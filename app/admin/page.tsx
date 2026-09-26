@@ -1,0 +1,125 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { verifySessionToken } from "@/lib/auth-utils";
+import { db } from "@/lib/db";
+import { AdminDashboard, StudentItem, TeacherItem } from "@/components/admin-dashboard";
+
+export const dynamic = "force-dynamic";
+
+export default async function AdminPage() {
+  const token = cookies().get("session_token")?.value;
+  if (!token) redirect("/login");
+
+  const payload = await verifySessionToken(token);
+  if (!payload || payload.role !== "ADMIN") {
+    redirect("/login");
+  }
+
+  const adminUser = await db.user.findUnique({
+    where: { id: payload.userId },
+  });
+
+  if (!adminUser) {
+    redirect("/login");
+  }
+
+  const [classes, scheduleItems, homeworks, submissions, users] = await Promise.all([
+    db.classGroup.findMany({ orderBy: [{ grade: "asc" }, { letter: "asc" }] }),
+    db.scheduleItem.findMany({ orderBy: [{ dayOfWeek: "asc" }, { lessonNumber: "asc" }] }),
+    db.homework.findMany({
+      include: {
+        classGroup: true,
+        _count: { select: { submissions: true } },
+      },
+      orderBy: { targetDate: "desc" },
+    }),
+    db.homeworkSubmission.findMany({
+      include: {
+        student: true,
+        homework: true,
+        attachments: true,
+      },
+      orderBy: { submittedAt: "desc" },
+    }),
+    db.user.findMany({
+      include: { classGroup: true },
+      orderBy: { fullName: "asc" },
+    }),
+  ]);
+
+  const students: StudentItem[] = users
+    .filter((u) => u.role === "STUDENT" && u.classGroup)
+    .map((u) => ({
+      id: u.id,
+      fullName: u.fullName,
+      login: u.login,
+      plainPassword: u.plainPasswordForAdmin || "—",
+      classId: u.classId || "",
+      className: u.classGroup?.name || "",
+      grade: u.classGroup?.grade || 0,
+      letter: u.classGroup?.letter || "",
+    }));
+
+  const teachers: TeacherItem[] = users
+    .filter((u) => u.role === "ADMIN")
+    .map((u) => ({
+      id: u.id,
+      fullName: u.fullName,
+      login: u.login,
+      plainPassword: u.plainPasswordForAdmin || "—",
+    }));
+
+  const formattedHomeworks = homeworks.map((h) => ({
+    id: h.id,
+    classId: h.classId,
+    className: h.classGroup.name,
+    subjectName: h.subjectName,
+    title: h.title,
+    description: h.description,
+    targetDate: h.targetDate.toISOString().split("T")[0],
+    submissionsCount: h._count.submissions,
+  }));
+
+  const formattedSubmissions = submissions.map((s) => ({
+    id: s.id,
+    studentName: s.student.fullName,
+    subjectName: s.homework.subjectName,
+    homeworkTitle: s.homework.title,
+    content: s.content,
+    submittedAt: s.submittedAt.toISOString(),
+    status: s.status,
+    grade: s.grade,
+    teacherComment: s.teacherComment,
+    attachments: s.attachments.map((a) => ({
+      id: a.id,
+      fileName: a.fileName,
+      fileUrl: a.fileUrl,
+      fileType: a.fileType,
+      expiresAt: a.expiresAt.toISOString(),
+    })),
+  }));
+
+  const formattedSchedule = scheduleItems.map((s) => ({
+    id: s.id,
+    classId: s.classId,
+    dayOfWeek: s.dayOfWeek,
+    lessonNumber: s.lessonNumber,
+    startTime: s.startTime,
+    endTime: s.endTime,
+    subjectName: s.subjectName,
+    room: s.room,
+    teacherName: s.teacherName,
+  }));
+
+  return (
+    <AdminDashboard
+      serverDate={new Date().toISOString()}
+      classes={classes}
+      scheduleItems={formattedSchedule}
+      homeworks={formattedHomeworks}
+      submissions={formattedSubmissions}
+      students={students}
+      teachers={teachers}
+    />
+  );
+}

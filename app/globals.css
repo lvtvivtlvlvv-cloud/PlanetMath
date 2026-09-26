@@ -1,0 +1,309 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   1. БАЗОВАЯ ТЕМА (BASE)
+   ========================================================================== */
+:root,
+html[data-theme="base"] {
+  --bg-main: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.9);
+  --bg-surface: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --border-color: rgba(226, 232, 240, 0.8);
+  --accent-color: #10b981;
+  --accent-contrast: #ffffff;
+  --btn-primary-bg: #0f172a;
+  --btn-primary-text: #ffffff;
+  --btn-primary-hover: #1e293b;
+  --btn-radius: 0.75rem;
+}
+
+html[data-theme="base"].dark {
+  --bg-main: #06080d;
+  --bg-card: rgba(18, 24, 38, 0.75);
+  --bg-surface: #141c2e;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --accent-color: #059669;
+  --accent-contrast: #ffffff;
+  --btn-primary-bg: #f8fafc;
+  --btn-primary-text: #0f172a;
+  --btn-primary-hover: #e2e8f0;
+  --btn-radius: 0.75rem;
+}
+
+/* ==========================================================================
+   2. ТЕМА «STANDART +» (Apple Liquid Glass)
+   ========================================================================== */
+html[data-theme="standart-plus"] {
+  --bg-main: #030806;
+  --bg-card: rgba(255, 255, 255, 0.06);
+  --bg-surface: rgba(255, 255, 255, 0.09);
+  --text-primary: #f3fdf7;
+  --text-secondary: #86efac;
+  --border-color: rgba(255, 255, 255, 0.14);
+  --accent-color: #2edc85;
+  --accent-hover: #34f595;
+  --accent-glow: rgba(46, 220, 133, 0.35);
+  --btn-primary-bg: linear-gradient(180deg, rgba(46, 220, 133, 0.9) 0%, rgba(20, 175, 95, 0.85) 100%);
+  --btn-primary-text: #02120a;
+  --btn-primary-hover: #34f595;
+  --btn-radius: 0.85rem;
+  --glass-blur: blur(24px);
+}
+
+html[data-theme="standart-plus"] .glass-panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.25), 0 16px 36px -10px rgba(0, 0, 0, 0.55);
+}
+
+html[data-theme="standart-plus"] .glass-interactive:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(46, 220, 133, 0.08) 100%);
+  border-color: rgba(46, 220, 133, 0.5);
+  box-shadow: inset 0 1px 2px 0 rgba(255, 255, 255, 0.35), 0 12px 30px -5px rgba(46, 220, 133, 0.3);
+  transform: translate3d(0, -2px, 0);
+}
+
+html[data-theme="standart-plus"] .standart-date-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease;
+  will-change: transform;
+}
+
+html[data-theme="standart-plus"] .standart-date-btn:hover {
+  transform: translate3d(3px, -3px, 0) scale(1.02);
+  border-color: rgba(46, 220, 133, 0.6);
+  background: rgba(46, 220, 133, 0.15);
+  box-shadow: 0 8px 24px rgba(46, 220, 133, 0.25);
+}
+
+html[data-theme="standart-plus"] .standart-date-btn.selected-date {
+  background: linear-gradient(135deg, rgba(46, 220, 133, 0.32) 0%, rgba(46, 220, 133, 0.1) 100%);
+  border-color: #2edc85;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4), 0 0 20px rgba(46, 220, 133, 0.35);
+  color: #2edc85;
+  transform: translate3d(4px, -4px, 0) scale(1.03);
+}
+
+/* ==========================================================================
+   3. ТЕМА «CLOCK» (Неоновый Циановый Космос)
+   ========================================================================== */
+html[data-theme="clock"] {
+  --bg-main: #06080d;
+  --bg-card: rgba(12, 17, 26, 0.7);
+  --bg-surface: rgba(18, 25, 40, 0.8);
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --border-color: rgba(56, 189, 248, 0.22);
+  --accent-color: #38bdf8;
+  --accent-hover: #22d3ee;
+  --accent-glow: rgba(34, 211, 238, 0.45);
+  --btn-primary-bg: rgba(14, 165, 233, 0.16);
+  --btn-primary-text: #38bdf8;
+  --btn-primary-hover: rgba(14, 165, 233, 0.32);
+  --btn-radius: 0.85rem;
+  --glass-blur: blur(16px);
+}
+
+html[data-theme="clock"] .theme-btn {
+  background: rgba(14, 165, 233, 0.16) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.38) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+}
+
+html[data-theme="clock"] .theme-btn:hover {
+  background: rgba(14, 165, 233, 0.3) !important;
+  border-color: rgba(56, 189, 248, 0.7) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.3) !important;
+  transform: translate3d(0, -1px, 0);
+}
+
+html[data-theme="clock"] .theme-btn:active {
+  transform: translate3d(0, 0, 0) scale(0.98);
+}
+
+html[data-theme="clock"] .glass-panel {
+  background: rgba(10, 14, 22, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  backdrop-filter: blur(16px);
+}
+
+html[data-theme="clock"] .glass-interactive:hover {
+  border-color: rgba(34, 211, 238, 0.7) !important;
+  box-shadow: 0 0 24px -2px rgba(34, 211, 238, 0.35), inset 0 1px 2px rgba(56, 189, 248, 0.25) !important;
+  transform: translate3d(0, -2px, 0);
+}
+
+html[data-theme="clock"] .theme-hw-chip {
+  background-color: rgba(14, 165, 233, 0.15) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+}
+
+html[data-theme="clock"] .theme-room-text {
+  color: #38bdf8 !important;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.45);
+}
+
+/* ==========================================================================
+   4. ТЕМА «GARDEN» (Ультра-скругление)
+   ========================================================================== */
+html[data-theme="garden"] {
+  --bg-main: #101611;
+  --bg-card: #182019;
+  --bg-surface: #202b21;
+  --text-primary: #f8f6f0;
+  --text-secondary: #abc270;
+  --border-color: rgba(171, 194, 112, 0.2);
+  --accent-color: #fec868;
+  --accent-contrast: #473c33;
+  --btn-primary-bg: #473c33;
+  --btn-primary-text: #fec868;
+  --btn-primary-hover: #352c25;
+  --btn-radius: 9999px;
+}
+
+html[data-theme="garden"] .garden-active-tab {
+  position: relative;
+  background-color: #fec868;
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html[data-theme="garden"] .garden-active-tab::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: -22px;
+  width: 22px;
+  height: 22px;
+  background: radial-gradient(circle at 0 0, transparent 22px, #fec868 22.5px);
+  pointer-events: none;
+}
+
+html[data-theme="garden"] .garden-active-tab::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: -22px;
+  width: 22px;
+  height: 22px;
+  background: radial-gradient(circle at 100% 0, transparent 22px, #fec868 22.5px);
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   ПЛАВНЫЕ АНИМАЦИИ ВКЛАДОК И НЕДЕЛЬ
+   ========================================================================== */
+@keyframes tabFadeSlide {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-tab-enter {
+  animation: tabFadeSlide 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+@keyframes weekSlideInRight {
+  from {
+    opacity: 0;
+    transform: translate3d(28px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes weekSlideInLeft {
+  from {
+    opacity: 0;
+    transform: translate3d(-28px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-week-right {
+  animation: weekSlideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+.animate-week-left {
+  animation: weekSlideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.theme-btn {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border-radius: var(--btn-radius);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow, background-color;
+}
+
+.theme-btn:hover {
+  background: var(--btn-primary-hover);
+  transform: translate3d(0, -1.5px, 0);
+}
+
+.theme-btn:active {
+  transform: translate3d(0, 0, 0) scale(0.98);
+}
+
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: var(--glass-blur, blur(16px));
+  -webkit-backdrop-filter: var(--glass-blur, blur(16px));
+  border: 1px solid var(--border-color);
+}
+
+html[data-theme="standart-plus"] table,
+html[data-theme="standart-plus"] thead,
+html[data-theme="standart-plus"] tbody,
+html[data-theme="standart-plus"] tr {
+  background-color: transparent !important;
+}
+
+.glass-interactive {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  will-change: transform;
+}
+
+.glass-interactive:hover {
+  transform: translate3d(0, -2px, 0);
+  border-color: var(--accent-color);
+}

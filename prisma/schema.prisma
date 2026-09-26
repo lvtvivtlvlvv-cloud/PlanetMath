@@ -1,0 +1,99 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                    String               @id @default(cuid())
+  login                 String               @unique
+  passwordHash          String
+  role                  String               @default("STUDENT")
+  fullName              String
+  classId               String?
+  plainPasswordForAdmin String?
+  classGroup            ClassGroup?          @relation(fields: [classId], references: [id], onDelete: SetNull)
+  submissions           HomeworkSubmission[]
+  createdAt             DateTime             @default(now())
+
+  @@index([login])
+  @@index([classId])
+}
+
+model ClassGroup {
+  id            String         @id @default(cuid())
+  grade         Int
+  letter        String
+  name          String         @unique
+  students      User[]
+  scheduleItems ScheduleItem[]
+  homeworks     Homework[]
+}
+
+model ScheduleItem {
+  id           String     @id @default(cuid())
+  classId      String
+  dayOfWeek    Int
+  lessonNumber Int
+  startTime    String
+  endTime      String
+  subjectName  String
+  room         String
+  teacherName  String
+  classGroup   ClassGroup @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@index([classId, dayOfWeek])
+}
+
+model Homework {
+  id          String               @id @default(cuid())
+  classId     String
+  subjectName String
+  targetDate  DateTime
+  title       String
+  description String
+  createdAt   DateTime             @default(now())
+  classGroup  ClassGroup           @relation(fields: [classId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
+  submissions HomeworkSubmission[]
+
+  @@index([classId, targetDate])
+}
+
+model HomeworkSubmission {
+  id             String       @id @default(cuid())
+  homeworkId     String
+  studentId      String
+  content        String
+  submittedAt    DateTime     @default(now())
+  status         String       @default("PENDING")
+  grade          Int?
+  teacherComment String?
+  gradedAt       DateTime?
+  homework       Homework     @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  student        User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  attachments    Attachment[]
+
+  @@unique([homeworkId, studentId])
+  @@index([studentId])
+  @@index([homeworkId])
+}
+
+model Attachment {
+  id           String              @id @default(cuid())
+  fileName     String
+  fileUrl      String
+  fileType     String
+  fileSize     Int
+  createdAt    DateTime            @default(now())
+  expiresAt    DateTime
+  homeworkId   String?
+  submissionId String?
+  homework     Homework?           @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  submission   HomeworkSubmission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+}
