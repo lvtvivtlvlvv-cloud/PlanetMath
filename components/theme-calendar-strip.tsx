@@ -79,10 +79,10 @@ export function ThemeCalendarStrip({
     );
   }
 
-  // 3. ТЕМА STANDART +: Liquid Glass
-  if (theme === "standart-plus") {
+  // 3. ТЕМА СТАНДАРТ (STANDART / STANDART +)
+  if (theme === "standart" || theme === "standart-plus") {
     return (
-      <div className="glass-panel rounded-2xl p-2.5">
+      <div className="glass-panel rounded-2xl p-2 sm:p-2.5">
         <div className="flex items-center justify-between gap-1.5 sm:gap-2">
           {days.map((w) => {
             const isSelected = selectedDayOfWeek === w.dayOfWeek;
@@ -90,20 +90,29 @@ export function ThemeCalendarStrip({
               <button
                 key={w.dayOfWeek}
                 type="button"
-                onMouseEnter={() => onSelectDay(w.dayOfWeek)}
                 onClick={() => onSelectDay(w.dayOfWeek)}
-                className={`standart-date-btn relative flex flex-1 flex-col items-center justify-center h-16 rounded-xl ${
-                  isSelected ? "selected-date font-black" : "text-emerald-100/70"
+                className={`standart-date-btn relative flex flex-1 flex-col items-center justify-center h-14 sm:h-16 rounded-xl transition-all ${
+                  isSelected ? "selected-date font-bold" : "text-emerald-100/70"
                 }`}
               >
-                <span className="text-base sm:text-lg font-black leading-none">
+                <span className="text-base sm:text-lg font-bold leading-none">
                   {w.dateNumber}
                 </span>
-                <span className="text-[11px] font-bold uppercase mt-1">
+                <span
+                  className={`text-[10px] sm:text-[11px] font-semibold uppercase mt-1 ${
+                    isSelected ? "text-emerald-950 font-extrabold" : "text-zinc-400"
+                  }`}
+                >
                   {w.short}
                 </span>
                 {w.isToday && (
-                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#0CE25E] shadow-[0_0_8px_#0CE25E]" />
+                  <span
+                    className={`absolute top-1.5 right-1.5 h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full ${
+                      isSelected
+                        ? "bg-emerald-950"
+                        : "bg-emerald-400 shadow-[0_0_6px_#10B981]"
+                    }`}
+                  />
                 )}
               </button>
             );

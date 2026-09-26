@@ -209,22 +209,22 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
       : "bg-emerald-950/50 text-emerald-300 border border-emerald-500/20";
 
   return (
-    <div className="min-h-screen space-y-6 p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
-      <header className="flex flex-col gap-4 border-b border-zinc-200/40 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
+    <div className="min-h-screen space-y-6 p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))]">
+      <header className="flex flex-col gap-3 sm:gap-4 border-b border-zinc-200/40 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
         <div>
-          <h1 className="text-2xl font-bold">Электронный Дневник</h1>
-          <p className="text-xs text-zinc-500">
-            {user.fullName} • Класс: <span className="font-bold text-zinc-900 dark:text-zinc-100">{user.className}</span>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Электронный Дневник</h1>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            {user.fullName} • Класс: <span className="font-semibold text-zinc-900 dark:text-zinc-100">{user.className}</span>
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-end gap-2.5 sm:gap-3 shrink-0">
           <ThemeSwitcher />
           <form action={logoutAction}>
             <button
               type="submit"
-              className="flex items-center gap-1.5 rounded-xl border border-red-200/80 bg-red-50/70 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400"
+              className="flex items-center gap-1.5 rounded-xl border border-red-200/80 bg-red-50/70 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400 min-h-[36px]"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-3.5 w-3.5" />
               <span>Выйти</span>
             </button>
           </form>
@@ -296,8 +296,8 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                     ? "text-[#473C33]"
                     : theme === "clock"
                     ? "text-cyan-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]"
-                    : theme === "standart-plus"
-                    ? "text-[#2EDC85]"
+                    : (theme === "standart" || theme === "standart-plus")
+                    ? "text-emerald-400 font-bold"
                     : "text-zinc-800 dark:text-zinc-200"
                 }`}
               >

@@ -1,22 +1,21 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { verifySessionToken } from "@/lib/auth-utils";
+"use client";
 
-export default async function HomePage() {
-  const token = cookies().get("session_token")?.value;
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-  if (!token) {
-    redirect("/login");
-  }
+export default function HomePage() {
+  const router = useRouter();
 
-  const payload = await verifySessionToken(token);
-  if (!payload) {
-    redirect("/login");
-  }
+  useEffect(() => {
+    router.replace("/login");
+  }, [router]);
 
-  if (payload.role === "ADMIN") {
-    redirect("/admin");
-  } else {
-    redirect("/student");
-  }
+  return (
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex flex-col items-center gap-3 text-zinc-400">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+        <span className="text-xs font-medium">Перенаправление на портал...</span>
+      </div>
+    </div>
+  );
 }

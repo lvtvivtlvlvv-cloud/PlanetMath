@@ -9,6 +9,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = req.cookies.get("session_token")?.value;
 
+  const isRootPage = pathname === "/";
   const isAuthPage = pathname.startsWith("/login");
   const isAdminPage = pathname.startsWith("/admin");
   const isStudentPage = pathname.startsWith("/student");
@@ -20,7 +21,26 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   };
 
-  // 1. Неавторизованный пользователь пытается зайти в кабинет
+  // 1. Корневой путь (/) — немедленный редирект на уровне middleware
+  if (isRootPage) {
+    if (!token) {
+      return createRedirect("/login");
+    }
+    try {
+      const { payload } = await jwtVerify(token, JWT_SECRET);
+      const role = payload.role as string;
+      if (role === "ADMIN") {
+        return createRedirect("/admin");
+      }
+      return createRedirect("/student");
+    } catch {
+      const res = createRedirect("/login");
+      res.cookies.delete("session_token");
+      return res;
+    }
+  }
+
+  // 2. Неавторизованный пользователь пытается зайти в кабинет
   if (!token) {
     if (isAdminPage || isStudentPage) {
       return createRedirect("/login");
@@ -28,14 +48,14 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Страница входа (/login):
+  // 3. Страница входа (/login):
   // ВАЖНО: НИКОГДА не перенаправляем автоматически с /login в кабинеты!
   // Это исключает бесконечный цикл 307, если в базе данных пользователя уже нет.
   if (isAuthPage) {
     return NextResponse.next();
   }
 
-  // 3. Проверка прав для защищенных кабинетов
+  // 4. Проверка прав для защищенных кабинетов
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
     const role = payload.role as string;
@@ -58,5 +78,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/student/:path*", "/login"],
+  matcher: ["/", "/admin/:path*", "/student/:path*", "/login"],
 };

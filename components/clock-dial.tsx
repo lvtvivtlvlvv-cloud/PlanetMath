@@ -89,7 +89,8 @@ export function ClockDial({
     if (!containerRef.current) return;
     const updateSize = () => {
       if (containerRef.current) {
-        setContainerWidth(containerRef.current.clientWidth);
+        const newWidth = containerRef.current.clientWidth;
+        setContainerWidth((prev) => (Math.abs(prev - newWidth) > 4 ? newWidth : prev));
       }
     };
     updateSize();
@@ -447,8 +448,7 @@ export function ClockDial({
             className="h-full w-full rounded-full border border-cyan-500/30 shadow-[inset_0_20px_70px_rgba(15,23,42,0.9),_0_0_40px_rgba(56,189,248,0.25)]"
             style={{
               background: "radial-gradient(circle at 50% 25%, #0e2038 0%, #081424 45%, #02060d 85%)",
-              transform: `rotate(${earthRotationAngle}deg) translateZ(0)`,
-              willChange: "transform",
+              transform: `rotate(${earthRotationAngle}deg)`,
               backfaceVisibility: "hidden",
             }}
           >
@@ -591,10 +591,10 @@ export function ClockDial({
                 e.stopPropagation();
                 handleDayTap(item.k);
               }}
-              className="absolute left-1/2 cursor-pointer p-2 will-change-transform"
+              className="absolute left-1/2 cursor-pointer p-2"
               style={{
                 top: `${y}px`,
-                transform: `translate3d(calc(-50% + ${x}px), 0, 0) rotate(${angleDeg}deg) scale(${scale}) translateZ(0)`,
+                transform: `translate(calc(-50% + ${x}px), 0) rotate(${angleDeg}deg) scale(${scale})`,
                 opacity,
                 backfaceVisibility: "hidden",
               }}

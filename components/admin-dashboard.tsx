@@ -350,28 +350,28 @@ export function AdminDashboard({
       : "bg-emerald-950/50 text-emerald-300 border border-emerald-500/20";
 
   return (
-    <div className="min-h-screen space-y-6 p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
-      <header className="flex flex-col gap-4 border-b border-zinc-200/40 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
+    <div className="min-h-screen space-y-6 p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))]">
+      <header className="flex flex-col gap-3 sm:gap-4 border-b border-zinc-200/40 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
         <div>
-          <h1 className="text-2xl font-bold">Панель Учителя</h1>
-          <p className="text-xs text-zinc-500">2026–2027 учебный год</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Панель Учителя</h1>
+          <p className="text-xs text-zinc-400 mt-0.5">2026–2027 учебный год</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-end gap-2.5 sm:gap-3 shrink-0">
           <ThemeSwitcher />
           <form action={logoutAction}>
             <button
               type="submit"
-              className="flex items-center gap-1.5 rounded-xl border border-red-200/80 bg-red-50/70 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400"
+              className="flex items-center gap-1.5 rounded-xl border border-red-200/80 bg-red-50/70 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400 min-h-[36px]"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-3.5 w-3.5" />
               <span>Выйти</span>
             </button>
           </form>
         </div>
       </header>
 
-      {/* НАВИГАЦИОННЫЕ ВКЛАДКИ */}
-      <nav className="flex flex-wrap gap-2 border-b border-zinc-200/40 pb-2 dark:border-zinc-800">
+      {/* НАВИГАЦИОННЫЕ ВКЛАДКИ С ГОРИЗОНТАЛЬНЫМ СКРОЛЛОМ НА МОБИЛЬНЫХ */}
+      <nav className="flex items-center gap-2 border-b border-zinc-200/40 pb-2 dark:border-zinc-800 overflow-x-auto scrollbar-none py-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
         {[
           { id: "schedule", label: "Расписание" },
           { id: "homeworks", label: "Выданные ДЗ" },
@@ -384,8 +384,8 @@ export function AdminDashboard({
           let activeClasses = "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 shadow-md";
           if (theme === "clock") {
             activeClasses = "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-[0_0_16px_rgba(56,189,248,0.25)] backdrop-blur-md";
-          } else if (theme === "standart-plus") {
-            activeClasses = "bg-emerald-500/20 text-[#2EDC85] border-[#2EDC85]/40 shadow-[0_0_16px_rgba(46,220,133,0.25)] backdrop-blur-md";
+          } else if (theme === "standart" || theme === "standart-plus") {
+            activeClasses = "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_16px_rgba(16,185,129,0.2)] backdrop-blur-md";
           } else if (theme === "garden") {
             activeClasses = "bg-[#FEC868]/20 text-[#FEC868] border-[#FEC868]/40 shadow-[0_0_16px_rgba(254,200,104,0.2)]";
           }
@@ -395,7 +395,7 @@ export function AdminDashboard({
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id as any)}
-              className={`rounded-xl px-4 py-2 text-sm font-semibold border transition-[color,background-color,border-color,box-shadow] duration-200 outline-none focus:outline-none ${
+              className={`rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold border whitespace-nowrap shrink-0 transition-[color,background-color,border-color,box-shadow] duration-200 outline-none focus:outline-none min-h-[38px] ${
                 isActive
                   ? activeClasses
                   : "border-transparent text-zinc-400 hover:text-white hover:bg-white/5"
@@ -522,8 +522,8 @@ export function AdminDashboard({
                           ? "text-[#473C33]"
                           : theme === "clock"
                           ? "text-cyan-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]"
-                          : theme === "standart-plus"
-                          ? "text-[#2EDC85]"
+                          : (theme === "standart" || theme === "standart-plus")
+                          ? "text-emerald-400 font-bold"
                           : "text-zinc-800 dark:text-zinc-200"
                       }`}
                     >

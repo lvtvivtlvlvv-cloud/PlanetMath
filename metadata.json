@@ -1,0 +1,6 @@
+{
+  "name": "PlanetMath - Школьный дневник и расписание",
+  "description": "Система электронного расписания занятий и школьного дневника для учеников и преподавателей",
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"],
+  "permissions": []
+}

@@ -37,61 +37,67 @@ html[data-theme="base"].dark {
 }
 
 /* ==========================================================================
-   2. ТЕМА «STANDART +» (Apple Liquid Glass)
+   2. ЕДИНАЯ ТЕМА «СТАНДАРТ» (STANDART / STANDART +)
    ========================================================================== */
+html[data-theme="standart"],
 html[data-theme="standart-plus"] {
-  --bg-main: #030806;
-  --bg-card: rgba(255, 255, 255, 0.06);
-  --bg-surface: rgba(255, 255, 255, 0.09);
-  --text-primary: #f3fdf7;
-  --text-secondary: #86efac;
-  --border-color: rgba(255, 255, 255, 0.14);
-  --accent-color: #2edc85;
-  --accent-hover: #34f595;
-  --accent-glow: rgba(46, 220, 133, 0.35);
-  --btn-primary-bg: linear-gradient(180deg, rgba(46, 220, 133, 0.9) 0%, rgba(20, 175, 95, 0.85) 100%);
-  --btn-primary-text: #02120a;
-  --btn-primary-hover: #34f595;
-  --btn-radius: 0.85rem;
-  --glass-blur: blur(24px);
+  --bg-main: #070c09;
+  --bg-card: rgba(13, 23, 18, 0.88);
+  --bg-surface: rgba(19, 34, 26, 0.92);
+  --text-primary: #f0fdf4;
+  --text-secondary: #94a3b8;
+  --border-color: rgba(52, 211, 153, 0.16);
+  --accent-color: #10b981;
+  --accent-hover: #34d399;
+  --accent-glow: rgba(16, 185, 129, 0.25);
+  --btn-primary-bg: #10b981;
+  --btn-primary-text: #022c1b;
+  --btn-primary-hover: #34d399;
+  --btn-radius: 0.875rem;
+  --glass-blur: blur(12px);
 }
 
+html[data-theme="standart"] .glass-panel,
 html[data-theme="standart-plus"] .glass-panel {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.25), 0 16px 36px -10px rgba(0, 0, 0, 0.55);
+  background: rgba(13, 23, 18, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(52, 211, 153, 0.15);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35), inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
 }
 
+html[data-theme="standart"] .glass-interactive:hover,
 html[data-theme="standart-plus"] .glass-interactive:hover {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(46, 220, 133, 0.08) 100%);
-  border-color: rgba(46, 220, 133, 0.5);
-  box-shadow: inset 0 1px 2px 0 rgba(255, 255, 255, 0.35), 0 12px 30px -5px rgba(46, 220, 133, 0.3);
-  transform: translate3d(0, -2px, 0);
+  background: rgba(19, 34, 26, 0.92);
+  border-color: rgba(52, 211, 153, 0.45);
+  box-shadow: 0 8px 24px -4px rgba(16, 185, 129, 0.2);
+  transform: translateY(-1.5px);
 }
 
+html[data-theme="standart"] .standart-date-btn,
 html[data-theme="standart-plus"] .standart-date-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(16px);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease;
-  will-change: transform;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(52, 211, 153, 0.14);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #94a3b8;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 
+html[data-theme="standart"] .standart-date-btn:hover,
 html[data-theme="standart-plus"] .standart-date-btn:hover {
-  transform: translate3d(3px, -3px, 0) scale(1.02);
-  border-color: rgba(46, 220, 133, 0.6);
-  background: rgba(46, 220, 133, 0.15);
-  box-shadow: 0 8px 24px rgba(46, 220, 133, 0.25);
+  border-color: rgba(52, 211, 153, 0.4);
+  background: rgba(16, 185, 129, 0.08);
+  color: #f0fdf4;
 }
 
+html[data-theme="standart"] .standart-date-btn.selected-date,
 html[data-theme="standart-plus"] .standart-date-btn.selected-date {
-  background: linear-gradient(135deg, rgba(46, 220, 133, 0.32) 0%, rgba(46, 220, 133, 0.1) 100%);
-  border-color: #2edc85;
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4), 0 0 20px rgba(46, 220, 133, 0.35);
-  color: #2edc85;
-  transform: translate3d(4px, -4px, 0) scale(1.03);
+  background: #10b981;
+  border-color: #34d399;
+  color: #022c1b;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  font-weight: 800;
 }
 
 /* ==========================================================================
@@ -225,39 +231,36 @@ html[data-theme="garden"] .garden-active-tab::after {
 
 .animate-tab-enter {
   animation: tabFadeSlide 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, opacity;
 }
 
 @keyframes weekSlideInRight {
   from {
     opacity: 0;
-    transform: translate3d(28px, 0, 0);
+    transform: translateX(20px);
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
+    transform: translateX(0);
   }
 }
 
 @keyframes weekSlideInLeft {
   from {
     opacity: 0;
-    transform: translate3d(-28px, 0, 0);
+    transform: translateX(-20px);
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
+    transform: translateX(0);
   }
 }
 
 .animate-week-right {
-  animation: weekSlideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, opacity;
+  animation: weekSlideInRight 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-week-left {
-  animation: weekSlideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, opacity;
+  animation: weekSlideInLeft 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 body {
@@ -265,32 +268,36 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .theme-btn {
   background: var(--btn-primary-bg);
   color: var(--btn-primary-text);
   border-radius: var(--btn-radius);
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, box-shadow, background-color;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .theme-btn:hover {
   background: var(--btn-primary-hover);
-  transform: translate3d(0, -1.5px, 0);
+  transform: translateY(-1.5px);
 }
 
 .theme-btn:active {
-  transform: translate3d(0, 0, 0) scale(0.98);
+  transform: scale(0.98);
 }
 
 .glass-panel {
   background: var(--bg-card);
-  backdrop-filter: var(--glass-blur, blur(16px));
-  -webkit-backdrop-filter: var(--glass-blur, blur(16px));
+  backdrop-filter: var(--glass-blur, blur(12px));
+  -webkit-backdrop-filter: var(--glass-blur, blur(12px));
   border: 1px solid var(--border-color);
 }
 
+html[data-theme="standart"] table,
+html[data-theme="standart"] thead,
+html[data-theme="standart"] tbody,
+html[data-theme="standart"] tr,
 html[data-theme="standart-plus"] table,
 html[data-theme="standart-plus"] thead,
 html[data-theme="standart-plus"] tbody,
@@ -299,11 +306,10 @@ html[data-theme="standart-plus"] tr {
 }
 
 .glass-interactive {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
-  will-change: transform;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .glass-interactive:hover {
-  transform: translate3d(0, -2px, 0);
+  transform: translateY(-2px);
   border-color: var(--accent-color);
 }
