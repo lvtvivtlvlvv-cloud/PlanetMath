@@ -35,6 +35,12 @@ import {
   Check,
   Plus,
   Calendar,
+  Search,
+  ArrowUpDown,
+  SlidersHorizontal,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
 } from "lucide-react";
 
 const SHORT_WEEKDAYS = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"];
@@ -77,6 +83,12 @@ interface StudentDashboardProps {
       status: string;
       grade: number | null;
       teacherComment: string | null;
+      attachments?: Array<{
+        id: string;
+        fileName: string;
+        fileUrl: string;
+        fileType: string;
+      }>;
     } | null;
   }>;
 }
@@ -248,44 +260,113 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
 
   // Табы студента: Расписание vs Домашние задания
   const [activeTab, setActiveTab] = useState<"schedule" | "homework">("schedule");
-  const [hwFilterMode, setHwFilterMode] = useState<"day" | "all">("day");
+  const [hwStatusFilter, setHwStatusFilter] = useState<"ALL" | "NEED_SUBMIT" | "PENDING" | "GRADED">("ALL");
+  const [hwSort, setHwSort] = useState<"DEADLINE_NEAREST" | "DEADLINE_FURTHEST" | "DATE_NEWEST" | "DATE_OLDEST" | "STATUS" | "SUBJECT">("DEADLINE_NEAREST");
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [viewCheckedHwModal, setViewCheckedHwModal] = useState<typeof homeworks[0] | null>(null);
+  const [activeCheckedFileIdx, setActiveCheckedFileIdx] = useState<number>(0);
   const [checkedPageRotation, setCheckedPageRotation] = useState<number>(0);
+  const [checkedZoom, setCheckedZoom] = useState<number>(1);
 
   const parseTeacherFeedback = (raw: string | null | undefined) => {
-    if (!raw) return { text: "", annotations: [], tasks: {} as Record<number, boolean | null> };
+    if (!raw) {
+      return {
+        text: "",
+        annotations: [] as any[],
+        tasks: {} as Record<number, boolean | null>,
+        canvasWidth: 800,
+        canvasHeight: 1066,
+        modifiedImageUrl: "",
+      };
+    }
     try {
       const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === "object" && ("text" in parsed || "annotations" in parsed || "tasks" in parsed)) {
+      if (parsed && typeof parsed === "object") {
         return {
           text: (parsed.text as string) || "",
           annotations: (parsed.annotations as any[]) || [],
           tasks: (parsed.tasks as Record<number, boolean | null>) || {},
+          canvasWidth: (parsed.canvasWidth as number) || 800,
+          canvasHeight: (parsed.canvasHeight as number) || 1066,
+          modifiedImageUrl: (parsed.modifiedImageUrl as string) || "",
         };
       }
     } catch {}
-    return { text: raw, annotations: [], tasks: {} as Record<number, boolean | null> };
+    return {
+      text: raw,
+      annotations: [] as any[],
+      tasks: {} as Record<number, boolean | null>,
+      canvasWidth: 800,
+      canvasHeight: 1066,
+      modifiedImageUrl: "",
+    };
   };
 
-  const targetDayStr = useMemo(() => format(currentDate, "yyyy-MM-dd"), [currentDate]);
+  const unsubmittedCount = useMemo(() => homeworks.filter((h) => !h.submission).length, [homeworks]);
+  const pendingCount = useMemo(() => homeworks.filter((h) => h.submission && h.submission.grade === null).length, [homeworks]);
+  const gradedCount = useMemo(() => homeworks.filter((h) => h.submission && h.submission.grade !== null).length, [homeworks]);
 
   const displayedHomeworks = useMemo(() => {
     let list = [...homeworks];
-    if (hwFilterMode === "day") {
-      list = list.filter((h) => h.targetDate === targetDayStr);
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter(
+        (h) =>
+          h.title.toLowerCase().includes(q) ||
+          h.description.toLowerCase().includes(q) ||
+          h.subjectName.toLowerCase().includes(q)
+      );
     }
+
+    // Filter by subject
     if (selectedSubjectFilter !== "ALL") {
       list = list.filter(
         (h) => h.subjectName.trim().toLowerCase() === selectedSubjectFilter.trim().toLowerCase()
       );
     }
-    return list;
-  }, [homeworks, hwFilterMode, targetDayStr, selectedSubjectFilter]);
 
-  const homeworksForTodayCount = useMemo(() => {
-    return homeworks.filter((h) => h.targetDate === targetDayStr).length;
-  }, [homeworks, targetDayStr]);
+    // Filter by status
+    if (hwStatusFilter === "NEED_SUBMIT") {
+      list = list.filter((h) => !h.submission);
+    } else if (hwStatusFilter === "PENDING") {
+      list = list.filter((h) => h.submission && h.submission.grade === null);
+    } else if (hwStatusFilter === "GRADED") {
+      list = list.filter((h) => h.submission && h.submission.grade !== null);
+    }
+
+    // Sorting
+    list.sort((a, b) => {
+      if (hwSort === "DEADLINE_NEAREST") {
+        return new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime();
+      }
+      if (hwSort === "DEADLINE_FURTHEST") {
+        return new Date(b.targetDate).getTime() - new Date(a.targetDate).getTime();
+      }
+      if (hwSort === "DATE_NEWEST") {
+        return new Date(b.targetDate).getTime() - new Date(a.targetDate).getTime();
+      }
+      if (hwSort === "DATE_OLDEST") {
+        return new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime();
+      }
+      if (hwSort === "SUBJECT") {
+        return a.subjectName.localeCompare(b.subjectName, "ru");
+      }
+      if (hwSort === "STATUS") {
+        const getScore = (hw: typeof a) => {
+          if (!hw.submission) return 0;
+          if (hw.submission.grade === null) return 1;
+          return 2;
+        };
+        return getScore(a) - getScore(b);
+      }
+      return 0;
+    });
+
+    return list;
+  }, [homeworks, searchQuery, selectedSubjectFilter, hwStatusFilter, hwSort]);
 
   const availableSubjects = useMemo(() => {
     const set = new Set<string>();
@@ -564,18 +645,50 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                                     </div>
                                   )}
 
-                                  {sub?.teacherComment && (
-                                    <div className={`mt-2 rounded-xl p-2.5 text-xs ${
-                                      isPlanet
-                                        ? "bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"
-                                        : isGarden
-                                        ? "bg-[#FEC868]/10 text-[#FEC868] border border-[#FEC868]/20"
-                                        : "bg-emerald-500/10 text-emerald-300"
-                                    }`}>
-                                      <span className="font-semibold">Комментарий учителя: </span>
-                                      {sub.teacherComment}
+                                  {/* Student's submitted attachments preview */}
+                                  {(sub as any)?.attachments && (sub as any).attachments.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-1.5">
+                                      {(sub as any).attachments.map((file: any) => (
+                                        <AttachmentBadge key={file.id} file={file} />
+                                      ))}
                                     </div>
                                   )}
+
+                                  {/* Teacher feedback - cleanly parsed, NEVER raw JSON! */}
+                                  {sub && (() => {
+                                    const parsedFb = parseTeacherFeedback(sub.teacherComment);
+                                    return (
+                                      <div className="mt-2 space-y-2">
+                                        {parsedFb.text ? (
+                                          <div className={`rounded-xl p-2.5 text-xs ${
+                                            isPlanet
+                                              ? "bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"
+                                              : isGarden
+                                              ? "bg-[#FEC868]/10 text-[#FEC868] border border-[#FEC868]/20"
+                                              : "bg-emerald-500/10 text-emerald-300"
+                                          }`}>
+                                            <span className="font-bold">Комментарий учителя: </span>
+                                            {parsedFb.text}
+                                          </div>
+                                        ) : null}
+
+                                        {sub.grade !== null && sub.grade !== undefined && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setCheckedPageRotation(0);
+                                              setActiveCheckedFileIdx(0);
+                                              setViewCheckedHwModal(h);
+                                            }}
+                                            className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition"
+                                          >
+                                            <Eye className="h-3.5 w-3.5" />
+                                            <span>Посмотреть проверенную работу с исправлениями</span>
+                                          </button>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               );
                             })}
@@ -592,83 +705,98 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
       </section>
       )}
 
-      {/* ВКЛАДКА: ДОМАШНИЕ ЗАДАНИЯ (ДЗ) */}
+      {/* ВКЛАДКА: ДОМАШНИЕ ЗАДАНИЯ (ДЗ) — ВСЕ ЗАДАНИЯ В ЦЕЛОМ С СОРТИРОВКОЙ И ФИЛЬТРАМИ */}
       {activeTab === "homework" && (
         <section className="space-y-5 animate-tab-enter">
-          {/* Верхняя карточка с переключателем режима: На выбранный день vs Все ДЗ */}
-          <div className="glass-panel flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 sm:p-5 rounded-3xl shadow-sm">
+          {/* Верхняя карточка со сводкой и статусами */}
+          <div className="glass-panel flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-5 sm:p-6 rounded-3xl shadow-sm">
             <div>
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                <span className="h-2.5 w-2.5 rounded-full bg-blue-500 animate-pulse" />
                 <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">Домашние задания</h2>
               </div>
               <p className="text-xs text-zinc-400 mt-1">
-                Все выданные задания, прикрепленные PDF-файлы и проверенные работы с оценками
+                Все выданные задания, проверка решений и оценки преподавателя
               </p>
             </div>
 
-            {/* Переключатель: На день vs Все задания */}
-            <div className="flex items-center gap-1.5 bg-black/25 dark:bg-white/5 p-1 rounded-2xl border border-zinc-700/60 text-xs font-bold shrink-0">
-              <button
-                type="button"
-                onClick={() => setHwFilterMode("day")}
-                className={`px-3.5 py-1.5 rounded-xl transition ${
-                  hwFilterMode === "day"
-                    ? isGarden
-                      ? "bg-[#FEC868] text-[#2C2114] shadow-xs font-black"
-                      : isPlanet
-                      ? "bg-cyan-500 text-black shadow-xs font-black"
-                      : "bg-emerald-500 text-white shadow-xs font-black"
-                    : "text-zinc-400 hover:text-white"
-                }`}
-              >
-                На день ({homeworksForTodayCount})
-              </button>
-              <button
-                type="button"
-                onClick={() => setHwFilterMode("all")}
-                className={`px-3.5 py-1.5 rounded-xl transition ${
-                  hwFilterMode === "all"
-                    ? isGarden
-                      ? "bg-[#FEC868] text-[#2C2114] shadow-xs font-black"
-                      : isPlanet
-                      ? "bg-cyan-500 text-black shadow-xs font-black"
-                      : "bg-emerald-500 text-white shadow-xs font-black"
-                    : "text-zinc-400 hover:text-white"
-                }`}
-              >
-                Все задания ({homeworks.length})
-              </button>
+            {/* Фильтр по статусам */}
+            <div className="flex flex-wrap items-center gap-1.5 bg-black/30 dark:bg-white/5 p-1 rounded-2xl border border-zinc-700/60 text-xs font-bold shrink-0">
+              {[
+                { id: "ALL", label: "Все", count: homeworks.length },
+                { id: "NEED_SUBMIT", label: "Надо сдать", count: unsubmittedCount },
+                { id: "PENDING", label: "На проверке", count: pendingCount },
+                { id: "GRADED", label: "Проверено", count: gradedCount },
+              ].map((btn) => {
+                const isActive = hwStatusFilter === btn.id;
+                return (
+                  <button
+                    key={btn.id}
+                    type="button"
+                    onClick={() => setHwStatusFilter(btn.id as any)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition font-black text-xs ${
+                      isActive
+                        ? isGarden
+                          ? "bg-[#FEC868] text-[#2C2114] shadow-xs"
+                          : isPlanet
+                          ? "bg-cyan-500 text-black shadow-xs"
+                          : "bg-emerald-500 text-white shadow-xs"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    <span>{btn.label}</span>
+                    <span className={`text-[10px] rounded-full px-1.5 py-0.5 ${isActive ? "bg-black/20" : "bg-white/10"}`}>
+                      {btn.count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Интерактивная полоса дней недели при режиме «На день» */}
-          {hwFilterMode === "day" && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between px-1 text-xs">
-                <span className="font-extrabold text-zinc-300">
-                  Выбранный день: <span className="text-blue-400 font-black">{activeDateFormatted}</span>
-                </span>
-                <span className="text-zinc-500 text-[11px]">
-                  Нажимайте на даты ниже для просмотра ДЗ на день
-                </span>
-              </div>
-              <ThemeCalendarStrip
-                currentDate={currentDate}
-                onSelectDate={handleSelectDate}
-                serverToday={hostToday}
-                days={weekDayDates}
-                selectedDayOfWeek={selectedDayOfWeek}
-                onSelectDay={(dow) => {
-                  const target = addDays(monday, dow - 1);
-                  setCurrentDate(target);
-                }}
-                onPrevWeek={handlePrevWeek}
-                onNextWeek={handleNextWeek}
-                onScrubDay={(targetDate) => setCurrentDate(targetDate)}
+          {/* Панель сортировки, поиска и фильтрации */}
+          <div className="glass-panel p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            {/* Поиск */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+              <input
+                type="text"
+                placeholder="Поиск по предмету или теме..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-xl border border-zinc-700/80 bg-black/20 pl-9 pr-8 py-1.5 text-xs text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
             </div>
-          )}
+
+            {/* Выбор сортировки */}
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs font-bold text-zinc-400 flex items-center gap-1">
+                <ArrowUpDown className="h-3.5 w-3.5" />
+                <span>Сортировка:</span>
+              </span>
+              <select
+                value={hwSort}
+                onChange={(e) => setHwSort(e.target.value as any)}
+                className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs font-bold text-zinc-200 focus:border-zinc-500 focus:outline-none shadow-xs"
+              >
+                <option value="DEADLINE_NEAREST">Сначала ближайший дедлайн</option>
+                <option value="DEADLINE_FURTHEST">Сначала дальний дедлайн</option>
+                <option value="DATE_NEWEST">Сначала новые (по дате)</option>
+                <option value="DATE_OLDEST">Сначала старые (по дате)</option>
+                <option value="STATUS">Сначала не сданные</option>
+                <option value="SUBJECT">По предмету (А-Я)</option>
+              </select>
+            </div>
+          </div>
 
           {/* Фильтр по предметам */}
           {availableSubjects.length > 1 && (
@@ -682,22 +810,26 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                     : "bg-zinc-800/60 text-zinc-400 hover:text-white"
                 }`}
               >
-                Все предметы
+                Все предметы ({homeworks.length})
               </button>
-              {availableSubjects.map((sub) => (
-                <button
-                  key={sub}
-                  type="button"
-                  onClick={() => setSelectedSubjectFilter(sub)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs whitespace-nowrap ${
-                    selectedSubjectFilter === sub
-                      ? "bg-white text-zinc-900 shadow-sm"
-                      : "bg-zinc-800/60 text-zinc-400 hover:text-white"
-                  }`}
-                >
-                  {sub}
-                </button>
-              ))}
+              {availableSubjects.map((sub) => {
+                const count = homeworks.filter((h) => h.subjectName.trim().toLowerCase() === sub.toLowerCase()).length;
+                return (
+                  <button
+                    key={sub}
+                    type="button"
+                    onClick={() => setSelectedSubjectFilter(sub)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs whitespace-nowrap flex items-center gap-1.5 ${
+                      selectedSubjectFilter === sub
+                        ? "bg-white text-zinc-900 shadow-sm"
+                        : "bg-zinc-800/60 text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    <span>{sub}</span>
+                    <span className="text-[10px] opacity-75">({count})</span>
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -707,15 +839,24 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
               <div className="flex h-56 flex-col items-center justify-center rounded-3xl border-2 border-dashed border-zinc-800 p-8 text-center text-zinc-400">
                 <BookOpen className="h-8 w-8 mb-2 opacity-50" />
                 <p className="text-sm font-bold">
-                  {hwFilterMode === "day"
-                    ? `На ${activeDateFormatted} домашних заданий нет`
-                    : "Домашних заданий не найдено"}
+                  Домашних заданий не найдено
                 </p>
                 <p className="text-xs mt-1 text-zinc-500">
-                  {hwFilterMode === "day"
-                    ? "Выберите другой день в календаре выше или переключитесь на «Все задания»"
-                    : "Учитель еще не добавил новые домашние работы"}
+                  Попробуйте сбросить фильтры или изменить поисковый запрос
                 </p>
+                {(searchQuery || selectedSubjectFilter !== "ALL" || hwStatusFilter !== "ALL") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setSelectedSubjectFilter("ALL");
+                      setHwStatusFilter("ALL");
+                    }}
+                    className="mt-3 rounded-xl border border-zinc-700 bg-white/5 px-3 py-1.5 text-xs font-bold text-zinc-300 hover:bg-white/10"
+                  >
+                    Сбросить фильтры
+                  </button>
+                )}
               </div>
             ) : (
               displayedHomeworks.map((hw) => {
@@ -993,12 +1134,32 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
 
               <button
                 type="button"
-                onClick={() => window.print()}
-                className="hidden sm:flex items-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 shadow-xs"
+                onClick={() => setCheckedZoom((prev) => (prev === 1 ? 1.25 : prev === 1.25 ? 1.5 : 1))}
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-600 hover:bg-zinc-100 transition"
+                title="Масштаб"
               >
-                <Download className="h-3.5 w-3.5" />
-                <span>Печать / PDF</span>
+                {checkedZoom > 1 ? <ZoomOut className="h-4 w-4" /> : <ZoomIn className="h-4 w-4" />}
               </button>
+
+              {parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment).modifiedImageUrl ? (
+                <a
+                  href={parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment).modifiedImageUrl}
+                  download={`Проверенное_ДЗ_${viewCheckedHwModal.subjectName}.jpg`}
+                  className="hidden sm:flex items-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 shadow-xs"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Скачать с пометками</span>
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="hidden sm:flex items-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 shadow-xs"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Печать / PDF</span>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -1012,199 +1173,237 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
 
           {/* Body: Center Viewport + Right Grading Sidebar */}
           <div className="flex flex-1 overflow-hidden rounded-b-3xl bg-white">
-            {/* Center: Student handwritten notebook sheet with teacher's red annotations */}
-            <div className="flex-1 overflow-y-auto bg-[#2E3440] p-4 sm:p-6 flex flex-col items-center justify-start">
-              <div
-                className="relative w-full max-w-3xl overflow-hidden rounded-2xl shadow-2xl bg-white border border-zinc-700 transition-transform duration-300 my-auto"
-                style={{
-                  transform: `rotate(${checkedPageRotation}deg)`,
-                  transformOrigin: "center center",
-                }}
-              >
-                {/* 1. Underlying Handwritten Notebook Page */}
-                <div className="relative w-full aspect-[3/4] bg-[#FAF9F5] select-none p-6 sm:p-10 font-serif leading-relaxed flex flex-col justify-between overflow-hidden">
-                  {/* Notebook Squared Grid Background */}
+            {/* Center: Actual checked homework with teacher's annotations or modified image */}
+            {(() => {
+              const feedback = parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment);
+              const studentSubmittedImg =
+                viewCheckedHwModal.submission?.attachments?.find((a: any) =>
+                  a.fileType?.startsWith("image/") || a.fileUrl?.match(/\.(jpeg|jpg|png|webp|gif)/i)
+                )?.fileUrl ||
+                viewCheckedHwModal.submission?.attachments?.[0]?.fileUrl;
+
+              return (
+                <div className="flex-1 overflow-y-auto bg-[#2E3440] p-4 sm:p-6 flex flex-col items-center justify-start">
                   <div
-                    className="absolute inset-0 opacity-25 pointer-events-none"
+                    className="relative w-full max-w-3xl overflow-hidden rounded-2xl shadow-2xl bg-white border border-zinc-700 transition-all duration-300 my-auto"
                     style={{
-                      backgroundImage:
-                        "linear-gradient(to right, #94A3B8 1px, transparent 1px), linear-gradient(to bottom, #94A3B8 1px, transparent 1px)",
-                      backgroundSize: "20px 20px",
+                      transform: `rotate(${checkedPageRotation}deg) scale(${checkedZoom})`,
+                      transformOrigin: "center center",
                     }}
-                  />
+                  >
+                    {/* 1. If teacher generated and saved a modified image composite, show it directly! */}
+                    {feedback.modifiedImageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={feedback.modifiedImageUrl}
+                        alt="Проверенная работа с исправлениями учителя"
+                        className="w-full h-auto object-contain block select-none"
+                      />
+                    ) : (
+                      <div className="relative w-full aspect-[3/4] bg-[#FAF9F5] select-none overflow-hidden">
+                        {/* Background: student photo or student answer sheet */}
+                        {studentSubmittedImg ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={studentSubmittedImg}
+                            alt="Работа ученика"
+                            className="w-full h-full object-contain pointer-events-none"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 p-8 sm:p-12 text-[#1E293B] font-serif leading-relaxed flex flex-col justify-between overflow-hidden">
+                            {/* Notebook Squared Grid Background */}
+                            <div
+                              className="absolute inset-0 opacity-25 pointer-events-none"
+                              style={{
+                                backgroundImage:
+                                  "linear-gradient(to right, #94A3B8 1px, transparent 1px), linear-gradient(to bottom, #94A3B8 1px, transparent 1px)",
+                                backgroundSize: "20px 20px",
+                              }}
+                            />
 
-                  {/* Header */}
-                  <div className="relative z-0 space-y-1.5 border-b border-blue-400/40 pb-2">
-                    <div className="flex items-center justify-between font-mono text-xs font-bold text-blue-900">
-                      <span>{user.fullName}</span>
-                      <span>{viewCheckedHwModal.targetDate}</span>
-                    </div>
-                    <div className="text-center font-mono text-sm sm:text-base font-extrabold text-blue-950">
-                      ДЗ. {viewCheckedHwModal.title} — все типы задания № 2
-                    </div>
-                  </div>
+                            {/* Header */}
+                            <div className="relative z-0 space-y-1.5 border-b border-blue-400/40 pb-2">
+                              <div className="flex items-center justify-between font-mono text-xs font-bold text-blue-900">
+                                <span>{user.fullName}</span>
+                                <span>{viewCheckedHwModal.targetDate}</span>
+                              </div>
+                              <div className="text-center font-mono text-sm sm:text-base font-extrabold text-blue-950">
+                                ДЗ: {viewCheckedHwModal.subjectName} — {viewCheckedHwModal.title}
+                              </div>
+                            </div>
 
-                  {/* Mathematical solutions written in blue pen */}
-                  <div className="relative z-0 space-y-4 text-xs sm:text-sm font-mono text-blue-950">
-                    <div>
-                      <p className="font-bold text-blue-900">
-                        1. Даны векторы a&#773;(11; 0) и b&#773;(1; -5). Найдите длину a&#773; - 3b&#773;.
-                      </p>
-                      <p className="pl-4 mt-0.5 text-blue-800">
-                        (11; 0) - 3(1; -5) = (8; 15) &rArr; |a&#773; - 3b&#773;| = &radic;(64 + 225) = 17.
-                      </p>
-                    </div>
+                            {/* Student text answer */}
+                            <div className="relative z-0 space-y-3 text-xs sm:text-sm font-mono text-blue-950 my-auto">
+                              {viewCheckedHwModal.submission?.content ? (
+                                <div className="bg-white/60 p-5 rounded-2xl border border-blue-200 shadow-xs">
+                                  <p className="font-bold text-blue-900 text-sm mb-1">Решение ученика:</p>
+                                  <p className="font-sans leading-relaxed text-blue-950">{viewCheckedHwModal.submission.content}</p>
+                                </div>
+                              ) : (
+                                <div className="bg-white/60 p-5 rounded-2xl border border-blue-200 shadow-xs">
+                                  <p className="font-bold text-blue-900 text-sm mb-1">Выполненное задание:</p>
+                                  <p className="font-sans leading-relaxed text-blue-950">
+                                    {viewCheckedHwModal.description || `Задание по предмету «${viewCheckedHwModal.subjectName}» выполнено.`}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
 
-                    <div>
-                      <p className="font-bold text-blue-900">
-                        2. Найдите длину вектора a&#773;(-5; 12).
-                      </p>
-                      <p className="pl-4 mt-0.5 text-blue-800">
-                        |a&#773;| = &radic;(25 + 144) = &radic;169 = 13.
-                      </p>
-                    </div>
+                            {/* Footer */}
+                            <div className="relative z-0 flex items-center justify-between text-[11px] font-mono text-zinc-500 pt-3 border-t border-zinc-300">
+                              <span>Работа проверена преподавателем</span>
+                              <span>{viewCheckedHwModal.submission?.submittedAt ? `Сдано: ${String(viewCheckedHwModal.submission.submittedAt).slice(0, 10)}` : "Проверено"}</span>
+                            </div>
+                          </div>
+                        )}
 
-                    <div>
-                      <p className="font-bold text-blue-900">
-                        3. Даны векторы a&#773;(-15; -3), b&#773;(-3; 4) и c&#773;(0; 4).
-                      </p>
-                      <p className="pl-4 mt-0.5 text-blue-800">
-                        2a&#773; - 3b&#773; + c&#773; = (-30; -6) + (9; -12) + (0; 4) = (-21; -14).
-                      </p>
-                    </div>
+                        {/* 2. Dynamic SVG Layer for Teacher's Pencil Strokes */}
+                        {feedback.annotations && feedback.annotations.length > 0 && (
+                          <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
+                            {feedback.annotations
+                              .filter((item: any) => item.type === "stroke" && item.points?.length > 1)
+                              .map((stroke: any) => {
+                                const d = stroke.points
+                                  .map((pt: any, idx: number) => `${idx === 0 ? "M" : "L"} ${pt.x} ${pt.y}`)
+                                  .join(" ");
+                                return (
+                                  <path
+                                    key={stroke.id}
+                                    d={d}
+                                    fill="none"
+                                    stroke={stroke.color || "#EF4444"}
+                                    strokeWidth={stroke.width || 3}
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                );
+                              })}
+                          </svg>
+                        )}
 
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-bold text-blue-900">
-                          4. Скалярное произведение a&#773; &bull; b&#773;:
-                        </p>
-                        <p className="pl-4 mt-0.5 text-blue-800">
-                          a&#773;(5; 4), b&#773;(1; 3) &rArr; 5 + 12 = 17.
-                        </p>
-                        <p className="pl-4 text-blue-800">
-                          cos(&alpha;) = 17 / (&radic;41 &bull; &radic;10) &asymp; 0.84.
-                        </p>
+                        {/* 3. Text Notes Layer */}
+                        {feedback.annotations && feedback.annotations.length > 0 && (
+                          <div className="absolute inset-0 pointer-events-none z-20">
+                            {feedback.annotations
+                              .filter((item: any) => item.type === "text" && item.text)
+                              .map((textItem: any) => (
+                                <div
+                                  key={textItem.id}
+                                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white/95 px-3 py-1 text-xs font-black shadow-md border"
+                                  style={{
+                                    left: `${textItem.x}%`,
+                                    top: `${textItem.y}%`,
+                                    color: textItem.color || "#EF4444",
+                                    borderColor: textItem.color || "#EF4444",
+                                  }}
+                                >
+                                  {textItem.text}
+                                </div>
+                              ))}
+                          </div>
+                        )}
                       </div>
-
-                      <div className="w-28 h-24 border border-zinc-400 bg-white/80 rounded p-1 flex items-center justify-center relative">
-                        <div className="w-full h-px bg-zinc-400 absolute" />
-                        <div className="h-full w-px bg-zinc-400 absolute" />
-                        <svg className="w-full h-full absolute inset-0">
-                          <line x1="56" y1="48" x2="85" y2="24" stroke="#1E40AF" strokeWidth="2" />
-                          <line x1="56" y1="48" x2="75" y2="35" stroke="#0284C7" strokeWidth="1.5" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="relative z-0 text-right text-[11px] font-mono text-zinc-500 pt-3 border-t border-zinc-300">
-                    Работа выполнена самостоятельно • Стр. 1 из 1
-                  </div>
-
-                  {/* 2. Teacher's Red Ink Marks Overlay */}
-                  <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
-                    {/* Checkmarks in red pen */}
-                    <path d="M 40 140 L 48 152 L 72 130" fill="none" stroke="#EF4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M 40 220 L 48 232 L 72 210" fill="none" stroke="#EF4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M 40 300 L 48 312 L 72 290" fill="none" stroke="#EF4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M 40 380 L 48 392 L 72 370" fill="none" stroke="#EF4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    {/* Red wavy underline on coordinate note */}
-                    <path d="M 280 375 Q 290 370 300 375 T 320 375 T 340 375" fill="none" stroke="#EF4444" strokeWidth="2" />
-                  </svg>
-
-                  {/* 3. Teacher's Red Text Annotation Marker */}
-                  <div className="absolute top-16 right-8 z-20 rounded-xl bg-white/95 px-3 py-1.5 text-xs font-black text-red-600 shadow-md border border-red-500">
-                    ✓ Отлично! Все вычисления верны
+                    )}
                   </div>
                 </div>
-              </div>
-            </div>
+              );
+            })()}
 
             {/* Right: Task Checklist & Feedback Sidebar */}
-            <aside className="w-72 sm:w-80 shrink-0 border-l border-zinc-200 bg-zinc-50/80 p-5 flex flex-col justify-between overflow-y-auto">
-              <div className="space-y-5">
-                {/* 1. Выполнение заданий 1..14 */}
-                <div>
-                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900">
-                    Выполнение заданий (14 задач)
-                  </h4>
-                  <p className="text-[11px] text-zinc-500 mt-0.5">
-                    Зеленым отмечены правильно решенные задачи:
-                  </p>
+            {(() => {
+              const feedback = parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment);
+              const taskEntries = Object.entries(feedback.tasks || {});
+              const gradeVal = viewCheckedHwModal.submission?.grade ?? 5;
+              let gradeColor = "bg-emerald-600";
+              let gradeText = "Отлично!";
+              if (gradeVal === 4) {
+                gradeColor = "bg-green-600";
+                gradeText = "Хорошо!";
+              } else if (gradeVal === 3) {
+                gradeColor = "bg-amber-500";
+                gradeText = "Удовлетворительно";
+              } else if (gradeVal === 2) {
+                gradeColor = "bg-rose-600";
+                gradeText = "Неудовлетворительно";
+              }
 
-                  <div className="mt-3 grid grid-cols-5 gap-1.5">
-                    {Array.from({ length: 14 }).map((_, i) => {
-                      const num = i + 1;
-                      const isError = num === 6; // Matching Image 1 mock
-                      return (
-                        <div
-                          key={num}
-                          className={`flex h-9 items-center justify-center rounded-xl text-xs font-black shadow-xs ${
-                            isError
-                              ? "bg-rose-500 text-white"
-                              : "bg-emerald-500 text-white"
-                          }`}
-                        >
-                          {num}
+              return (
+                <aside className="w-72 sm:w-80 shrink-0 border-l border-zinc-200 bg-zinc-50/80 p-5 flex flex-col justify-between overflow-y-auto">
+                  <div className="space-y-5">
+                    {/* 1. Выполнение заданий (если отмечены учителем) */}
+                    {taskEntries.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900">
+                          Выполнение заданий ({taskEntries.length} задач)
+                        </h4>
+                        <p className="text-[11px] text-zinc-500 mt-0.5">
+                          Отметки преподавателя по номерам:
+                        </p>
+
+                        <div className="mt-3 grid grid-cols-5 gap-1.5">
+                          {taskEntries.map(([num, isOk]) => (
+                            <div
+                              key={num}
+                              className={`flex h-9 items-center justify-center rounded-xl text-xs font-black shadow-xs ${
+                                isOk === true
+                                  ? "bg-emerald-500 text-white"
+                                  : isOk === false
+                                  ? "bg-rose-500 text-white"
+                                  : "bg-zinc-200 text-zinc-600"
+                              }`}
+                            >
+                              {num}
+                            </div>
+                          ))}
                         </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="mt-2 flex items-center justify-between text-[10px] font-bold text-zinc-400 px-1">
-                    <span className="flex items-center gap-1">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500" /> Верно (13)
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="h-2 w-2 rounded-full bg-rose-500" /> Ошибка (1)
-                    </span>
-                  </div>
-                </div>
-
-                {/* 2. Итоговая оценка */}
-                <div className="pt-4 border-t border-zinc-200 space-y-2">
-                  <span className="text-xs font-black text-zinc-900 block">
-                    Итоговая оценка учителя:
-                  </span>
-
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-xl font-black text-white shadow-md">
-                      {viewCheckedHwModal.submission?.grade || 5}
-                    </div>
-                    <div>
-                      <div className="text-xs font-extrabold text-emerald-700">
-                        Отлично!
                       </div>
-                      <div className="text-[10px] text-zinc-400">
-                        Работа зачтена в электронный журнал
+                    )}
+
+                    {/* 2. Итоговая оценка */}
+                    <div className="pt-4 border-t border-zinc-200 space-y-2">
+                      <span className="text-xs font-black text-zinc-900 block">
+                        Итоговая оценка учителя:
+                      </span>
+
+                      <div className="flex items-center gap-3">
+                        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${gradeColor} text-xl font-black text-white shadow-md`}>
+                          {gradeVal}
+                        </div>
+                        <div>
+                          <div className="text-xs font-extrabold text-zinc-900">
+                            {gradeText}
+                          </div>
+                          <div className="text-[10px] text-zinc-400">
+                            Работа зачтена в электронный дневник
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* 3. Комментарий учителя */}
-                <div className="pt-4 border-t border-zinc-200">
-                  <span className="text-xs font-black text-zinc-900 block mb-1">
-                    Замечания преподавателя:
-                  </span>
-                  <div className="rounded-2xl border border-zinc-200 bg-white p-3 text-xs text-zinc-800 leading-relaxed shadow-xs">
-                    {parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment).text ||
-                      "Все верно, отличная работа! Но аккуратнее оформляйте чертежи к задачам на векторы."}
+                    {/* 3. Комментарий учителя */}
+                    <div className="pt-4 border-t border-zinc-200">
+                      <span className="text-xs font-black text-zinc-900 block mb-1">
+                        Замечания преподавателя:
+                      </span>
+                      <div className="rounded-2xl border border-zinc-200 bg-white p-3.5 text-xs text-zinc-800 leading-relaxed shadow-xs">
+                        {feedback.text || "Работа проверена преподавателем. Все требования выполнены."}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Close Button */}
-              <div className="pt-4 border-t border-zinc-200">
-                <button
-                  type="button"
-                  onClick={() => setViewCheckedHwModal(null)}
-                  className="w-full rounded-xl bg-zinc-900 py-2.5 text-xs font-black text-white hover:bg-zinc-800 transition"
-                >
-                  Закрыть просмотр
-                </button>
-              </div>
-            </aside>
+                  {/* Close Button */}
+                  <div className="pt-4 border-t border-zinc-200">
+                    <button
+                      type="button"
+                      onClick={() => setViewCheckedHwModal(null)}
+                      className="w-full rounded-xl bg-zinc-900 py-2.5 text-xs font-black text-white hover:bg-zinc-800 transition"
+                    >
+                      Закрыть просмотр
+                    </button>
+                  </div>
+                </aside>
+              );
+            })()}
           </div>
         </div>
       )}

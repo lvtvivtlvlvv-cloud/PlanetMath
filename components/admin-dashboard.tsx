@@ -79,18 +79,19 @@ function getAvatarColor(name: string): string {
 }
 
 function parseTeacherComment(raw: string | null | undefined) {
-  if (!raw) return { text: "", annotations: [], tasks: {} };
+  if (!raw) return { text: "", annotations: [], tasks: {}, modifiedImageUrl: "" };
   try {
     const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object" && ("text" in parsed || "annotations" in parsed || "tasks" in parsed)) {
+    if (parsed && typeof parsed === "object" && ("text" in parsed || "annotations" in parsed || "tasks" in parsed || "modifiedImageUrl" in parsed)) {
       return {
         text: parsed.text || "",
         annotations: parsed.annotations || [],
         tasks: parsed.tasks || {},
+        modifiedImageUrl: parsed.modifiedImageUrl || "",
       };
     }
   } catch {}
-  return { text: raw, annotations: [], tasks: {} };
+  return { text: raw, annotations: [], tasks: {}, modifiedImageUrl: "" };
 }
 
 // 12 учеников со сданными работами для задания «Векторы» (строго по фото 1)
@@ -636,22 +637,7 @@ export function AdminDashboard({
           description: "Все типы задания № 2. Координаты, скалярное произведение, сложение и вычитание векторов.",
           targetDate: "2026-09-16",
           submissionsCount: 12,
-          attachments: [
-            {
-              id: "att_1",
-              fileName: "Векторы на плоскости. Примеры с решениями.pdf",
-              fileUrl: "#",
-              fileType: "application/pdf",
-              fileSize: 89088,
-            },
-            {
-              id: "att_2",
-              fileName: "ДЗ Векторы на плоскости — 14 прототипов.pdf",
-              fileUrl: "#",
-              fileType: "application/pdf",
-              fileSize: 74900,
-            },
-          ],
+          attachments: [],
         },
         {
           id: "hw_sine_cosine",
@@ -662,15 +648,7 @@ export function AdminDashboard({
           description: "Нахождение сторон и углов произвольного треугольника. Задачи 1-8.",
           targetDate: "2026-09-17",
           submissionsCount: 9,
-          attachments: [
-            {
-              id: "att_3",
-              fileName: "Теорема синусов и косинусов. Памятка.pdf",
-              fileUrl: "#",
-              fileType: "application/pdf",
-              fileSize: 62400,
-            },
-          ],
+          attachments: [],
         },
         {
           id: "hw_scalar_product",
@@ -681,15 +659,7 @@ export function AdminDashboard({
           description: "Угол между векторами. Условие ортогональности и коллинеарности.",
           targetDate: "2026-09-18",
           submissionsCount: 14,
-          attachments: [
-            {
-              id: "att_4",
-              fileName: "Скалярное произведение векторов.pdf",
-              fileUrl: "#",
-              fileType: "application/pdf",
-              fileSize: 95100,
-            },
-          ],
+          attachments: [],
         },
         {
           id: "hw_independent",
@@ -700,15 +670,7 @@ export function AdminDashboard({
           description: "14 заданий базового и профильного уровня. Время выполнения: 45 минут.",
           targetDate: "2026-09-21",
           submissionsCount: 10,
-          attachments: [
-            {
-              id: "att_5",
-              fileName: "Самостоятельная работа № 2 (Векторы).pdf",
-              fileUrl: "#",
-              fileType: "application/pdf",
-              fileSize: 112000,
-            },
-          ],
+          attachments: [],
         },
       ];
     }
@@ -741,10 +703,29 @@ export function AdminDashboard({
           teacherComment: parsed.text,
           annotations: parsed.annotations,
           tasksCompleted: parsed.tasks,
+          content: s.content,
+          modifiedImageUrl: parsed.modifiedImageUrl,
         };
       });
     } else {
-      studentSubs = MOCK_VECTOR_SUBMISSIONS;
+      const classStudents = students.filter((st) => !hw.classId || st.classId === hw.classId);
+      const targetList = classStudents.length > 0 ? classStudents : students;
+      studentSubs = targetList.map((st) => ({
+        id: `sub_${st.id}_${hw.id}`,
+        studentId: st.id,
+        studentName: st.fullName,
+        avatarColor: getAvatarColor(st.fullName),
+        initials: st.fullName.split(" ").slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "УЧ",
+        submittedAt: `${hw.targetDate || "2026-09-16"}, 16:30`,
+        pagesCount: 1,
+        pageImages: [],
+        status: "PENDING",
+        grade: null,
+        teacherComment: "",
+        annotations: [],
+        tasksCompleted: {},
+        content: `Домашнее задание по предмету «${hw.subjectName}» (${hw.title}) выполнено в рабочей тетради.`,
+      }));
     }
 
     setCheckingHomeworkData({
@@ -764,7 +745,8 @@ export function AdminDashboard({
     grade: number,
     comment: string,
     annotations: AnnotationItem[],
-    tasksCompleted: { [taskNum: number]: boolean | null }
+    tasksCompleted: { [taskNum: number]: boolean | null },
+    modifiedImageUrl?: string
   ) => {
     if (submissions.some((s) => s.id === submissionId)) {
       await gradeSubmissionAction(
@@ -772,7 +754,10 @@ export function AdminDashboard({
         grade,
         comment,
         JSON.stringify(annotations),
-        JSON.stringify(tasksCompleted)
+        JSON.stringify(tasksCompleted),
+        800,
+        1066,
+        modifiedImageUrl
       );
     }
 
@@ -786,6 +771,7 @@ export function AdminDashboard({
               teacherComment: comment,
               annotations,
               tasksCompleted,
+              modifiedImageUrl,
             }
           : s
       )

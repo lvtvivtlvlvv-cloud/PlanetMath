@@ -174,17 +174,23 @@ export async function gradeSubmissionAction(
   grade: number,
   comment?: string,
   annotationsJson?: string,
-  tasksJson?: string
+  tasksJson?: string,
+  canvasWidth?: number,
+  canvasHeight?: number,
+  modifiedImageUrl?: string
 ) {
   if (grade < 1 || grade > 5) throw new Error("Оценка должна быть от 1 до 5");
 
   let packedComment = comment ?? "";
-  if (annotationsJson || tasksJson) {
+  if (annotationsJson || tasksJson || modifiedImageUrl) {
     try {
       const payload = {
         text: comment ?? "",
         annotations: annotationsJson ? JSON.parse(annotationsJson) : [],
         tasks: tasksJson ? JSON.parse(tasksJson) : {},
+        canvasWidth: canvasWidth || 800,
+        canvasHeight: canvasHeight || 1066,
+        modifiedImageUrl: modifiedImageUrl || "",
       };
       packedComment = JSON.stringify(payload);
     } catch {

@@ -291,10 +291,10 @@ export function HomeworkJournalView({
                       </div>
                     </div>
 
-                    {/* Attached PDF Files (Matching Image 2) */}
-                    <div className="flex flex-wrap gap-2.5">
-                      {hw.attachments && hw.attachments.length > 0 ? (
-                        hw.attachments.map((att) => (
+                    {/* Attached PDF Files (only if actually uploaded) */}
+                    {hw.attachments && hw.attachments.length > 0 && (
+                      <div className="flex flex-wrap gap-2.5">
+                        {hw.attachments.map((att) => (
                           <a
                             key={att.id}
                             href={att.fileUrl}
@@ -310,40 +310,13 @@ export function HomeworkJournalView({
                                 {att.fileName}
                               </div>
                               <div className="text-[10px] text-zinc-400">
-                                Открыть • PDF • {att.fileSize ? `${Math.round(att.fileSize / 1024)} KB` : "89 KB"}
+                                Открыть • PDF • {att.fileSize ? `${Math.round(att.fileSize / 1024)} KB` : "Файл"}
                               </div>
                             </div>
                           </a>
-                        ))
-                      ) : (
-                        // Default mock PDFs matching photo 2 if no attachments exist
-                        <>
-                          <div className="flex items-center gap-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-800/40 px-3.5 py-2 shadow-xs">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-rose-50 text-rose-500 dark:bg-rose-950/40">
-                              <FileText className="h-4 w-4" />
-                            </div>
-                            <div>
-                              <div className="truncate text-xs font-bold text-zinc-800 dark:text-zinc-200 max-w-[190px]">
-                                {hw.title}. Примеры с решениями.pdf
-                              </div>
-                              <div className="text-[10px] text-zinc-400">Открыть • PDF • 89.0 KB</div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-800/40 px-3.5 py-2 shadow-xs">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-rose-50 text-rose-500 dark:bg-rose-950/40">
-                              <FileText className="h-4 w-4" />
-                            </div>
-                            <div>
-                              <div className="truncate text-xs font-bold text-zinc-800 dark:text-zinc-200 max-w-[190px]">
-                                ДЗ {hw.title} — 14 прототипов.pdf
-                              </div>
-                              <div className="text-[10px] text-zinc-400">Открыть • PDF • 74.9 KB</div>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                        ))}
+                      </div>
+                    )}
 
                     {/* BIG BUTTON: ПРО ВЕРИТЬ ДЗ / РАБОТЫ И ЗАМЕТКИ (Matching Image 2!) */}
                     <div className="pt-2">

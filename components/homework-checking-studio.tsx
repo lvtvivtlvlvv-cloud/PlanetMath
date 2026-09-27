@@ -63,6 +63,8 @@ export interface StudentSubmissionItem {
   teacherComment: string | null;
   annotations?: AnnotationItem[];
   tasksCompleted?: { [taskNum: number]: boolean | null };
+  content?: string;
+  modifiedImageUrl?: string;
 }
 
 export interface HomeworkCheckingStudioProps {
@@ -73,6 +75,7 @@ export interface HomeworkCheckingStudioProps {
     targetDate: string;
     totalTasks?: number;
     className?: string;
+    description?: string;
   };
   submissions: StudentSubmissionItem[];
   isOpen: boolean;
@@ -82,7 +85,8 @@ export interface HomeworkCheckingStudioProps {
     grade: number,
     comment: string,
     annotations: AnnotationItem[],
-    tasksCompleted: { [taskNum: number]: boolean | null }
+    tasksCompleted: { [taskNum: number]: boolean | null },
+    modifiedImageUrl?: string
   ) => Promise<void>;
 }
 
@@ -446,17 +450,150 @@ export function HomeworkCheckingStudio({
     else if (failedCount > totalTasksCount * 0.5) setCurrentGrade(2);
   };
 
+  // Generate merged image of student page + teacher's pen strokes & text notes
+  const generateCompositeImage = async (): Promise<string> => {
+    const container = containerRef.current;
+    const canvas = canvasRef.current;
+    if (!container) return "";
+    const rect = container.getBoundingClientRect();
+    const width = Math.max(400, Math.round(rect.width));
+    const height = Math.max(500, Math.round(rect.height));
+
+    const offscreen = document.createElement("canvas");
+    offscreen.width = width;
+    offscreen.height = height;
+    const ctx = offscreen.getContext("2d");
+    if (!ctx) return "";
+
+    // 1. Draw base layer
+    if (currentSubmission?.pageImages && currentSubmission.pageImages[0]) {
+      try {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        await new Promise<void>((resolve) => {
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+          img.src = currentSubmission.pageImages[0];
+        });
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+        const hRatio = width / (img.width || width);
+        const vRatio = height / (img.height || height);
+        const ratio = Math.min(hRatio, vRatio);
+        const centerShiftX = (width - img.width * ratio) / 2;
+        const centerShiftY = (height - img.height * ratio) / 2;
+        ctx.drawImage(img, 0, 0, img.width, img.height, centerShiftX, centerShiftY, img.width * ratio, img.height * ratio);
+      } catch {
+        ctx.fillStyle = "#FAF9F5";
+        ctx.fillRect(0, 0, width, height);
+      }
+    } else {
+      ctx.fillStyle = "#FAF9F5";
+      ctx.fillRect(0, 0, width, height);
+
+      // Grid
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.25)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < width; x += 20) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < height; y += 20) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      // Notebook Header
+      ctx.fillStyle = "#1E40AF";
+      ctx.font = "bold 14px monospace, serif";
+      ctx.fillText(currentSubmission?.studentName || "Ученик", 30, 40);
+      ctx.font = "12px monospace, serif";
+      ctx.fillText(homework.targetDate, width - 140, 40);
+
+      ctx.strokeStyle = "rgba(96, 165, 250, 0.4)";
+      ctx.beginPath();
+      ctx.moveTo(30, 50);
+      ctx.lineTo(width - 30, 50);
+      ctx.stroke();
+
+      ctx.font = "bold 16px monospace, serif";
+      ctx.fillStyle = "#1E3A8A";
+      ctx.fillText(`ДЗ: ${homework.subjectName} — ${homework.title}`, 30, 80);
+
+      // Student answer text
+      ctx.font = "14px monospace, serif";
+      ctx.fillStyle = "#172554";
+      const textToRender = currentSubmission?.content || "Решение домашнего задания выполнено в тетради.";
+      const lines = textToRender.split("\n");
+      let lineY = 120;
+      for (const line of lines) {
+        ctx.fillText(line, 30, lineY);
+        lineY += 24;
+        if (lineY > height - 60) break;
+      }
+
+      // Footer
+      ctx.font = "11px monospace, serif";
+      ctx.fillStyle = "#64748B";
+      ctx.fillText("Работа выполнена самостоятельно • Проверено учителем", 30, height - 25);
+    }
+
+    // 2. Draw canvas drawings directly from canvasRef
+    if (canvas) {
+      ctx.drawImage(canvas, 0, 0, width, height);
+    }
+
+    // 3. Draw text annotations
+    currentAnnotations.forEach((item) => {
+      if (item.type === "text" && item.text) {
+        const pxX = (item.x / 100) * width;
+        const pxY = (item.y / 100) * height;
+
+        ctx.font = "bold 13px sans-serif";
+        const textMetrics = ctx.measureText(item.text);
+        const textWidth = textMetrics.width;
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+        ctx.strokeStyle = item.color;
+        ctx.lineWidth = 1.5;
+        const padX = 8;
+        const padY = 5;
+        const badgeH = 24;
+        ctx.beginPath();
+        if (typeof ctx.roundRect === "function") {
+          ctx.roundRect(pxX - padX, pxY - badgeH + padY, textWidth + padX * 2, badgeH, 6);
+        } else {
+          ctx.rect(pxX - padX, pxY - badgeH + padY, textWidth + padX * 2, badgeH);
+        }
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = item.color;
+        ctx.fillText(item.text, pxX, pxY);
+      }
+    });
+
+    return offscreen.toDataURL("image/jpeg", 0.92);
+  };
+
   // Save current student grade
   const handleSaveGrade = async (advanceToNext = false) => {
     if (!currentSubmission) return;
     setIsSaving(true);
     try {
+      const modifiedImg = await generateCompositeImage();
+
       await onSaveGrade(
         currentSubmission.id,
         currentGrade,
         currentComment,
         currentAnnotations,
-        currentTasks
+        currentTasks,
+        modifiedImg
       );
 
       // Update local status
@@ -470,6 +607,7 @@ export function HomeworkCheckingStudio({
                 teacherComment: currentComment,
                 annotations: currentAnnotations,
                 tasksCompleted: currentTasks,
+                modifiedImageUrl: modifiedImg,
               }
             : s
         )
@@ -834,87 +972,46 @@ export function HomeworkCheckingStudio({
                         </div>
 
                         <div className="text-center py-2 font-mono text-base font-extrabold text-blue-900 tracking-wide">
-                          ДЗ. {homework.title} — все типы задания № 2
+                          ДЗ. {homework.subjectName}: {homework.title}
                         </div>
                       </div>
 
-                      {/* Mathematical formulas and solutions written in blue ink */}
-                      <div className="relative z-0 space-y-4 text-xs sm:text-sm font-mono text-blue-950 font-medium">
-                        {/* Task 1 */}
-                        <div>
-                          <p className="font-bold text-blue-900">
-                            1. Даны векторы a&#773;(11; 0) и b&#773;(1; -5). Найдите длину вектора a&#773; - 3b&#773;.
-                          </p>
-                          <p className="pl-4 mt-1 text-blue-800">
-                            (11; 0) - 3(1; -5) = (11; 0) + (-3; 15) = (8; 15)
-                          </p>
-                          <p className="pl-4 text-blue-800">
-                            |a&#773; - 3b&#773;| = &radic;(8&sup2; + 15&sup2;) = &radic;(64 + 225) = &radic;289 = 17.
-                          </p>
-                        </div>
-
-                        {/* Task 2 */}
-                        <div>
-                          <p className="font-bold text-blue-900">
-                            2. Найдите длину вектора a&#773;(-5; 12).
-                          </p>
-                          <p className="pl-4 mt-1 text-blue-800">
-                            |a&#773;| = &radic;((-5)&sup2; + 12&sup2;) = &radic;(25 + 144) = &radic;169 = 13.
-                          </p>
-                        </div>
-
-                        {/* Task 3 */}
-                        <div>
-                          <p className="font-bold text-blue-900">
-                            3. Даны векторы a&#773;(-15; -3), b&#773;(-3; 4) и c&#773;(0; 4). Найдите d&#773; = 2a&#773; - 3b&#773; + c&#773;.
-                          </p>
-                          <p className="pl-4 mt-1 text-blue-800">
-                            2(-15; -3) - 3(-3; 4) + (0; 4) = (-30; -6) + (9; -12) + (0; 4) = (-21; -14)
-                          </p>
-                        </div>
-
-                        {/* Task 4 with coordinate sketch */}
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-bold text-blue-900">
-                              4. Найдите скалярное произведение a&#773; &bull; b&#773;:
-                            </p>
-                            <p className="pl-4 mt-1 text-blue-800">
-                              a&#773;(5; 4), b&#773;(1; 3) &rArr; a&#773; &bull; b&#773; = 5 &bull; 1 + 4 &bull; 3 = 5 + 12 = 17.
-                            </p>
-                            <p className="pl-4 text-blue-800">
-                              cos(&alpha;) = 17 / (&radic;41 &bull; &radic;10) &asymp; 0.84.
+                      {/* Student's answer in blue ink */}
+                      <div className="relative z-0 space-y-4 text-xs sm:text-sm font-mono text-blue-950 font-medium my-auto">
+                        {currentSubmission.content ? (
+                          <div className="space-y-2 whitespace-pre-wrap bg-white/50 p-5 rounded-2xl border border-blue-200/60 shadow-xs">
+                            <p className="font-bold text-blue-900 text-sm">Выполненное решение ученика:</p>
+                            <p className="text-blue-950 leading-relaxed font-sans text-sm">{currentSubmission.content}</p>
+                          </div>
+                        ) : homework.subjectName.toLowerCase().includes("математ") || homework.title.toLowerCase().includes("вектор") ? (
+                          <div className="space-y-3">
+                            <div>
+                              <p className="font-bold text-blue-900">1. Задание по теме: {homework.title}</p>
+                              <p className="pl-4 mt-1 text-blue-800">Дано: координаты векторов и числовые коэффициенты. Решение выполнено подробно.</p>
+                            </div>
+                            <div>
+                              <p className="font-bold text-blue-900">2. Вычисление числовых значений и проекций:</p>
+                              <p className="pl-4 mt-1 text-blue-800">|a&#773;| = &radic;(64 + 225) = &radic;289 = 17. Ответ проверен.</p>
+                            </div>
+                            <div>
+                              <p className="font-bold text-blue-900">3. Итоговый ответ к заданию:</p>
+                              <p className="pl-4 mt-1 text-blue-800">Ответ получен строго по алгоритму, график приведен в решении.</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-3 bg-white/50 p-5 rounded-2xl border border-blue-200/60 shadow-xs">
+                            <p className="font-bold text-blue-900 text-sm">Решение домашнего задания:</p>
+                            <p className="text-blue-950 leading-relaxed font-sans text-sm">
+                              {homework.description || `Задание по предмету «${homework.subjectName}» (${homework.title}) выполнено в тетради.`}
                             </p>
                           </div>
-
-                          {/* Mini coordinate system drawn in pencil */}
-                          <div className="w-36 h-28 border border-zinc-400 bg-white/70 rounded p-1 flex items-center justify-center relative">
-                            <span className="text-[10px] text-zinc-500 absolute top-1 right-2">Y</span>
-                            <span className="text-[10px] text-zinc-500 absolute bottom-1 right-2">X</span>
-                            <div className="w-full h-px bg-zinc-400 absolute" />
-                            <div className="h-full w-px bg-zinc-400 absolute" />
-                            {/* Hand-drawn vector line */}
-                            <svg className="w-full h-full absolute inset-0">
-                              <line x1="72" y1="56" x2="110" y2="28" stroke="#1E40AF" strokeWidth="2" markerEnd="url(#arrow)" />
-                              <line x1="72" y1="56" x2="95" y2="40" stroke="#0284C7" strokeWidth="1.5" />
-                            </svg>
-                          </div>
-                        </div>
-
-                        {/* Task 5 */}
-                        <div>
-                          <p className="font-bold text-blue-900">
-                            5. На координатной плоскости изображены векторы a&#773; и b&#773;.
-                          </p>
-                          <p className="pl-4 mt-1 text-blue-800">
-                            Координаты a&#773; = (8 - 1; 1 - (-4)) = (7; 5). Длина |a&#773;| = &radic;(49 + 25) = &radic;74.
-                          </p>
-                        </div>
+                        )}
                       </div>
 
                       {/* Footer Signature */}
-                      <div className="relative z-0 text-right text-xs font-mono text-zinc-500 pt-4 border-t border-zinc-300">
-                        Работа выполнена самостоятельно • Стр. 1
+                      <div className="relative z-0 flex items-center justify-between text-xs font-mono text-zinc-500 pt-4 border-t border-zinc-300">
+                        <span>Работа выполнена самостоятельно</span>
+                        <span>Стр. 1 из {currentSubmission.pagesCount || 1}</span>
                       </div>
                     </div>
                   )}
