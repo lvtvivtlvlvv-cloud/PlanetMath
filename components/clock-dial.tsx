@@ -31,10 +31,10 @@ const SHORT_WEEKDAYS = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"];
 const EarthSphereGraphic = React.memo(function EarthSphereGraphic() {
   return (
     <div
-      className="relative h-full w-full rounded-full border border-cyan-500/30 overflow-hidden shadow-[inset_0_20px_70px_rgba(15,23,42,0.9),_0_0_40px_rgba(56,189,248,0.25)]"
+      className="relative h-full w-full rounded-full border border-cyan-500/30 overflow-hidden shadow-[inset_0_20px_70px_rgba(15,23,42,0.95)]"
       style={{
         background: "radial-gradient(circle at 50% 25%, #0e2038 0%, #081424 45%, #02060d 85%)",
-        contain: "paint",
+        WebkitMaskImage: "-webkit-radial-gradient(white, black)",
       }}
     >
       <div className="absolute inset-0 h-full w-full">
@@ -48,40 +48,47 @@ const EarthSphereGraphic = React.memo(function EarthSphereGraphic() {
               <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.36" />
               <stop offset="100%" stopColor="#0284c7" stopOpacity="0.24" />
             </linearGradient>
+
+            {/* Строгая круговая маска — исключает любые синие шлейфы за пределами шара */}
+            <clipPath id="earthSphereClip">
+              <circle cx="270" cy="270" r="268" />
+            </clipPath>
           </defs>
 
-          {/* Координатная сетка параллелей и меридианов */}
-          <g stroke="rgba(56, 189, 248, 0.16)" strokeWidth="1" fill="none">
-            <circle cx="270" cy="270" r="225" strokeDasharray="3 5" />
-            <circle cx="270" cy="270" r="160" strokeDasharray="3 5" />
-            <circle cx="270" cy="270" r="90" strokeDasharray="3 5" />
-            <ellipse cx="270" cy="270" rx="268" ry="115" />
-            <ellipse cx="270" cy="270" rx="268" ry="195" />
-            <ellipse cx="270" cy="270" rx="115" ry="268" />
-            <ellipse cx="270" cy="270" rx="195" ry="268" />
-            <line x1="270" y1="2" x2="270" y2="538" stroke="rgba(56, 189, 248, 0.22)" />
-            <line x1="2" y1="270" x2="538" y2="270" stroke="rgba(56, 189, 248, 0.22)" />
-          </g>
+          <g clipPath="url(#earthSphereClip)">
+            {/* Координатная сетка параллелей и меридианов */}
+            <g stroke="rgba(56, 189, 248, 0.16)" strokeWidth="1" fill="none">
+              <circle cx="270" cy="270" r="225" strokeDasharray="3 5" />
+              <circle cx="270" cy="270" r="160" strokeDasharray="3 5" />
+              <circle cx="270" cy="270" r="90" strokeDasharray="3 5" />
+              <ellipse cx="270" cy="270" rx="268" ry="115" />
+              <ellipse cx="270" cy="270" rx="268" ry="195" />
+              <ellipse cx="270" cy="270" rx="115" ry="268" />
+              <ellipse cx="270" cy="270" rx="195" ry="268" />
+              <line x1="270" y1="2" x2="270" y2="538" stroke="rgba(56, 189, 248, 0.22)" />
+              <line x1="2" y1="270" x2="538" y2="270" stroke="rgba(56, 189, 248, 0.22)" />
+            </g>
 
-          {/* Очертания материков Земли */}
-          <g
-            transform="translate(270 270) scale(1.35) translate(-270 -270)"
-            fill="url(#softLandGrad)"
-            stroke="rgba(56, 189, 248, 0.65)"
-            strokeWidth="0.85"
-          >
-            <path d="M 235,130 Q 250,105 275,90 Q 320,78 375,78 Q 430,82 465,100 Q 475,125 460,150 Q 445,175 425,195 Q 410,215 395,245 Q 380,250 375,230 Q 365,260 355,245 Q 348,225 342,230 Q 332,225 328,195 Q 322,180 305,168 Q 285,165 270,160 Q 245,165 235,165 Q 225,150 235,130 Z" />
-            <path d="M 230,192 Q 260,186 285,190 Q 305,198 322,196 Q 324,215 325,235 Q 336,245 332,260 Q 320,290 305,325 Q 290,355 275,355 Q 260,355 250,325 Q 240,290 225,265 Q 208,245 212,225 Q 215,205 230,192 Z" />
-            <path d="M 75,115 Q 105,95 135,100 Q 155,90 170,105 Q 160,120 168,135 Q 175,150 165,175 Q 160,195 145,210 Q 135,225 125,245 Q 115,235 110,210 Q 95,190 90,165 Q 75,145 75,115 Z" />
-            <path d="M 132,255 Q 155,250 180,265 Q 210,285 210,310 Q 200,345 185,385 Q 175,415 168,420 Q 160,395 155,355 Q 145,310 135,280 Q 128,265 132,255 Z" />
-            <path d="M 188,72 Q 215,68 222,85 Q 220,105 208,110 Q 185,102 188,72 Z" />
-            <path d="M 432,335 Q 460,328 480,342 Q 488,360 480,380 Q 460,392 442,385 Q 425,372 425,352 Q 425,340 432,335 Z" />
-            <path d="M 238,126 Q 244,124 246,134 Q 242,144 238,140 Z" />
-            <path d="M 326,295 Q 332,292 331,310 Q 326,324 322,320 Z" />
-            <path d="M 458,140 Q 464,146 462,160 Q 456,165 456,150 Z" />
-            <ellipse cx="408" cy="272" rx="9" ry="3.5" transform="rotate(-15 408 272)" />
-            <ellipse cx="430" cy="285" rx="11" ry="4" transform="rotate(-10 430 285)" />
-            <path d="M 488,385 Q 492,400 486,415" strokeWidth="2" strokeLinecap="round" />
+            {/* Очертания материков Земли (строго обрезаны внутри сферы) */}
+            <g
+              transform="translate(270 270) scale(1.35) translate(-270 -270)"
+              fill="url(#softLandGrad)"
+              stroke="rgba(56, 189, 248, 0.65)"
+              strokeWidth="0.85"
+            >
+              <path d="M 235,130 Q 250,105 275,90 Q 320,78 375,78 Q 430,82 465,100 Q 475,125 460,150 Q 445,175 425,195 Q 410,215 395,245 Q 380,250 375,230 Q 365,260 355,245 Q 348,225 342,230 Q 332,225 328,195 Q 322,180 305,168 Q 285,165 270,160 Q 245,165 235,165 Q 225,150 235,130 Z" />
+              <path d="M 230,192 Q 260,186 285,190 Q 305,198 322,196 Q 324,215 325,235 Q 336,245 332,260 Q 320,290 305,325 Q 290,355 275,355 Q 260,355 250,325 Q 240,290 225,265 Q 208,245 212,225 Q 215,205 230,192 Z" />
+              <path d="M 75,115 Q 105,95 135,100 Q 155,90 170,105 Q 160,120 168,135 Q 175,150 165,175 Q 160,195 145,210 Q 135,225 125,245 Q 115,235 110,210 Q 95,190 90,165 Q 75,145 75,115 Z" />
+              <path d="M 132,255 Q 155,250 180,265 Q 210,285 210,310 Q 200,345 185,385 Q 175,415 168,420 Q 160,395 155,355 Q 145,310 135,280 Q 128,265 132,255 Z" />
+              <path d="M 188,72 Q 215,68 222,85 Q 220,105 208,110 Q 185,102 188,72 Z" />
+              <path d="M 432,335 Q 460,328 480,342 Q 488,360 480,380 Q 460,392 442,385 Q 425,372 425,352 Q 425,340 432,335 Z" />
+              <path d="M 238,126 Q 244,124 246,134 Q 242,144 238,140 Z" />
+              <path d="M 326,295 Q 332,292 331,310 Q 326,324 322,320 Z" />
+              <path d="M 458,140 Q 464,146 462,160 Q 456,165 456,150 Z" />
+              <ellipse cx="408" cy="272" rx="9" ry="3.5" transform="rotate(-15 408 272)" />
+              <ellipse cx="430" cy="285" rx="11" ry="4" transform="rotate(-10 430 285)" />
+              <path d="M 488,385 Q 492,400 486,415" strokeWidth="2" strokeLinecap="round" />
+            </g>
           </g>
         </svg>
       </div>
@@ -133,6 +140,7 @@ export function ClockDial({
   const touchHistoryRef = useRef<{ x: number; t: number }[]>([]);
 
   const animFrameRef = useRef<number | null>(null);
+  const touchMoveRafRef = useRef<number | null>(null);
   const lastHapticDayRef = useRef<number>(0);
 
   // Синхронизация при внешнем выборе дня в покое
@@ -353,13 +361,20 @@ export function ClockDial({
       const nextOffset = touchStartOffsetRef.current - moveDiff / PX_PER_DAY;
 
       floatOffsetRef.current = nextOffset;
-      setFloatOffset(nextOffset);
+
+      // Аппаратное сглаживание: обновление состояния строго раз в кадр дисплея (VSync 60/120 Гц)
+      if (touchMoveRafRef.current === null) {
+        touchMoveRafRef.current = requestAnimationFrame(() => {
+          setFloatOffset(floatOffsetRef.current);
+          touchMoveRafRef.current = null;
+        });
+      }
 
       const currentRounded = Math.round(nextOffset);
       if (currentRounded !== lastHapticDayRef.current) {
         lastHapticDayRef.current = currentRounded;
         try {
-          if (typeof navigator !== "undefined" && navigator.vibrate) {
+          if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
             navigator.vibrate(5);
           }
         } catch {}
@@ -372,6 +387,12 @@ export function ClockDial({
       wasSpinningRef.current = false;
       touchStartX.current = null;
       touchStartY.current = null;
+
+      if (touchMoveRafRef.current !== null) {
+        cancelAnimationFrame(touchMoveRafRef.current);
+        touchMoveRafRef.current = null;
+      }
+      setFloatOffset(floatOffsetRef.current);
 
       // ЛЕГКАЯ ОСТАНОВКА: при тапе по вращающемуся циферблату моментально тормозим и фиксируем ближайший день
       if (!hasMovedRef.current) {
@@ -452,7 +473,13 @@ export function ClockDial({
       const PX_PER_DAY = 52;
       const nextOffset = touchStartOffsetRef.current - moveDiff / PX_PER_DAY;
       floatOffsetRef.current = nextOffset;
-      setFloatOffset(nextOffset);
+
+      if (touchMoveRafRef.current === null) {
+        touchMoveRafRef.current = requestAnimationFrame(() => {
+          setFloatOffset(floatOffsetRef.current);
+          touchMoveRafRef.current = null;
+        });
+      }
     };
 
     const onPointerUp = (e: PointerEvent) => {
@@ -470,6 +497,9 @@ export function ClockDial({
     window.addEventListener("pointercancel", onPointerUp);
 
     return () => {
+      if (touchMoveRafRef.current !== null) {
+        cancelAnimationFrame(touchMoveRafRef.current);
+      }
       el.removeEventListener("touchstart", onTouchStart);
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
@@ -481,10 +511,12 @@ export function ClockDial({
     };
   }, [startInertia, startSnapSpring]);
 
-  // Текущая отображаемая дата в верхнем левом углу
+  const centerK = Math.round(floatOffset);
+
+  // Текущая отображаемая дата в верхнем левом углу (пересчитывается только при смене целого дня)
   const focusedDate = useMemo(() => {
-    return addDays(dragAnchorDateRef.current, Math.round(floatOffset));
-  }, [floatOffset]);
+    return addDays(dragAnchorDateRef.current, centerK);
+  }, [centerK]);
 
   const focusedDateText = useMemo(() => {
     return format(focusedDate, "d MMMM", { locale: ru }).toUpperCase();
@@ -509,7 +541,6 @@ export function ClockDial({
   // Непрерывная дуга дат: 9 элементов вокруг центрального дня
   const visibleDays = useMemo(() => {
     const items = [];
-    const centerK = Math.round(floatOffset);
     const today = serverToday || new Date();
 
     for (let k = centerK - 4; k <= centerK + 4; k++) {
@@ -524,7 +555,7 @@ export function ClockDial({
       });
     }
     return items;
-  }, [floatOffset, serverToday]);
+  }, [centerK, serverToday]);
 
   return (
     <div
@@ -559,15 +590,15 @@ export function ClockDial({
 
       {/* ВРАЩАЮЩАЯСЯ ЗЕМЛЯ НА ЗАДНЕМ ПЛАНЕ */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
-        {/* Атмосферное свечение вокруг Земли */}
+        {/* Атмосферное свечение вокруг Земли (чистое, без ореолов и размазывания) */}
         <div
           className="absolute left-1/2 -translate-x-1/2 rounded-full pointer-events-none"
           style={{
-            width: `${earthSize + 40}px`,
-            height: `${earthSize + 40}px`,
-            top: `${horizonTopY - 20}px`,
+            width: `${earthSize + 16}px`,
+            height: `${earthSize + 16}px`,
+            top: `${horizonTopY - 8}px`,
             background:
-              "radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, rgba(14, 165, 233, 0.12) 45%, transparent 72%)",
+              "radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, rgba(14, 165, 233, 0.03) 52%, transparent 70%)",
           }}
         />
 
@@ -586,7 +617,8 @@ export function ClockDial({
               transform: `rotate(${earthRotationAngle}deg) translateZ(0)`,
               transformOrigin: "50% 50%",
               willChange: "transform",
-              contain: "paint layout",
+              WebkitBackfaceVisibility: "hidden",
+              backfaceVisibility: "hidden",
             }}
           >
             <EarthSphereGraphic />
@@ -619,10 +651,10 @@ export function ClockDial({
         <div
           className="absolute left-1/2 -translate-x-1/2 rounded-full border-t-2 border-cyan-400/80 pointer-events-none"
           style={{
-            width: `${earthSize + 4}px`,
-            height: `${earthSize + 4}px`,
-            top: `${horizonTopY - 2}px`,
-            filter: "drop-shadow(0 0 12px rgba(34,211,238,0.85))",
+            width: `${earthSize + 2}px`,
+            height: `${earthSize + 2}px`,
+            top: `${horizonTopY - 1}px`,
+            boxShadow: "0 -2px 10px rgba(34,211,238,0.5)",
           }}
         />
       </div>
