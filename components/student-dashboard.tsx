@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   format,
   startOfWeek,
@@ -151,9 +151,9 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
     }
   };
 
-  const handleSelectDate = (date: Date) => {
+  const handleSelectDate = useCallback((date: Date) => {
     setCurrentDate(date);
-  };
+  }, []);
 
   const monthTitle = useMemo(() => {
     const formatted = format(monday, "LLLL yyyy", { locale: ru });
@@ -349,7 +349,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                 <div
                   className={`flex h-64 flex-col items-center justify-center p-8 text-center text-sm ${
                     isGarden
-                      ? "rounded-[34px] border-2 border-dashed border-[#2D412F] text-[#ABC270] bg-[#111A12]/80"
+                      ? "rounded-[34px] border-2 border-dashed border-[#FEC868]/50 text-[#FEC868] bg-[#FEC868]/10"
                       : isPlanet
                       ? "rounded-3xl border border-cyan-500/20 text-cyan-300/80 bg-cyan-950/10"
                       : "rounded-3xl border border-dashed border-zinc-800 text-zinc-400"
@@ -382,14 +382,14 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                       <div className="flex w-12 sm:w-14 flex-col justify-between py-1 text-right shrink-0">
                         <span
                           className={`text-xs sm:text-sm font-bold ${
-                            isGarden ? "text-[#ABC270] font-black" : "text-zinc-100"
+                            isGarden ? "text-[#FEC868] font-black" : "text-zinc-100"
                           }`}
                         >
                           {l.startTime}
                         </span>
                         <span
                           className={`text-xs sm:text-sm font-medium ${
-                            isGarden ? "text-[#ABC270]/60 font-semibold" : "text-zinc-400"
+                            isGarden ? "text-[#FEC868]/75 font-bold" : "text-zinc-400"
                           }`}
                         >
                           {l.endTime}
@@ -399,23 +399,27 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                       <div
                         className={`group flex-1 p-4 sm:p-5 shadow-sm transition-all duration-200 ${
                           isGarden
-                            ? "bg-[#18261A] hover:bg-[#253928] text-white border border-[#2D412F] hover:border-[#ABC270]/70 hover:shadow-[0_8px_24px_rgba(0,0,0,0.45),_0_0_16px_rgba(171,194,112,0.18)] hover:-translate-y-0.5 rounded-[28px] sm:rounded-[36px]"
+                            ? "bg-[#FEC868] text-[#2C2114] border border-[#DEAC4E] shadow-[0_4px_16px_rgba(254,200,104,0.25)] hover:bg-[#FFD782] hover:border-[#F2C063] hover:shadow-[0_8px_24px_rgba(254,200,104,0.4)] hover:-translate-y-0.5 rounded-[28px] sm:rounded-[36px]"
                             : "glass-panel glass-interactive rounded-2xl sm:rounded-3xl"
                         }`}
                       >
                         <div className="flex items-start justify-between">
                           <div>
-                            <div className={`text-xs font-semibold ${roomColorClass}`}>
+                            <div className={`text-xs font-black ${isGarden ? "text-[#1C4222]" : roomColorClass}`}>
                               {l.room.toLowerCase().startsWith("каб") ? l.room : `каб. ${l.room}`}
                             </div>
-                            <div className="mt-0.5 text-xs text-zinc-400">{l.teacherName}</div>
+                            <div className={`mt-0.5 text-xs ${isGarden ? "text-[#5A452C] font-semibold" : "text-zinc-400"}`}>
+                              {l.teacherName}
+                            </div>
                           </div>
                         </div>
 
-                        <div className="mt-3 text-sm sm:text-base font-bold text-white">{l.subjectName}</div>
+                        <div className={`mt-3 text-sm sm:text-base font-black ${isGarden ? "text-[#241A0E]" : "text-white"}`}>
+                          {l.subjectName}
+                        </div>
 
                         {attachedHw.length > 0 && (
-                          <div className="mt-3 space-y-2 border-t border-zinc-700/60 pt-2">
+                          <div className={`mt-3 space-y-2 border-t pt-2 ${isGarden ? "border-[#DEAC4A]/60" : "border-zinc-700/60"}`}>
                             {attachedHw.map((h) => {
                               const sub = h.submission;
                               return (
@@ -423,7 +427,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                                   key={h.id}
                                   className={`p-3.5 ${
                                     isGarden
-                                      ? "rounded-[22px] bg-[#111A12] border border-[#243626]"
+                                      ? "rounded-[22px] bg-[#FCE5A2] border border-[#DEAC4A]/70 text-[#2B1F12] shadow-xs"
                                       : isPlanet
                                       ? "rounded-xl bg-[#090D15]/80 border border-cyan-500/25"
                                       : "rounded-xl border border-zinc-700/60 bg-black/20"
@@ -431,11 +435,11 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                                 >
                                   <div className="flex items-start justify-between gap-2">
                                     <div>
-                                      <div className={`flex items-center gap-1.5 font-semibold text-xs ${roomColorClass}`}>
+                                      <div className={`flex items-center gap-1.5 font-bold text-xs ${isGarden ? "text-[#1C4222]" : roomColorClass}`}>
                                         <BookOpen className="h-3.5 w-3.5" />
                                         <span>ДЗ: {h.title}</span>
                                       </div>
-                                      <p className="mt-1 text-xs text-zinc-400">{h.description}</p>
+                                      <p className={`mt-1 text-xs ${isGarden ? "text-[#523E25]" : "text-zinc-400"}`}>{h.description}</p>
                                     </div>
 
                                     {sub?.grade ? (
@@ -453,7 +457,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                                         onClick={() => setActiveHwModal(h)}
                                         className={
                                           isGarden
-                                            ? "rounded-full px-4 py-1.5 text-xs font-black bg-[#FEC868] text-[#382C1E] hover:bg-[#FFE29A] shadow-md transition"
+                                            ? "rounded-full px-4 py-1.5 text-xs font-black bg-[#2E5A36] text-[#F8F6F0] hover:bg-[#3B6F45] border border-[#447A4E]/60 shadow-md transition"
                                             : "theme-btn px-3 py-1 text-xs font-bold"
                                         }
                                       >

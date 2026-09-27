@@ -147,9 +147,9 @@ html[data-theme="garden"] {
   --border-color: rgba(171, 194, 112, 0.22);
   --accent-color: #FEC868;
   --accent-contrast: #382C1E;
-  --btn-primary-bg: #FEC868;
-  --btn-primary-text: #382C1E;
-  --btn-primary-hover: #FFE29A;
+  --btn-primary-bg: #2E5A36;
+  --btn-primary-text: #F8F6F0;
+  --btn-primary-hover: #3B6F45;
   --btn-radius: 9999px;
   --glass-blur: blur(14px);
 }
@@ -170,18 +170,18 @@ html[data-theme="garden"] .glass-interactive:hover {
 }
 
 html[data-theme="garden"] .theme-btn {
-  background: #FEC868 !important;
-  color: #382C1E !important;
-  border: 1px solid rgba(254, 200, 104, 0.5) !important;
+  background: #2E5A36 !important;
+  color: #F8F6F0 !important;
+  border: 1px solid #447A4E !important;
   border-radius: 9999px !important;
   font-weight: 800 !important;
-  box-shadow: 0 4px 14px rgba(254, 200, 104, 0.3) !important;
+  box-shadow: 0 4px 14px rgba(46, 90, 54, 0.35) !important;
 }
 
 html[data-theme="garden"] .theme-btn:hover {
-  background: #FFE29A !important;
+  background: #3B6F45 !important;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(254, 200, 104, 0.45) !important;
+  box-shadow: 0 6px 20px rgba(46, 90, 54, 0.5) !important;
 }
 
 /* ==========================================================================

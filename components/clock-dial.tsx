@@ -71,19 +71,7 @@ export function ClockDial({
   const touchHistoryRef = useRef<{ x: number; t: number }[]>([]);
 
   const animFrameRef = useRef<number | null>(null);
-  const dragRafRef = useRef<number | null>(null);
-  const pendingTouchX = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(0);
   const lastHapticDayRef = useRef<number>(0);
-  const earthContinentsRef = useRef<HTMLDivElement>(null);
-
-  // Мгновенное аппаратное обновление угла вращения Земли (120-240 Гц без задержек реакта)
-  const updateEarthDirectly = useCallback((offset: number) => {
-    if (!earthContinentsRef.current) return;
-    const epochDays = Math.floor(dragAnchorDateRef.current.getTime() / (24 * 60 * 60 * 1000));
-    const angle = ((-epochDays - offset) * 13.5) % 360;
-    earthContinentsRef.current.style.transform = `translate3d(0,0,0) rotate(${angle}deg)`;
-  }, []);
 
   // Синхронизация при внешнем выборе дня в покое
   useEffect(() => {
@@ -91,10 +79,9 @@ export function ClockDial({
       dragAnchorDateRef.current = activeDate;
       floatOffsetRef.current = 0;
       setFloatOffset(0);
-      updateEarthDirectly(0);
       lastHapticDayRef.current = 0;
     }
-  }, [activeDate, updateEarthDirectly]);
+  }, [activeDate]);
 
   const [containerWidth, setContainerWidth] = useState<number>(860);
 
@@ -122,7 +109,6 @@ export function ClockDial({
       dragAnchorDateRef.current = finalDate;
       floatOffsetRef.current = 0;
       setFloatOffset(0);
-      updateEarthDirectly(0);
 
       if (onSelectDate) {
         onSelectDate(finalDate);
@@ -132,31 +118,25 @@ export function ClockDial({
         else if (onSelectDay) onSelectDay(dow);
       }
     },
-    [onSelectDate, onScrubDay, onSelectDay, updateEarthDirectly]
+    [onSelectDate, onScrubDay, onSelectDay]
   );
 
-  // 120-240 Hz пружина (Apple Spring Physics с непрерывной дельтой)
+  // Быстрая, отзывчивая и плавная пружина (без задержек и лагов)
   const startSnapSpring = useCallback(
     (targetOffset: number) => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-      lastTimeRef.current = performance.now();
 
-      const springStep = (now: number) => {
-        const rawDt = (now - lastTimeRef.current) / 16.6667;
-        const dt = Math.min(2.5, Math.max(0.1, rawDt));
-        lastTimeRef.current = now;
-
+      const springStep = () => {
         const diff = targetOffset - floatOffsetRef.current;
-        if (Math.abs(diff) < 0.001) {
+        if (Math.abs(diff) < 0.002) {
           animFrameRef.current = null;
           currentVelocityRef.current = 0;
           commitSelection(targetOffset);
           return;
         }
 
-        const decayFactor = 1 - Math.pow(0.72, dt);
-        floatOffsetRef.current += diff * decayFactor;
-        updateEarthDirectly(floatOffsetRef.current);
+        // Четкая и шелковистая пружинная доводка
+        floatOffsetRef.current += diff * 0.22;
         setFloatOffset(floatOffsetRef.current);
 
         const rounded = Math.round(floatOffsetRef.current);
@@ -174,28 +154,20 @@ export function ClockDial({
 
       animFrameRef.current = requestAnimationFrame(springStep);
     },
-    [commitSelection, updateEarthDirectly]
+    [commitSelection]
   );
 
-  // 120-240 Hz инерция с поддержкой высокой герцовки экранов и мультискроллинга
+  // Естественное и плавное инерционное вращение
   const startInertia = useCallback(
     (initialVelocity: number) => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-      lastTimeRef.current = performance.now();
 
-      currentVelocityRef.current = Math.max(-2.8, Math.min(2.8, initialVelocity));
-      const stopThreshold = 0.008;
+      currentVelocityRef.current = Math.max(-2.5, Math.min(2.5, initialVelocity));
 
-      const inertiaStep = (now: number) => {
-        const rawDt = (now - lastTimeRef.current) / 16.6667;
-        const dt = Math.min(2.5, Math.max(0.1, rawDt));
-        lastTimeRef.current = now;
-
-        if (Math.abs(currentVelocityRef.current) > stopThreshold) {
-          floatOffsetRef.current += currentVelocityRef.current * dt;
-          // Плавное физическое затухание для долгого и шелковистого скроллинга
-          currentVelocityRef.current *= Math.pow(0.974, dt);
-          updateEarthDirectly(floatOffsetRef.current);
+      const inertiaStep = () => {
+        if (Math.abs(currentVelocityRef.current) > 0.035) {
+          floatOffsetRef.current += currentVelocityRef.current;
+          currentVelocityRef.current *= 0.92;
           setFloatOffset(floatOffsetRef.current);
 
           const rounded = Math.round(floatOffsetRef.current);
@@ -217,7 +189,7 @@ export function ClockDial({
 
       animFrameRef.current = requestAnimationFrame(inertiaStep);
     },
-    [startSnapSpring, updateEarthDirectly]
+    [startSnapSpring]
   );
 
   // Клик по числу в 1 тап
@@ -250,7 +222,7 @@ export function ClockDial({
     return () => el.removeEventListener("wheel", handleWheel);
   }, [handleWheel]);
 
-  // НАДЕЖНЫЙ ПЕРЕХВАТЧИК ТАЧ-СОБЫТИЙ: МУЛЬТИСКРОЛЛИНГ И МГНОВЕННАЯ ОСТАНОВКА
+  // НАДЕЖНЫЙ ПЕРЕХВАТЧИК ТАЧ-СОБЫТИЙ: МУЛЬТИСКРОЛЛИНГ И МГНОВЕННЫЙ ОТКЛИК
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -263,21 +235,14 @@ export function ClockDial({
         cancelAnimationFrame(animFrameRef.current);
         animFrameRef.current = null;
       }
-      if (dragRafRef.current) {
-        cancelAnimationFrame(dragRafRef.current);
-        dragRafRef.current = null;
-      }
 
-      // Непрерывное сохранение текущего смещения в момент касания
       touchStartOffsetRef.current = floatOffsetRef.current;
-
       isDraggingRef.current = true;
       hasMovedRef.current = false;
       const clientX = e.touches[0].clientX;
       const clientY = e.touches[0].clientY;
       touchStartX.current = clientX;
       touchStartY.current = clientY;
-      pendingTouchX.current = clientX;
       touchHistoryRef.current = [{ x: clientX, t: performance.now() }];
       gestureLockRef.current = null;
     };
@@ -301,48 +266,33 @@ export function ClockDial({
 
       if (gestureLockRef.current !== "horizontal") return;
 
-      // Блокируем встроенный жест "Назад" в мобильном Safari и Chrome
       if (e.cancelable) {
         e.preventDefault();
       }
 
-      pendingTouchX.current = clientX;
       const now = performance.now();
       touchHistoryRef.current.push({ x: clientX, t: now });
       touchHistoryRef.current = touchHistoryRef.current.filter((item) => now - item.t < 120);
 
-      if (!dragRafRef.current) {
-        dragRafRef.current = requestAnimationFrame(() => {
-          if (pendingTouchX.current !== null && touchStartX.current !== null) {
-            const moveDiff = pendingTouchX.current - touchStartX.current;
-            const PX_PER_DAY = 52;
-            const nextOffset = touchStartOffsetRef.current - moveDiff / PX_PER_DAY;
+      const moveDiff = clientX - touchStartX.current;
+      const PX_PER_DAY = 52;
+      const nextOffset = touchStartOffsetRef.current - moveDiff / PX_PER_DAY;
 
-            floatOffsetRef.current = nextOffset;
-            updateEarthDirectly(nextOffset);
-            setFloatOffset(nextOffset);
+      floatOffsetRef.current = nextOffset;
+      setFloatOffset(nextOffset);
 
-            const currentRounded = Math.round(nextOffset);
-            if (currentRounded !== lastHapticDayRef.current) {
-              lastHapticDayRef.current = currentRounded;
-              try {
-                if (typeof navigator !== "undefined" && navigator.vibrate) {
-                  navigator.vibrate(5);
-                }
-              } catch {}
-            }
+      const currentRounded = Math.round(nextOffset);
+      if (currentRounded !== lastHapticDayRef.current) {
+        lastHapticDayRef.current = currentRounded;
+        try {
+          if (typeof navigator !== "undefined" && navigator.vibrate) {
+            navigator.vibrate(5);
           }
-          dragRafRef.current = null;
-        });
+        } catch {}
       }
     };
 
     const onTouchEnd = () => {
-      if (dragRafRef.current) {
-        cancelAnimationFrame(dragRafRef.current);
-        dragRafRef.current = null;
-      }
-
       isDraggingRef.current = false;
       const wasSpinning = wasSpinningRef.current;
       wasSpinningRef.current = false;
@@ -383,7 +333,6 @@ export function ClockDial({
         }
       }
 
-      // МУЛЬТИСКРОЛЛИНГ: если человек повторно смахивает в ту же сторону — складываем накопленную скорость
       let finalVelocity = releaseVelocity;
       if (
         Math.abs(releaseVelocity) > 0.035 &&
@@ -392,7 +341,7 @@ export function ClockDial({
       ) {
         finalVelocity = releaseVelocity + currentVelocityRef.current * 0.82;
       }
-      finalVelocity = Math.max(-2.8, Math.min(2.8, finalVelocity));
+      finalVelocity = Math.max(-2.5, Math.min(2.5, finalVelocity));
 
       if (Math.abs(finalVelocity) > 0.035) {
         startInertia(finalVelocity);
@@ -413,7 +362,6 @@ export function ClockDial({
       hasMovedRef.current = false;
       touchStartX.current = e.clientX;
       touchStartY.current = e.clientY;
-      pendingTouchX.current = e.clientX;
       touchHistoryRef.current = [{ x: e.clientX, t: performance.now() }];
       gestureLockRef.current = "horizontal";
     };
@@ -422,7 +370,6 @@ export function ClockDial({
       if (e.pointerType === "touch" || !isDraggingRef.current || touchStartX.current === null) return;
       hasMovedRef.current = true;
       const clientX = e.clientX;
-      pendingTouchX.current = clientX;
       const now = performance.now();
       touchHistoryRef.current.push({ x: clientX, t: now });
       touchHistoryRef.current = touchHistoryRef.current.filter((item) => now - item.t < 120);
@@ -431,7 +378,6 @@ export function ClockDial({
       const PX_PER_DAY = 52;
       const nextOffset = touchStartOffsetRef.current - moveDiff / PX_PER_DAY;
       floatOffsetRef.current = nextOffset;
-      updateEarthDirectly(nextOffset);
       setFloatOffset(nextOffset);
     };
 
@@ -459,7 +405,7 @@ export function ClockDial({
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("pointercancel", onPointerUp);
     };
-  }, [startInertia, startSnapSpring, updateEarthDirectly]);
+  }, [startInertia, startSnapSpring]);
 
   // Текущая отображаемая дата в верхнем левом углу
   const focusedDate = useMemo(() => {
@@ -551,30 +497,24 @@ export function ClockDial({
         />
 
         <div
-          className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
+          className="absolute left-1/2 -translate-x-1/2 pointer-events-none will-change-transform"
           style={{
             width: `${earthSize}px`,
             height: `${earthSize}px`,
             top: `${horizonTopY}px`,
+            transform: `translate3d(0, 0, 0) rotate(${earthRotationAngle}deg)`,
+            transformOrigin: "50% 50%",
+            backfaceVisibility: "hidden",
           }}
         >
-          {/* Статичная 3D сфера с радиальным градиентом атмосферы и внутренней тенью */}
+          {/* Сфера глобуса с радиальным градиентом атмосферы и внутренней тенью */}
           <div
             className="relative h-full w-full rounded-full border border-cyan-500/30 overflow-hidden shadow-[inset_0_20px_70px_rgba(15,23,42,0.9),_0_0_40px_rgba(56,189,248,0.25)]"
             style={{
               background: "radial-gradient(circle at 50% 25%, #0e2038 0%, #081424 45%, #02060d 85%)",
             }}
           >
-            {/* Аппаратный вращающийся слой континентов (120-240 FPS GPU compositor) */}
-            <div
-              ref={earthContinentsRef}
-              className="absolute inset-0 h-full w-full will-change-transform"
-              style={{
-                transform: `translate3d(0,0,0) rotate(${earthRotationAngle}deg)`,
-                transformOrigin: "50% 50%",
-                backfaceVisibility: "hidden",
-              }}
-            >
+            <div className="absolute inset-0 h-full w-full">
               <svg className="h-full w-full" viewBox="0 0 540 540">
                 <defs>
                   <clipPath id="earthGlobeClip">
@@ -622,22 +562,29 @@ export function ClockDial({
                 </g>
               </svg>
             </div>
-
-            {/* Статичная космическая тень горизонта (не вращается, физически точна) */}
-            <div className="pointer-events-none absolute inset-0 h-full w-full">
-              <svg className="h-full w-full" viewBox="0 0 540 540">
-                <defs>
-                  <linearGradient id="orbitDarkDim" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#06080D" stopOpacity="0.94" />
-                    <stop offset="35%" stopColor="#06080D" stopOpacity="0.82" />
-                    <stop offset="65%" stopColor="#06080D" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#06080D" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <rect x="0" y="0" width="540" height="250" fill="url(#orbitDarkDim)" />
-              </svg>
-            </div>
           </div>
+        </div>
+
+        {/* Статичная космическая тень горизонта (не вращается, физически точна) */}
+        <div
+          className="pointer-events-none absolute left-1/2 -translate-x-1/2 overflow-hidden rounded-full"
+          style={{
+            width: `${earthSize}px`,
+            height: `${earthSize}px`,
+            top: `${horizonTopY}px`,
+          }}
+        >
+          <svg className="h-full w-full" viewBox="0 0 540 540">
+            <defs>
+              <linearGradient id="orbitDarkDim" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#06080D" stopOpacity="0.94" />
+                <stop offset="35%" stopColor="#06080D" stopOpacity="0.82" />
+                <stop offset="65%" stopColor="#06080D" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="#06080D" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="540" height="250" fill="url(#orbitDarkDim)" />
+          </svg>
         </div>
 
         <div
