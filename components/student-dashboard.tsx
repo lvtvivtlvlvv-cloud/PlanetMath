@@ -21,6 +21,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   BookOpen,
   Paperclip,
   Clock,
@@ -260,10 +262,46 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
 
   // Табы студента: Расписание vs Домашние задания
   const [activeTab, setActiveTab] = useState<"schedule" | "homework">("schedule");
-  const [hwStatusFilter, setHwStatusFilter] = useState<"ALL" | "NEED_SUBMIT" | "PENDING" | "GRADED">("ALL");
+  const [isTabContentCollapsed, setIsTabContentCollapsed] = useState<boolean>(false);
+  const [isHwFiltersCollapsed, setIsHwFiltersCollapsed] = useState<boolean>(false);
+  const [isCalendarCollapsed, setIsCalendarCollapsed] = useState<boolean>(false);
+  const [collapsedHwIds, setCollapsedHwIds] = useState<Record<string, boolean>>({});
+
+  // По умолчанию на вкладке ДЗ включается кнопка "Надо сдать" (не сданные ДЗ)
+  const [hwStatusFilter, setHwStatusFilter] = useState<"ALL" | "NEED_SUBMIT" | "PENDING" | "GRADED">("NEED_SUBMIT");
   const [hwSort, setHwSort] = useState<"DEADLINE_NEAREST" | "DEADLINE_FURTHEST" | "DATE_NEWEST" | "DATE_OLDEST" | "STATUS" | "SUBJECT">("DEADLINE_NEAREST");
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  const handleTabClick = (tabId: "schedule" | "homework") => {
+    if (activeTab === tabId) {
+      // Клик по уже активной вкладке сворачивает / разворачивает её
+      setIsTabContentCollapsed((prev) => !prev);
+    } else {
+      setActiveTab(tabId);
+      setIsTabContentCollapsed(false);
+      if (tabId === "homework") {
+        setHwStatusFilter("NEED_SUBMIT");
+      }
+    }
+  };
+
+  const toggleHwCard = (id: string) => {
+    setCollapsedHwIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const collapseAllHw = () => {
+    const next: Record<string, boolean> = {};
+    homeworks.forEach((h) => { next[h.id] = true; });
+    setCollapsedHwIds(next);
+  };
+
+  const expandAllHw = () => {
+    setCollapsedHwIds({});
+  };
   const [viewCheckedHwModal, setViewCheckedHwModal] = useState<typeof homeworks[0] | null>(null);
   const [activeCheckedFileIdx, setActiveCheckedFileIdx] = useState<number>(0);
   const [checkedPageRotation, setCheckedPageRotation] = useState<number>(0);
@@ -375,7 +413,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
   }, [homeworks]);
 
   return (
-    <div className="min-h-screen space-y-6 p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))]">
+    <div className="min-h-screen space-y-4 sm:space-y-6 p-3 sm:p-6 lg:p-8 max-w-5xl mx-auto pr-[max(0.75rem,env(safe-area-inset-right))] pl-[max(0.75rem,env(safe-area-inset-left))] pb-24 sm:pb-8">
       <header className="flex flex-col gap-3 sm:gap-4 border-b border-zinc-200/40 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Электронный Дневник</h1>
@@ -397,82 +435,184 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
         </div>
       </header>
 
-      {/* СТУДЕНЧЕСКИЕ НАВИГАЦИОННЫЕ ВКЛАДКИ: РАСПИСАНИЕ И ДЗ */}
-      <nav className="flex items-center gap-2 border-b border-zinc-200/40 pb-2 dark:border-zinc-800 overflow-x-auto scrollbar-none py-1 -mx-2 px-2 sm:mx-0 sm:px-0">
-        {[
-          { id: "schedule", label: "Расписание" },
-          { id: "homework", label: `Домашние задания (${homeworks.length})` },
-        ].map((tab) => {
-          const isActive = activeTab === tab.id;
-          let activeClasses = "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 shadow-md";
-          if (isPlanet) {
-            activeClasses = "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-[0_0_16px_rgba(56,189,248,0.25)] backdrop-blur-md";
-          } else if (theme === "standart") {
-            activeClasses = "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_16px_rgba(16,185,129,0.2)] backdrop-blur-md";
-          } else if (isGarden) {
-            activeClasses = "bg-[#FEC868]/20 text-[#FEC868] border-[#FEC868]/40 shadow-[0_0_16px_rgba(254,200,104,0.2)]";
-          }
+      {/* СТУДЕНЧЕСКИЕ НАВИГАЦИОННЫЕ ВКЛАДКИ: РАСПИСАНИЕ И ДЗ С ВОЗМОЖНОСТЬЮ СВОРАЧИВАНИЯ */}
+      <nav className="flex items-center justify-between gap-2 border-b border-zinc-200/40 pb-2 dark:border-zinc-800 py-1">
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-0.5">
+          {[
+            {
+              id: "schedule",
+              label: "Расписание",
+              icon: Calendar,
+              badge: null,
+            },
+            {
+              id: "homework",
+              label: "Домашние задания",
+              icon: BookOpen,
+              badge: unsubmittedCount > 0 ? `${unsubmittedCount} сдать` : null,
+              totalCount: homeworks.length,
+            },
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            let activeClasses = "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 shadow-md";
+            if (isPlanet) {
+              activeClasses = "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-[0_0_16px_rgba(56,189,248,0.25)] backdrop-blur-md";
+            } else if (theme === "standart") {
+              activeClasses = "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_16px_rgba(16,185,129,0.2)] backdrop-blur-md";
+            } else if (isGarden) {
+              activeClasses = "bg-[#FEC868]/20 text-[#FEC868] border-[#FEC868]/40 shadow-[0_0_16px_rgba(254,200,104,0.2)]";
+            }
 
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-bold border whitespace-nowrap shrink-0 transition duration-200 ${
-                isActive
-                  ? activeClasses
-                  : "border-transparent text-zinc-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
+            const Icon = tab.icon;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabClick(tab.id as any)}
+                className={`flex items-center gap-1.5 sm:gap-2 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold border whitespace-nowrap shrink-0 transition duration-200 select-none ${
+                  isActive
+                    ? activeClasses
+                    : "border-transparent text-zinc-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span>{tab.label}</span>
+                {tab.totalCount !== undefined && (
+                  <span className="text-[11px] opacity-75 hidden sm:inline">
+                    ({tab.totalCount})
+                  </span>
+                )}
+                {tab.badge && (
+                  <span className="rounded-full bg-rose-500 text-white px-2 py-0.5 text-[10px] font-black leading-none animate-pulse shadow-xs">
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Кнопка сворачивания / разворачивания всей активной вкладки */}
+        <button
+          type="button"
+          onClick={() => setIsTabContentCollapsed(!isTabContentCollapsed)}
+          className={`flex items-center gap-1.5 rounded-xl border px-2.5 sm:px-3 py-1.5 text-xs font-bold transition duration-200 shrink-0 ${
+            isTabContentCollapsed
+              ? "bg-blue-600/30 text-blue-300 border-blue-500/50 shadow-xs"
+              : "bg-white/5 border-zinc-700/60 text-zinc-400 hover:text-white hover:bg-white/10"
+          }`}
+          title={isTabContentCollapsed ? "Развернуть вкладку" : "Свернуть вкладку"}
+        >
+          {isTabContentCollapsed ? (
+            <>
+              <ChevronDown className="h-3.5 w-3.5 text-blue-400" />
+              <span className="text-[11px]">Развернуть</span>
+            </>
+          ) : (
+            <>
+              <ChevronUp className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline text-[11px]">Свернуть</span>
+            </>
+          )}
+        </button>
       </nav>
 
-      {activeTab === "schedule" && (
+      {/* ЕСЛИ ВКЛАДКА СВЕРНУТА — АККУРАТНЫЙ МИНИ-БАР С КНОПКОЙ РАЗВЕРНУТЬ ОБРАТНО */}
+      {isTabContentCollapsed && (
+        <div className="glass-panel p-4 sm:p-5 rounded-3xl flex items-center justify-between gap-3 border border-dashed border-zinc-700/80 animate-fade-in shadow-sm">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/5 border border-white/10 text-zinc-300">
+              {activeTab === "schedule" ? (
+                <Calendar className="h-5 w-5 text-emerald-400" />
+              ) : (
+                <BookOpen className="h-5 w-5 text-blue-400" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-xs sm:text-sm text-zinc-200 truncate">
+                {activeTab === "schedule"
+                  ? `Вкладка «Расписание» свернута`
+                  : `Вкладка «Домашние задания» свернута`}
+              </p>
+              <p className="text-[11px] text-zinc-400 mt-0.5 truncate">
+                {activeTab === "schedule"
+                  ? `${activeDayLessons.length} уроков на ${activeDateFormatted}. Нажмите, чтобы открыть`
+                  : unsubmittedCount > 0
+                  ? `Осталось сдать заданий: ${unsubmittedCount}`
+                  : `Все задания сданы (${homeworks.length} шт)`}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsTabContentCollapsed(false)}
+            className="flex items-center gap-1.5 rounded-2xl bg-blue-600 hover:bg-blue-700 px-3.5 sm:px-4 py-2 text-xs font-bold text-white shadow-md transition shrink-0"
+          >
+            <ChevronDown className="h-4 w-4" />
+            <span>Развернуть</span>
+          </button>
+        </div>
+      )}
+
+      {!isTabContentCollapsed && activeTab === "schedule" && (
         <section className="space-y-4 animate-tab-enter">
-        <div className="glass-panel flex items-center justify-between rounded-2xl p-4 shadow-sm">
+        <div className="glass-panel flex items-center justify-between rounded-2xl p-3 sm:p-4 shadow-sm">
           <div className="flex items-center gap-2">
-            <span className="text-base font-bold">Расписание:</span>
+            <span className="text-sm sm:text-base font-bold">Расписание:</span>
             <span className="rounded-lg bg-black/10 px-2.5 py-1 text-xs font-semibold dark:bg-white/10">
               {monthTitle}
             </span>
           </div>
 
-          <div className="flex items-center rounded-lg border border-zinc-700">
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => handlePrevWeek(1)}
-              className="p-1.5 hover:bg-white/5"
+              onClick={() => setIsCalendarCollapsed(!isCalendarCollapsed)}
+              className="flex items-center gap-1 text-[11px] font-bold text-zinc-400 hover:text-white px-2.5 py-1.5 rounded-xl hover:bg-white/5 border border-zinc-700/60 transition"
+              title={isCalendarCollapsed ? "Развернуть дни недели" : "Свернуть дни недели"}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <Calendar className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{isCalendarCollapsed ? "Развернуть дни" : "Свернуть дни"}</span>
+              {isCalendarCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
             </button>
-            <button
-              type="button"
-              onClick={() => handleNextWeek(1)}
-              className="p-1.5 hover:bg-white/5"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+
+            <div className="flex items-center rounded-lg border border-zinc-700">
+              <button
+                type="button"
+                onClick={() => handlePrevWeek(1)}
+                className="p-1.5 hover:bg-white/5"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleNextWeek(1)}
+                className="p-1.5 hover:bg-white/5"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
 
         <div className={theme === "garden" ? "space-y-0" : "space-y-4"}>
-          <ThemeCalendarStrip
-            currentDate={currentDate}
-            onSelectDate={handleSelectDate}
-            serverToday={hostToday}
-            days={weekDayDates}
-            selectedDayOfWeek={selectedDayOfWeek}
-            onSelectDay={(dow) => {
-              const target = addDays(monday, dow - 1);
-              setCurrentDate(target);
-            }}
-            onPrevWeek={handlePrevWeek}
-            onNextWeek={handleNextWeek}
-            onScrubDay={(targetDate) => setCurrentDate(targetDate)}
-          />
+          {!isCalendarCollapsed && (
+            <ThemeCalendarStrip
+              currentDate={currentDate}
+              onSelectDate={handleSelectDate}
+              serverToday={hostToday}
+              days={weekDayDates}
+              selectedDayOfWeek={selectedDayOfWeek}
+              onSelectDay={(dow) => {
+                const target = addDays(monday, dow - 1);
+                setCurrentDate(target);
+              }}
+              onPrevWeek={handlePrevWeek}
+              onNextWeek={handleNextWeek}
+              onScrubDay={(targetDate) => setCurrentDate(targetDate)}
+            />
+          )}
 
           <div
             key={monday.toISOString()}
@@ -705,157 +845,230 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
       </section>
       )}
 
-      {/* ВКЛАДКА: ДОМАШНИЕ ЗАДАНИЯ (ДЗ) — ВСЕ ЗАДАНИЯ В ЦЕЛОМ С СОРТИРОВКОЙ И ФИЛЬТРАМИ */}
-      {activeTab === "homework" && (
-        <section className="space-y-5 animate-tab-enter">
+      {/* ВКЛАДКА: ДОМАШНИЕ ЗАДАНИЯ (ДЗ) — ПО УМОЛЧАНИЮ ВКЛЮЧЕНА КНОПКА «НАДО СДАТЬ» С ВОЗМОЖНОСТЬЮ СВОРАЧИВАНИЯ */}
+      {!isTabContentCollapsed && activeTab === "homework" && (
+        <section className="space-y-4 sm:space-y-5 animate-tab-enter">
           {/* Верхняя карточка со сводкой и статусами */}
-          <div className="glass-panel flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-5 sm:p-6 rounded-3xl shadow-sm">
+          <div className="glass-panel flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4 p-4 sm:p-6 rounded-3xl shadow-sm">
             <div>
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-blue-500 animate-pulse" />
-                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">Домашние задания</h2>
+                <h2 className="text-lg sm:text-2xl font-black tracking-tight text-white">Домашние задания</h2>
               </div>
-              <p className="text-xs text-zinc-400 mt-1">
+              <p className="text-xs text-zinc-400 mt-0.5">
                 Все выданные задания, проверка решений и оценки преподавателя
               </p>
             </div>
 
-            {/* Фильтр по статусам */}
-            <div className="flex flex-wrap items-center gap-1.5 bg-black/30 dark:bg-white/5 p-1 rounded-2xl border border-zinc-700/60 text-xs font-bold shrink-0">
-              {[
-                { id: "ALL", label: "Все", count: homeworks.length },
-                { id: "NEED_SUBMIT", label: "Надо сдать", count: unsubmittedCount },
-                { id: "PENDING", label: "На проверке", count: pendingCount },
-                { id: "GRADED", label: "Проверено", count: gradedCount },
-              ].map((btn) => {
-                const isActive = hwStatusFilter === btn.id;
-                return (
-                  <button
-                    key={btn.id}
-                    type="button"
-                    onClick={() => setHwStatusFilter(btn.id as any)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition font-black text-xs ${
-                      isActive
-                        ? isGarden
-                          ? "bg-[#FEC868] text-[#2C2114] shadow-xs"
-                          : isPlanet
-                          ? "bg-cyan-500 text-black shadow-xs"
-                          : "bg-emerald-500 text-white shadow-xs"
-                        : "text-zinc-400 hover:text-white"
-                    }`}
-                  >
-                    <span>{btn.label}</span>
-                    <span className={`text-[10px] rounded-full px-1.5 py-0.5 ${isActive ? "bg-black/20" : "bg-white/10"}`}>
-                      {btn.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+            <div className="flex items-center gap-2 flex-wrap justify-between md:justify-end">
+              {/* Фильтр по статусам: по умолчанию выбран "Надо сдать" (NEED_SUBMIT) */}
+              <div className="flex flex-wrap items-center gap-1 bg-black/30 dark:bg-white/5 p-1 rounded-2xl border border-zinc-700/60 text-xs font-bold">
+                {[
+                  { id: "ALL", label: "Все", count: homeworks.length },
+                  { id: "NEED_SUBMIT", label: "Надо сдать", count: unsubmittedCount },
+                  { id: "PENDING", label: "На проверке", count: pendingCount },
+                  { id: "GRADED", label: "Проверено", count: gradedCount },
+                ].map((btn) => {
+                  const isActive = hwStatusFilter === btn.id;
+                  return (
+                    <button
+                      key={btn.id}
+                      type="button"
+                      onClick={() => setHwStatusFilter(btn.id as any)}
+                      className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl transition font-black text-xs ${
+                        isActive
+                          ? isGarden
+                            ? "bg-[#FEC868] text-[#2C2114] shadow-xs"
+                            : isPlanet
+                            ? "bg-cyan-500 text-black shadow-xs"
+                            : "bg-emerald-500 text-white shadow-xs"
+                          : "text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      <span>{btn.label}</span>
+                      <span className={`text-[10px] rounded-full px-1.5 py-0.5 ${isActive ? "bg-black/20" : "bg-white/10"}`}>
+                        {btn.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
 
-          {/* Панель сортировки, поиска и фильтрации */}
-          <div className="glass-panel p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-            {/* Поиск */}
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
-              <input
-                type="text"
-                placeholder="Поиск по предмету или теме..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-zinc-700/80 bg-black/20 pl-9 pr-8 py-1.5 text-xs text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </div>
-
-            {/* Выбор сортировки */}
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs font-bold text-zinc-400 flex items-center gap-1">
-                <ArrowUpDown className="h-3.5 w-3.5" />
-                <span>Сортировка:</span>
-              </span>
-              <select
-                value={hwSort}
-                onChange={(e) => setHwSort(e.target.value as any)}
-                className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs font-bold text-zinc-200 focus:border-zinc-500 focus:outline-none shadow-xs"
-              >
-                <option value="DEADLINE_NEAREST">Сначала ближайший дедлайн</option>
-                <option value="DEADLINE_FURTHEST">Сначала дальний дедлайн</option>
-                <option value="DATE_NEWEST">Сначала новые (по дате)</option>
-                <option value="DATE_OLDEST">Сначала старые (по дате)</option>
-                <option value="STATUS">Сначала не сданные</option>
-                <option value="SUBJECT">По предмету (А-Я)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Фильтр по предметам */}
-          {availableSubjects.length > 1 && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              {/* Кнопка сворачивания фильтров и поиска для экономии места на мобильных */}
               <button
                 type="button"
-                onClick={() => setSelectedSubjectFilter("ALL")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs whitespace-nowrap ${
-                  selectedSubjectFilter === "ALL"
-                    ? "bg-white text-zinc-900 shadow-sm"
-                    : "bg-zinc-800/60 text-zinc-400 hover:text-white"
-                }`}
+                onClick={() => setIsHwFiltersCollapsed(!isHwFiltersCollapsed)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-zinc-700/60 bg-white/5 text-xs font-bold text-zinc-300 hover:text-white transition"
+                title="Свернуть / развернуть поиск и фильтры"
               >
-                Все предметы ({homeworks.length})
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{isHwFiltersCollapsed ? "Поиск и фильтры" : "Скрыть фильтры"}</span>
+                {isHwFiltersCollapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
               </button>
-              {availableSubjects.map((sub) => {
-                const count = homeworks.filter((h) => h.subjectName.trim().toLowerCase() === sub.toLowerCase()).length;
-                return (
+            </div>
+          </div>
+
+          {/* Сворачиваемая панель сортировки, поиска и фильтрации */}
+          {!isHwFiltersCollapsed && (
+            <div className="space-y-3">
+              <div className="glass-panel p-3 sm:p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 shadow-xs">
+                {/* Поиск */}
+                <div className="relative flex-1 min-w-[180px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+                  <input
+                    type="text"
+                    placeholder="Поиск по предмету или теме..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-700/80 bg-black/20 pl-9 pr-8 py-1.5 text-xs text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Выбор сортировки */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs font-bold text-zinc-400 flex items-center gap-1">
+                    <ArrowUpDown className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Сортировка:</span>
+                  </span>
+                  <select
+                    value={hwSort}
+                    onChange={(e) => setHwSort(e.target.value as any)}
+                    className="w-full sm:w-auto rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs font-bold text-zinc-200 focus:border-zinc-500 focus:outline-none shadow-xs"
+                  >
+                    <option value="DEADLINE_NEAREST">Ближайший дедлайн</option>
+                    <option value="DEADLINE_FURTHEST">Дальний дедлайн</option>
+                    <option value="DATE_NEWEST">Сначала новые (по дате)</option>
+                    <option value="DATE_OLDEST">Сначала старые (по дате)</option>
+                    <option value="STATUS">Сначала не сданные</option>
+                    <option value="SUBJECT">По предмету (А-Я)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Фильтр по предметам */}
+              {availableSubjects.length > 1 && (
+                <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-none">
                   <button
-                    key={sub}
                     type="button"
-                    onClick={() => setSelectedSubjectFilter(sub)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs whitespace-nowrap flex items-center gap-1.5 ${
-                      selectedSubjectFilter === sub
+                    onClick={() => setSelectedSubjectFilter("ALL")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-xs whitespace-nowrap shrink-0 ${
+                      selectedSubjectFilter === "ALL"
                         ? "bg-white text-zinc-900 shadow-sm"
                         : "bg-zinc-800/60 text-zinc-400 hover:text-white"
                     }`}
                   >
-                    <span>{sub}</span>
-                    <span className="text-[10px] opacity-75">({count})</span>
+                    Все предметы ({homeworks.length})
                   </button>
-                );
-              })}
+                  {availableSubjects.map((sub) => {
+                    const count = homeworks.filter((h) => h.subjectName.trim().toLowerCase() === sub.toLowerCase()).length;
+                    return (
+                      <button
+                        key={sub}
+                        type="button"
+                        onClick={() => setSelectedSubjectFilter(sub)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-xs whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                          selectedSubjectFilter === sub
+                            ? "bg-white text-zinc-900 shadow-sm"
+                            : "bg-zinc-800/60 text-zinc-400 hover:text-white"
+                        }`}
+                      >
+                        <span>{sub}</span>
+                        <span className="text-[10px] opacity-75">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
-          {/* Список карточек ДЗ */}
-          <div className="space-y-4">
+          {/* Информационная строка со счетчиком и кнопками свернуть/развернуть все карточки */}
+          <div className="flex items-center justify-between text-xs text-zinc-400 px-1 pt-1">
+            <span>
+              Показано: <strong className="text-zinc-200">{displayedHomeworks.length}</strong> {displayedHomeworks.length === 1 ? "задание" : displayedHomeworks.length < 5 ? "задания" : "заданий"}
+              {hwStatusFilter === "NEED_SUBMIT" && " (надо сдать)"}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={collapseAllHw}
+                className="hover:text-white transition text-[11px] underline underline-offset-2"
+              >
+                Свернуть все
+              </button>
+              <span>•</span>
+              <button
+                type="button"
+                onClick={expandAllHw}
+                className="hover:text-white transition text-[11px] underline underline-offset-2"
+              >
+                Развернуть все
+              </button>
+            </div>
+          </div>
+
+          {/* Список карточек ДЗ с возможностью сворачивания каждой карточки */}
+          <div className="space-y-3 sm:space-y-4">
             {displayedHomeworks.length === 0 ? (
-              <div className="flex h-56 flex-col items-center justify-center rounded-3xl border-2 border-dashed border-zinc-800 p-8 text-center text-zinc-400">
-                <BookOpen className="h-8 w-8 mb-2 opacity-50" />
-                <p className="text-sm font-bold">
-                  Домашних заданий не найдено
-                </p>
-                <p className="text-xs mt-1 text-zinc-500">
-                  Попробуйте сбросить фильтры или изменить поисковый запрос
-                </p>
-                {(searchQuery || selectedSubjectFilter !== "ALL" || hwStatusFilter !== "ALL") && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery("");
-                      setSelectedSubjectFilter("ALL");
-                      setHwStatusFilter("ALL");
-                    }}
-                    className="mt-3 rounded-xl border border-zinc-700 bg-white/5 px-3 py-1.5 text-xs font-bold text-zinc-300 hover:bg-white/10"
-                  >
-                    Сбросить фильтры
-                  </button>
+              <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-zinc-800 p-6 sm:p-10 text-center text-zinc-400">
+                {hwStatusFilter === "NEED_SUBMIT" ? (
+                  <>
+                    <CheckCircle2 className="h-10 w-10 sm:h-12 sm:w-12 mb-2 text-emerald-400" />
+                    <p className="text-base sm:text-lg font-bold text-white">
+                      Все домашние задания сданы!
+                    </p>
+                    <p className="text-xs mt-1 text-zinc-400 max-w-sm">
+                      У вас нет долгов или не сданных работ. Вы можете проверить статус отправленных решений или архив всех заданий.
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+                      {gradedCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setHwStatusFilter("GRADED")}
+                          className="rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2 text-xs font-bold text-white transition shadow-xs"
+                        >
+                          Посмотреть проверенные ({gradedCount})
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setHwStatusFilter("ALL")}
+                        className="rounded-xl border border-zinc-700 bg-white/5 hover:bg-white/10 px-3.5 py-2 text-xs font-bold text-zinc-300 transition"
+                      >
+                        Показать все задания ({homeworks.length})
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <BookOpen className="h-8 w-8 mb-2 opacity-50" />
+                    <p className="text-sm font-bold text-white">
+                      Домашних заданий не найдено
+                    </p>
+                    <p className="text-xs mt-1 text-zinc-500">
+                      Попробуйте сбросить фильтры или изменить поисковый запрос
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setSelectedSubjectFilter("ALL");
+                        setHwStatusFilter("NEED_SUBMIT");
+                      }}
+                      className="mt-3 rounded-xl border border-zinc-700 bg-white/5 px-3 py-1.5 text-xs font-bold text-zinc-300 hover:bg-white/10"
+                    >
+                      Сбросить фильтры
+                    </button>
+                  </>
                 )}
               </div>
             ) : (
@@ -866,146 +1079,183 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                 const dateParts = hw.targetDate.split("-");
                 const dayStr = dateParts[2] || "16";
                 const monthStr = dateParts[1] || "09";
+                const isCardCollapsed = !!collapsedHwIds[hw.id];
 
                 return (
                   <div
                     key={hw.id}
-                    className="glass-panel rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 hover:border-zinc-600 transition"
+                    className="glass-panel rounded-3xl p-4 sm:p-6 shadow-sm space-y-3 sm:space-y-4 hover:border-zinc-600 transition"
                   >
-                    {/* Шапка карточки ДЗ */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800/80 pb-3">
-                      <div className="flex items-center gap-2.5">
+                    {/* Шапка карточки ДЗ: клик сворачивает / разворачивает подробности */}
+                    <div
+                      onClick={() => toggleHwCard(hw.id)}
+                      className="flex items-center justify-between gap-2 border-b border-zinc-800/80 pb-3 cursor-pointer select-none group"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-2xl bg-blue-500/10 border border-blue-500/30 text-blue-400 font-mono text-xs font-black shadow-xs">
                           <span>{dayStr}</span>
                           <span className="text-[9px] opacity-75 leading-none">{monthStr}</span>
                         </div>
 
-                        <div>
-                          <span className="text-xs font-black uppercase tracking-wider text-blue-400">
-                            {hw.subjectName}
-                          </span>
-                          <div className="text-[11px] text-zinc-400">
-                            Срок сдачи: {hw.targetDate}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black uppercase tracking-wider text-blue-400 truncate">
+                              {hw.subjectName}
+                            </span>
+                            <span className="text-[11px] text-zinc-400 hidden sm:inline">
+                              • Срок: {hw.targetDate}
+                            </span>
                           </div>
+                          {isCardCollapsed ? (
+                            <p className="text-xs font-bold text-zinc-200 truncate mt-0.5">
+                              {hw.title}
+                            </p>
+                          ) : (
+                            <span className="text-[11px] text-zinc-400 sm:hidden">
+                              Срок: {hw.targetDate}
+                            </span>
+                          )}
                         </div>
                       </div>
 
-                      {/* Статус выполнения ДЗ */}
-                      <div>
+                      {/* Правая часть шапки: статус и кнопка свернуть/развернуть */}
+                      <div className="flex items-center gap-2 shrink-0">
                         {isGraded ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 px-3.5 py-1 text-xs font-black text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2.5 sm:px-3.5 py-1 text-xs font-black text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]">
                             <CheckCircle2 className="h-3.5 w-3.5" />
-                            <span>Проверено • Оценка: {sub.grade}</span>
+                            <span>Оценка: {sub.grade}</span>
                           </span>
                         ) : sub ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 px-3.5 py-1 text-xs font-black text-amber-300">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 px-2.5 sm:px-3.5 py-1 text-xs font-black text-amber-300">
                             <Clock className="h-3.5 w-3.5" />
-                            <span>Сдано • Ожидает проверки</span>
+                            <span className="hidden sm:inline">На проверке</span>
+                            <span className="sm:hidden">Сдано</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-800 border border-zinc-700 px-3.5 py-1 text-xs font-bold text-zinc-400">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/20 border border-rose-500/40 px-2.5 sm:px-3.5 py-1 text-xs font-black text-rose-300">
                             <span>Не сдано</span>
                           </span>
                         )}
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleHwCard(hw.id);
+                          }}
+                          className="p-1 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition"
+                          title={isCardCollapsed ? "Развернуть задание" : "Свернуть задание"}
+                        >
+                          {isCardCollapsed ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronUp className="h-4 w-4" />
+                          )}
+                        </button>
                       </div>
                     </div>
 
-                    {/* Название и инструкция */}
-                    <div>
-                      <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
-                        {hw.title}
-                      </h3>
-                      {hw.description && (
-                        <p className="mt-1 text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                          {hw.description}
-                        </p>
-                      )}
-                    </div>
+                    {/* Разворачиваемое тело карточки ДЗ */}
+                    {!isCardCollapsed && (
+                      <div className="space-y-3 sm:space-y-4 pt-1 animate-fade-in">
+                        {/* Название и инструкция */}
+                        <div>
+                          <h3 className="text-base sm:text-xl font-black text-white tracking-tight">
+                            {hw.title}
+                          </h3>
+                          {hw.description && (
+                            <p className="mt-1 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                              {hw.description}
+                            </p>
+                          )}
+                        </div>
 
-                    {/* Прикрепленные учителем файлы PDF */}
-                    {hw.attachments && hw.attachments.length > 0 && (
-                      <div className="space-y-1.5">
-                        <span className="text-[11px] font-bold text-zinc-400 block">
-                          Прикрепленные материалы к уроку:
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                          {hw.attachments.map((att) => (
-                            <a
-                              key={att.id}
-                              href={att.fileUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-3 py-1.5 text-xs text-zinc-200 hover:bg-zinc-700 transition"
-                            >
-                              <FileText className="h-3.5 w-3.5 text-rose-400" />
-                              <span className="font-semibold max-w-[200px] truncate">{att.fileName}</span>
-                            </a>
-                          ))}
+                        {/* Прикрепленные учителем файлы */}
+                        {hw.attachments && hw.attachments.length > 0 && (
+                          <div className="space-y-1.5">
+                            <span className="text-[11px] font-bold text-zinc-400 block">
+                              Прикрепленные материалы к уроку:
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              {hw.attachments.map((att) => (
+                                <a
+                                  key={att.id}
+                                  href={att.fileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-3 py-1.5 text-xs text-zinc-200 hover:bg-zinc-700 transition"
+                                >
+                                  <FileText className="h-3.5 w-3.5 text-rose-400" />
+                                  <span className="font-semibold max-w-[200px] truncate">{att.fileName}</span>
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Нижняя панель действий */}
+                        <div className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-zinc-800/80">
+                          {isGraded ? (
+                            <div className="flex-1 space-y-2">
+                              {feedback.text && (
+                                <div className="text-xs text-zinc-200 bg-emerald-950/40 border border-emerald-500/25 rounded-2xl p-3">
+                                  <span className="font-black text-emerald-400 block mb-0.5">
+                                    Отзыв учителя:
+                                  </span>
+                                  {feedback.text}
+                                </div>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCheckedPageRotation(0);
+                                  setViewCheckedHwModal(hw);
+                                }}
+                                className="flex items-center justify-center gap-2 w-full sm:w-auto rounded-2xl bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-xs font-black text-white shadow-md transition"
+                              >
+                                <Eye className="h-4 w-4" />
+                                <span>Посмотреть проверенную работу с исправлениями</span>
+                              </button>
+                            </div>
+                          ) : sub ? (
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-2">
+                              <span className="text-xs text-zinc-400">
+                                Отправлено решение • Ожидает проверки
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveHwModal(hw);
+                                  setSubmitText(sub.content || "");
+                                }}
+                                className="flex items-center justify-center gap-1.5 rounded-xl border border-zinc-700 px-3.5 py-1.5 text-xs font-bold text-zinc-200 hover:bg-white/5"
+                              >
+                                <span>Дополнить ответ</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-2">
+                              <span className="text-xs text-zinc-400">
+                                Срок сдачи: {hw.targetDate}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveHwModal(hw);
+                                  setSubmitText("");
+                                  setSubmitFiles([]);
+                                }}
+                                className="flex items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-xs font-black text-white shadow-md transition"
+                              >
+                                <Send className="h-3.5 w-3.5" />
+                                <span>Сдать решение (прикрепить фото)</span>
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
-
-                    {/* Нижняя панель действий */}
-                    <div className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-zinc-800/80">
-                      {isGraded ? (
-                        <div className="flex-1 space-y-2">
-                          {feedback.text && (
-                            <div className="text-xs text-zinc-200 bg-emerald-950/40 border border-emerald-500/25 rounded-2xl p-3">
-                              <span className="font-black text-emerald-400 block mb-0.5">
-                                Отзыв учителя:
-                              </span>
-                              {feedback.text}
-                            </div>
-                          )}
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setCheckedPageRotation(0);
-                              setViewCheckedHwModal(hw);
-                            }}
-                            className="flex items-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-xs font-black text-white shadow-md transition"
-                          >
-                            <Eye className="h-4 w-4" />
-                            <span>Посмотреть проверенную работу с исправлениями</span>
-                          </button>
-                        </div>
-                      ) : sub ? (
-                        <div className="flex items-center justify-between w-full">
-                          <span className="text-xs text-zinc-400">
-                            Отправлено решение • Ожидает проверки
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveHwModal(hw);
-                              setSubmitText(sub.content || "");
-                            }}
-                            className="flex items-center gap-1.5 rounded-xl border border-zinc-700 px-3.5 py-1.5 text-xs font-bold text-zinc-200 hover:bg-white/5"
-                          >
-                            <span>Дополнить ответ</span>
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between w-full">
-                          <span className="text-xs text-zinc-400">
-                            Срок сдачи: {hw.targetDate}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveHwModal(hw);
-                              setSubmitText("");
-                              setSubmitFiles([]);
-                            }}
-                            className="flex items-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-xs font-black text-white shadow-md transition"
-                          >
-                            <Send className="h-3.5 w-3.5" />
-                            <span>Сдать решение (прикрепить фото)</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
                   </div>
                 );
               })
@@ -1172,7 +1422,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
           </div>
 
           {/* Body: Center Viewport + Right Grading Sidebar */}
-          <div className="flex flex-1 overflow-hidden rounded-b-3xl bg-white">
+          <div className="flex flex-1 overflow-hidden rounded-b-3xl bg-white flex-col md:flex-row">
             {/* Center: Actual checked homework with teacher's annotations or modified image */}
             {(() => {
               const feedback = parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment);
@@ -1328,8 +1578,8 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
               }
 
               return (
-                <aside className="w-72 sm:w-80 shrink-0 border-l border-zinc-200 bg-zinc-50/80 p-5 flex flex-col justify-between overflow-y-auto">
-                  <div className="space-y-5">
+                <aside className="w-full md:w-80 shrink-0 border-t md:border-t-0 md:border-l border-zinc-200 bg-zinc-50/80 p-4 sm:p-5 flex flex-col justify-between overflow-y-auto max-h-[220px] md:max-h-none">
+                  <div className="space-y-4 sm:space-y-5">
                     {/* 1. Выполнение заданий (если отмечены учителем) */}
                     {taskEntries.length > 0 && (
                       <div>
@@ -1360,7 +1610,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                     )}
 
                     {/* 2. Итоговая оценка */}
-                    <div className="pt-4 border-t border-zinc-200 space-y-2">
+                    <div className="pt-3 sm:pt-4 border-t border-zinc-200 space-y-2">
                       <span className="text-xs font-black text-zinc-900 block">
                         Итоговая оценка учителя:
                       </span>
@@ -1381,7 +1631,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                     </div>
 
                     {/* 3. Комментарий учителя */}
-                    <div className="pt-4 border-t border-zinc-200">
+                    <div className="pt-3 sm:pt-4 border-t border-zinc-200">
                       <span className="text-xs font-black text-zinc-900 block mb-1">
                         Замечания преподавателя:
                       </span>
@@ -1407,6 +1657,65 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
           </div>
         </div>
       )}
+
+      {/* МОБИЛЬНАЯ НИЖНЯЯ ПАНЕЛЬ ДЛЯ ТЕЛЕФОНОВ И ПЛАНШЕТОВ */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800/80 px-3 py-2 flex items-center justify-around shadow-[0_-8px_24px_rgba(0,0,0,0.6)]">
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("schedule");
+            setIsTabContentCollapsed(false);
+          }}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition text-xs font-bold ${
+            activeTab === "schedule" && !isTabContentCollapsed
+              ? "text-emerald-400 bg-emerald-500/10"
+              : "text-zinc-400 hover:text-white"
+          }`}
+        >
+          <Calendar className="h-4 w-4 mb-0.5" />
+          <span className="text-[10px]">Расписание</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("homework");
+            setIsTabContentCollapsed(false);
+            setHwStatusFilter("NEED_SUBMIT");
+          }}
+          className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-xl transition text-xs font-bold ${
+            activeTab === "homework" && !isTabContentCollapsed
+              ? "text-blue-400 bg-blue-500/10"
+              : "text-zinc-400 hover:text-white"
+          }`}
+        >
+          <BookOpen className="h-4 w-4 mb-0.5" />
+          <span className="text-[10px]">Домашние</span>
+          {unsubmittedCount > 0 && (
+            <span className="absolute -top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-rose-500 text-[9px] font-black text-white flex items-center justify-center animate-pulse">
+              {unsubmittedCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setIsTabContentCollapsed(!isTabContentCollapsed)}
+          className="flex flex-col items-center justify-center py-1 px-3 rounded-xl transition text-xs font-bold text-zinc-400 hover:text-white"
+        >
+          {isTabContentCollapsed ? (
+            <>
+              <ChevronDown className="h-4 w-4 mb-0.5 text-blue-400" />
+              <span className="text-[10px] text-blue-400">Развернуть</span>
+            </>
+          ) : (
+            <>
+              <ChevronUp className="h-4 w-4 mb-0.5" />
+              <span className="text-[10px]">Свернуть</span>
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }
