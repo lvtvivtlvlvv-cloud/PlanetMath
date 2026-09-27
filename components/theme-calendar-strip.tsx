@@ -29,6 +29,31 @@ export function ThemeCalendarStrip({
 }: ThemeCalendarStripProps) {
   const { theme } = useAppTheme();
 
+  // Жест свайпа для переключения недель в темах standart и garden
+  const touchStartX = React.useRef<number | null>(null);
+  const touchStartY = React.useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    touchStartX.current = null;
+    touchStartY.current = null;
+
+    if (Math.abs(dx) > 38 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+      if (dx < 0) {
+        if (onNextWeek) onNextWeek(1);
+      } else {
+        if (onPrevWeek) onPrevWeek(1);
+      }
+    }
+  };
+
   // 1. ТЕМА PLANET: планетарный циферблат с Землёй
   if (theme === "planet") {
     return (
@@ -49,7 +74,11 @@ export function ThemeCalendarStrip({
   // 2. ТЕМА GARDEN: органические сверхскругленные дни, физически соединяющиеся с таблицей
   if (theme === "garden") {
     return (
-      <div className="relative z-10 w-full rounded-t-[40px] sm:rounded-t-[50px] bg-[#141E15] border-t-2 border-x-2 border-[#2D3E2F] px-2.5 sm:px-4 pt-3.5 pb-2.5 shadow-xl">
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className="relative z-10 w-full rounded-t-[40px] sm:rounded-t-[50px] bg-[#141E15] border-t-2 border-x-2 border-b-0 border-[#2D3E2F] px-2.5 sm:px-4 pt-3.5 pb-2 shadow-xl select-none"
+      >
         <div className="flex items-center justify-between gap-1.5 sm:gap-2">
           {days.map((w) => {
             const isSelected = selectedDayOfWeek === w.dayOfWeek;
@@ -88,9 +117,13 @@ export function ThemeCalendarStrip({
     );
   }
 
-  // 3. ТЕМА «СТАНДАРТ» (Единая обновленная тема)
+  // 3. ТЕМА «СТАНДАРТ» (Единая обновленная тема со свайпом)
   return (
-    <div className="glass-panel rounded-2xl p-2 sm:p-2.5 shadow-md">
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      className="glass-panel rounded-2xl p-2 sm:p-2.5 shadow-md select-none"
+    >
       <div className="flex items-center justify-between gap-1.5 sm:gap-2">
         {days.map((w) => {
           const isSelected = selectedDayOfWeek === w.dayOfWeek;

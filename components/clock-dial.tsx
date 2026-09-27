@@ -75,6 +75,15 @@ export function ClockDial({
   const pendingTouchX = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
   const lastHapticDayRef = useRef<number>(0);
+  const earthContinentsRef = useRef<HTMLDivElement>(null);
+
+  // Мгновенное аппаратное обновление угла вращения Земли (120-240 Гц без задержек реакта)
+  const updateEarthDirectly = useCallback((offset: number) => {
+    if (!earthContinentsRef.current) return;
+    const epochDays = Math.floor(dragAnchorDateRef.current.getTime() / (24 * 60 * 60 * 1000));
+    const angle = ((-epochDays - offset) * 13.5) % 360;
+    earthContinentsRef.current.style.transform = `translate3d(0,0,0) rotate(${angle}deg)`;
+  }, []);
 
   // Синхронизация при внешнем выборе дня в покое
   useEffect(() => {
@@ -82,9 +91,10 @@ export function ClockDial({
       dragAnchorDateRef.current = activeDate;
       floatOffsetRef.current = 0;
       setFloatOffset(0);
+      updateEarthDirectly(0);
       lastHapticDayRef.current = 0;
     }
-  }, [activeDate]);
+  }, [activeDate, updateEarthDirectly]);
 
   const [containerWidth, setContainerWidth] = useState<number>(860);
 
@@ -112,6 +122,7 @@ export function ClockDial({
       dragAnchorDateRef.current = finalDate;
       floatOffsetRef.current = 0;
       setFloatOffset(0);
+      updateEarthDirectly(0);
 
       if (onSelectDate) {
         onSelectDate(finalDate);
@@ -121,21 +132,22 @@ export function ClockDial({
         else if (onSelectDay) onSelectDay(dow);
       }
     },
-    [onSelectDate, onScrubDay, onSelectDay]
+    [onSelectDate, onScrubDay, onSelectDay, updateEarthDirectly]
   );
 
-  // 120 Hz пружина (Apple Spring Physics)
+  // 120-240 Hz пружина (Apple Spring Physics с непрерывной дельтой)
   const startSnapSpring = useCallback(
     (targetOffset: number) => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       lastTimeRef.current = performance.now();
 
       const springStep = (now: number) => {
-        const dt = Math.min(32, Math.max(1, now - lastTimeRef.current)) / 16.667;
+        const rawDt = (now - lastTimeRef.current) / 16.6667;
+        const dt = Math.min(2.5, Math.max(0.1, rawDt));
         lastTimeRef.current = now;
 
         const diff = targetOffset - floatOffsetRef.current;
-        if (Math.abs(diff) < 0.002) {
+        if (Math.abs(diff) < 0.001) {
           animFrameRef.current = null;
           currentVelocityRef.current = 0;
           commitSelection(targetOffset);
@@ -144,6 +156,7 @@ export function ClockDial({
 
         const decayFactor = 1 - Math.pow(0.72, dt);
         floatOffsetRef.current += diff * decayFactor;
+        updateEarthDirectly(floatOffsetRef.current);
         setFloatOffset(floatOffsetRef.current);
 
         const rounded = Math.round(floatOffsetRef.current);
@@ -161,26 +174,28 @@ export function ClockDial({
 
       animFrameRef.current = requestAnimationFrame(springStep);
     },
-    [commitSelection]
+    [commitSelection, updateEarthDirectly]
   );
 
-  // 120 Hz инерция с поддержкой мультискроллинга и раскручивания
+  // 120-240 Hz инерция с поддержкой высокой герцовки экранов и мультискроллинга
   const startInertia = useCallback(
     (initialVelocity: number) => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       lastTimeRef.current = performance.now();
 
       currentVelocityRef.current = Math.max(-2.8, Math.min(2.8, initialVelocity));
-      const stopThreshold = 0.012;
+      const stopThreshold = 0.008;
 
       const inertiaStep = (now: number) => {
-        const dt = Math.min(32, Math.max(1, now - lastTimeRef.current)) / 16.667;
+        const rawDt = (now - lastTimeRef.current) / 16.6667;
+        const dt = Math.min(2.5, Math.max(0.1, rawDt));
         lastTimeRef.current = now;
 
         if (Math.abs(currentVelocityRef.current) > stopThreshold) {
           floatOffsetRef.current += currentVelocityRef.current * dt;
-          // Плавное физическое затухание для долгого и приятного мультискроллинга
-          currentVelocityRef.current *= Math.pow(0.972, dt);
+          // Плавное физическое затухание для долгого и шелковистого скроллинга
+          currentVelocityRef.current *= Math.pow(0.974, dt);
+          updateEarthDirectly(floatOffsetRef.current);
           setFloatOffset(floatOffsetRef.current);
 
           const rounded = Math.round(floatOffsetRef.current);
@@ -202,7 +217,7 @@ export function ClockDial({
 
       animFrameRef.current = requestAnimationFrame(inertiaStep);
     },
-    [startSnapSpring]
+    [startSnapSpring, updateEarthDirectly]
   );
 
   // Клик по числу в 1 тап
@@ -304,6 +319,7 @@ export function ClockDial({
             const nextOffset = touchStartOffsetRef.current - moveDiff / PX_PER_DAY;
 
             floatOffsetRef.current = nextOffset;
+            updateEarthDirectly(nextOffset);
             setFloatOffset(nextOffset);
 
             const currentRounded = Math.round(nextOffset);
@@ -386,18 +402,64 @@ export function ClockDial({
       }
     };
 
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.pointerType === "touch" || e.button !== 0) return;
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+        animFrameRef.current = null;
+      }
+      touchStartOffsetRef.current = floatOffsetRef.current;
+      isDraggingRef.current = true;
+      hasMovedRef.current = false;
+      touchStartX.current = e.clientX;
+      touchStartY.current = e.clientY;
+      pendingTouchX.current = e.clientX;
+      touchHistoryRef.current = [{ x: e.clientX, t: performance.now() }];
+      gestureLockRef.current = "horizontal";
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (e.pointerType === "touch" || !isDraggingRef.current || touchStartX.current === null) return;
+      hasMovedRef.current = true;
+      const clientX = e.clientX;
+      pendingTouchX.current = clientX;
+      const now = performance.now();
+      touchHistoryRef.current.push({ x: clientX, t: now });
+      touchHistoryRef.current = touchHistoryRef.current.filter((item) => now - item.t < 120);
+
+      const moveDiff = clientX - touchStartX.current;
+      const PX_PER_DAY = 52;
+      const nextOffset = touchStartOffsetRef.current - moveDiff / PX_PER_DAY;
+      floatOffsetRef.current = nextOffset;
+      updateEarthDirectly(nextOffset);
+      setFloatOffset(nextOffset);
+    };
+
+    const onPointerUp = (e: PointerEvent) => {
+      if (e.pointerType === "touch" || !isDraggingRef.current) return;
+      onTouchEnd();
+    };
+
     el.addEventListener("touchstart", onTouchStart, { passive: true });
     el.addEventListener("touchmove", onTouchMove, { passive: false });
     el.addEventListener("touchend", onTouchEnd, { passive: true });
     el.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    el.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
 
     return () => {
       el.removeEventListener("touchstart", onTouchStart);
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
       el.removeEventListener("touchcancel", onTouchEnd);
+      el.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
     };
-  }, [startInertia, startSnapSpring]);
+  }, [startInertia, startSnapSpring, updateEarthDirectly]);
 
   // Текущая отображаемая дата в верхнем левом углу
   const focusedDate = useMemo(() => {
@@ -489,78 +551,92 @@ export function ClockDial({
         />
 
         <div
-          className="absolute left-1/2 -translate-x-1/2"
+          className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
           style={{
             width: `${earthSize}px`,
             height: `${earthSize}px`,
             top: `${horizonTopY}px`,
           }}
         >
+          {/* Статичная 3D сфера с радиальным градиентом атмосферы и внутренней тенью */}
           <div
-            className="h-full w-full rounded-full border border-cyan-500/30 shadow-[inset_0_20px_70px_rgba(15,23,42,0.9),_0_0_40px_rgba(56,189,248,0.25)]"
+            className="relative h-full w-full rounded-full border border-cyan-500/30 overflow-hidden shadow-[inset_0_20px_70px_rgba(15,23,42,0.9),_0_0_40px_rgba(56,189,248,0.25)]"
             style={{
               background: "radial-gradient(circle at 50% 25%, #0e2038 0%, #081424 45%, #02060d 85%)",
-              transform: `rotate(${earthRotationAngle}deg)`,
-              backfaceVisibility: "hidden",
             }}
           >
-            <svg className="h-full w-full" viewBox="0 0 540 540">
-              <defs>
-                <clipPath id="earthGlobeClip">
-                  <circle cx="270" cy="270" r="268" />
-                </clipPath>
+            {/* Аппаратный вращающийся слой континентов (120-240 FPS GPU compositor) */}
+            <div
+              ref={earthContinentsRef}
+              className="absolute inset-0 h-full w-full will-change-transform"
+              style={{
+                transform: `translate3d(0,0,0) rotate(${earthRotationAngle}deg)`,
+                transformOrigin: "50% 50%",
+                backfaceVisibility: "hidden",
+              }}
+            >
+              <svg className="h-full w-full" viewBox="0 0 540 540">
+                <defs>
+                  <clipPath id="earthGlobeClip">
+                    <circle cx="270" cy="270" r="268" />
+                  </clipPath>
 
-                <linearGradient id="softLandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.36" />
-                  <stop offset="100%" stopColor="#0284c7" stopOpacity="0.24" />
-                </linearGradient>
+                  <linearGradient id="softLandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.36" />
+                    <stop offset="100%" stopColor="#0284c7" stopOpacity="0.24" />
+                  </linearGradient>
+                </defs>
 
-                {/* Subtle coast stroke used instead of software rasterized filter */}
+                <g clipPath="url(#earthGlobeClip)">
+                  <g stroke="rgba(56, 189, 248, 0.16)" strokeWidth="1" fill="none">
+                    <circle cx="270" cy="270" r="225" strokeDasharray="3 5" />
+                    <circle cx="270" cy="270" r="160" strokeDasharray="3 5" />
+                    <circle cx="270" cy="270" r="90" strokeDasharray="3 5" />
+                    <ellipse cx="270" cy="270" rx="268" ry="115" />
+                    <ellipse cx="270" cy="270" rx="268" ry="195" />
+                    <ellipse cx="270" cy="270" rx="115" ry="268" />
+                    <ellipse cx="270" cy="270" rx="195" ry="268" />
+                    <line x1="270" y1="2" x2="270" y2="538" stroke="rgba(56, 189, 248, 0.22)" />
+                    <line x1="2" y1="270" x2="538" y2="270" stroke="rgba(56, 189, 248, 0.22)" />
+                  </g>
 
-                <linearGradient id="orbitDarkDim" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#06080D" stopOpacity="0.94" />
-                  <stop offset="35%" stopColor="#06080D" stopOpacity="0.82" />
-                  <stop offset="65%" stopColor="#06080D" stopOpacity="0.35" />
-                  <stop offset="100%" stopColor="#06080D" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-
-              <g clipPath="url(#earthGlobeClip)">
-                <g stroke="rgba(56, 189, 248, 0.16)" strokeWidth="1" fill="none">
-                  <circle cx="270" cy="270" r="225" strokeDasharray="3 5" />
-                  <circle cx="270" cy="270" r="160" strokeDasharray="3 5" />
-                  <circle cx="270" cy="270" r="90" strokeDasharray="3 5" />
-                  <ellipse cx="270" cy="270" rx="268" ry="115" />
-                  <ellipse cx="270" cy="270" rx="268" ry="195" />
-                  <ellipse cx="270" cy="270" rx="115" ry="268" />
-                  <ellipse cx="270" cy="270" rx="195" ry="268" />
-                  <line x1="270" y1="2" x2="270" y2="538" stroke="rgba(56, 189, 248, 0.22)" />
-                  <line x1="2" y1="270" x2="538" y2="270" stroke="rgba(56, 189, 248, 0.22)" />
+                  <g
+                    transform="translate(270 270) scale(1.35) translate(-270 -270)"
+                    fill="url(#softLandGrad)"
+                    stroke="rgba(56, 189, 248, 0.65)"
+                    strokeWidth="0.85"
+                  >
+                    <path d="M 235,130 Q 250,105 275,90 Q 320,78 375,78 Q 430,82 465,100 Q 475,125 460,150 Q 445,175 425,195 Q 410,215 395,245 Q 380,250 375,230 Q 365,260 355,245 Q 348,225 342,230 Q 332,225 328,195 Q 322,180 305,168 Q 285,165 270,160 Q 245,165 235,165 Q 225,150 235,130 Z" />
+                    <path d="M 230,192 Q 260,186 285,190 Q 305,198 322,196 Q 324,215 325,235 Q 336,245 332,260 Q 320,290 305,325 Q 290,355 275,355 Q 260,355 250,325 Q 240,290 225,265 Q 208,245 212,225 Q 215,205 230,192 Z" />
+                    <path d="M 75,115 Q 105,95 135,100 Q 155,90 170,105 Q 160,120 168,135 Q 175,150 165,175 Q 160,195 145,210 Q 135,225 125,245 Q 115,235 110,210 Q 95,190 90,165 Q 75,145 75,115 Z" />
+                    <path d="M 132,255 Q 155,250 180,265 Q 210,285 210,310 Q 200,345 185,385 Q 175,415 168,420 Q 160,395 155,355 Q 145,310 135,280 Q 128,265 132,255 Z" />
+                    <path d="M 188,72 Q 215,68 222,85 Q 220,105 208,110 Q 185,102 188,72 Z" />
+                    <path d="M 432,335 Q 460,328 480,342 Q 488,360 480,380 Q 460,392 442,385 Q 425,372 425,352 Q 425,340 432,335 Z" />
+                    <path d="M 238,126 Q 244,124 246,134 Q 242,144 238,140 Z" />
+                    <path d="M 326,295 Q 332,292 331,310 Q 326,324 322,320 Z" />
+                    <path d="M 458,140 Q 464,146 462,160 Q 456,165 456,150 Z" />
+                    <ellipse cx="408" cy="272" rx="9" ry="3.5" transform="rotate(-15 408 272)" />
+                    <ellipse cx="430" cy="285" rx="11" ry="4" transform="rotate(-10 430 285)" />
+                    <path d="M 488,385 Q 492,400 486,415" strokeWidth="2" strokeLinecap="round" />
+                  </g>
                 </g>
+              </svg>
+            </div>
 
-                <g
-                  transform="translate(270 270) scale(1.35) translate(-270 -270)"
-                  fill="url(#softLandGrad)"
-                  stroke="rgba(56, 189, 248, 0.65)"
-                  strokeWidth="0.85"
-                >
-                  <path d="M 235,130 Q 250,105 275,90 Q 320,78 375,78 Q 430,82 465,100 Q 475,125 460,150 Q 445,175 425,195 Q 410,215 395,245 Q 380,250 375,230 Q 365,260 355,245 Q 348,225 342,230 Q 332,225 328,195 Q 322,180 305,168 Q 285,165 270,160 Q 245,165 235,165 Q 225,150 235,130 Z" />
-                  <path d="M 230,192 Q 260,186 285,190 Q 305,198 322,196 Q 324,215 325,235 Q 336,245 332,260 Q 320,290 305,325 Q 290,355 275,355 Q 260,355 250,325 Q 240,290 225,265 Q 208,245 212,225 Q 215,205 230,192 Z" />
-                  <path d="M 75,115 Q 105,95 135,100 Q 155,90 170,105 Q 160,120 168,135 Q 175,150 165,175 Q 160,195 145,210 Q 135,225 125,245 Q 115,235 110,210 Q 95,190 90,165 Q 75,145 75,115 Z" />
-                  <path d="M 132,255 Q 155,250 180,265 Q 210,285 210,310 Q 200,345 185,385 Q 175,415 168,420 Q 160,395 155,355 Q 145,310 135,280 Q 128,265 132,255 Z" />
-                  <path d="M 188,72 Q 215,68 222,85 Q 220,105 208,110 Q 185,102 188,72 Z" />
-                  <path d="M 432,335 Q 460,328 480,342 Q 488,360 480,380 Q 460,392 442,385 Q 425,372 425,352 Q 425,340 432,335 Z" />
-                  <path d="M 238,126 Q 244,124 246,134 Q 242,144 238,140 Z" />
-                  <path d="M 326,295 Q 332,292 331,310 Q 326,324 322,320 Z" />
-                  <path d="M 458,140 Q 464,146 462,160 Q 456,165 456,150 Z" />
-                  <ellipse cx="408" cy="272" rx="9" ry="3.5" transform="rotate(-15 408 272)" />
-                  <ellipse cx="430" cy="285" rx="11" ry="4" transform="rotate(-10 430 285)" />
-                  <path d="M 488,385 Q 492,400 486,415" strokeWidth="2" strokeLinecap="round" />
-                </g>
-
+            {/* Статичная космическая тень горизонта (не вращается, физически точна) */}
+            <div className="pointer-events-none absolute inset-0 h-full w-full">
+              <svg className="h-full w-full" viewBox="0 0 540 540">
+                <defs>
+                  <linearGradient id="orbitDarkDim" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#06080D" stopOpacity="0.94" />
+                    <stop offset="35%" stopColor="#06080D" stopOpacity="0.82" />
+                    <stop offset="65%" stopColor="#06080D" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#06080D" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
                 <rect x="0" y="0" width="540" height="250" fill="url(#orbitDarkDim)" />
-              </g>
-            </svg>
+              </svg>
+            </div>
           </div>
         </div>
 

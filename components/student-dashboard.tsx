@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   format,
   startOfWeek,
@@ -123,6 +123,32 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
   const handleNextWeek = (weeks = 1) => {
     setWeekAnimDirection("right");
     setCurrentDate((prev) => addWeeks(prev, weeks));
+  };
+
+  // Свайп для переключения недель на карточке расписания в темах standart и garden
+  const scheduleTouchStartX = useRef<number | null>(null);
+  const scheduleTouchStartY = useRef<number | null>(null);
+
+  const handleScheduleTouchStart = (e: React.TouchEvent) => {
+    if (isPlanet) return;
+    scheduleTouchStartX.current = e.touches[0].clientX;
+    scheduleTouchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleScheduleTouchEnd = (e: React.TouchEvent) => {
+    if (isPlanet || scheduleTouchStartX.current === null || scheduleTouchStartY.current === null) return;
+    const dx = e.changedTouches[0].clientX - scheduleTouchStartX.current;
+    const dy = e.changedTouches[0].clientY - scheduleTouchStartY.current;
+    scheduleTouchStartX.current = null;
+    scheduleTouchStartY.current = null;
+
+    if (Math.abs(dx) > 42 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+      if (dx < 0) {
+        handleNextWeek(1);
+      } else {
+        handlePrevWeek(1);
+      }
+    }
   };
 
   const handleSelectDate = (date: Date) => {
@@ -279,6 +305,8 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
 
           <div
             key={monday.toISOString()}
+            onTouchStart={handleScheduleTouchStart}
+            onTouchEnd={handleScheduleTouchEnd}
             className={`${
               weekAnimDirection === "right"
                 ? "animate-week-right"
@@ -287,12 +315,12 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                 : ""
             } ${
               isGarden
-                ? "rounded-b-[40px] sm:rounded-b-[50px] bg-[#141E15] p-5 sm:p-7 shadow-2xl text-[#F8F6F0] border-b-2 border-x-2 border-[#2D3E2F] relative z-0"
+                ? "rounded-b-[40px] sm:rounded-b-[50px] bg-[#141E15] p-5 sm:p-7 shadow-2xl text-[#F8F6F0] border-b-2 border-x-2 border-t-0 border-[#2D3E2F] relative z-0 -mt-1"
                 : "space-y-3 pt-1"
             }`}
           >
-            {/* ПОДПИСЬ ТЕКУЩЕЙ ВЫБРАННОЙ ДАТЫ */}
-            <div className={`mb-4 ${isGarden ? "pb-3.5 border-b border-[#243526]" : ""}`}>
+            {/* ПОДПИСЬ ТЕКУЩЕЙ ВЫБРАННОЙ ДАТЫ (без разделительной полосы) */}
+            <div className="mb-4">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <span
                   className={`font-bold text-sm tracking-wide ${
@@ -369,9 +397,9 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                       </div>
 
                       <div
-                        className={`group flex-1 p-4 sm:p-5 shadow-sm transition ${
+                        className={`group flex-1 p-4 sm:p-5 shadow-sm transition-all duration-200 ${
                           isGarden
-                            ? "bg-[#1A271C] text-white border border-[#2D412F] hover:border-[#ABC270]/40 rounded-[28px] sm:rounded-[36px] shadow-lg"
+                            ? "bg-[#18261A] hover:bg-[#253928] text-white border border-[#2D412F] hover:border-[#ABC270]/70 hover:shadow-[0_8px_24px_rgba(0,0,0,0.45),_0_0_16px_rgba(171,194,112,0.18)] hover:-translate-y-0.5 rounded-[28px] sm:rounded-[36px]"
                             : "glass-panel glass-interactive rounded-2xl sm:rounded-3xl"
                         }`}
                       >
