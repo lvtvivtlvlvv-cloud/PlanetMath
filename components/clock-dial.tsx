@@ -59,6 +59,9 @@ export function ClockDial({
   // Непрерывное вещественное смещение в днях от dragAnchorDateRef
   const [floatOffset, setFloatOffset] = useState<number>(0);
   const floatOffsetRef = useRef<number>(0);
+  const touchStartOffsetRef = useRef<number>(0);
+  const currentVelocityRef = useRef<number>(0);
+  const wasSpinningRef = useRef<boolean>(false);
 
   const isDraggingRef = useRef<boolean>(false);
   const hasMovedRef = useRef<boolean>(false);
@@ -134,6 +137,7 @@ export function ClockDial({
         const diff = targetOffset - floatOffsetRef.current;
         if (Math.abs(diff) < 0.002) {
           animFrameRef.current = null;
+          currentVelocityRef.current = 0;
           commitSelection(targetOffset);
           return;
         }
@@ -147,7 +151,7 @@ export function ClockDial({
           lastHapticDayRef.current = rounded;
           try {
             if (typeof navigator !== "undefined" && navigator.vibrate) {
-              navigator.vibrate(6);
+              navigator.vibrate(5);
             }
           } catch {}
         }
@@ -160,22 +164,23 @@ export function ClockDial({
     [commitSelection]
   );
 
-  // 120 Hz инерция при резком смахивании
+  // 120 Hz инерция с поддержкой мультискроллинга и раскручивания
   const startInertia = useCallback(
     (initialVelocity: number) => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       lastTimeRef.current = performance.now();
 
-      let velocity = Math.max(-0.45, Math.min(0.45, initialVelocity));
+      currentVelocityRef.current = Math.max(-2.8, Math.min(2.8, initialVelocity));
       const stopThreshold = 0.012;
 
       const inertiaStep = (now: number) => {
         const dt = Math.min(32, Math.max(1, now - lastTimeRef.current)) / 16.667;
         lastTimeRef.current = now;
 
-        if (Math.abs(velocity) > stopThreshold) {
-          floatOffsetRef.current += velocity * dt;
-          velocity *= Math.pow(0.938, dt);
+        if (Math.abs(currentVelocityRef.current) > stopThreshold) {
+          floatOffsetRef.current += currentVelocityRef.current * dt;
+          // Плавное физическое затухание для долгого и приятного мультискроллинга
+          currentVelocityRef.current *= Math.pow(0.972, dt);
           setFloatOffset(floatOffsetRef.current);
 
           const rounded = Math.round(floatOffsetRef.current);
@@ -183,13 +188,14 @@ export function ClockDial({
             lastHapticDayRef.current = rounded;
             try {
               if (typeof navigator !== "undefined" && navigator.vibrate) {
-                navigator.vibrate(6);
+                navigator.vibrate(5);
               }
             } catch {}
           }
 
           animFrameRef.current = requestAnimationFrame(inertiaStep);
         } else {
+          currentVelocityRef.current = 0;
           startSnapSpring(Math.round(floatOffsetRef.current));
         }
       };
@@ -203,6 +209,7 @@ export function ClockDial({
   const handleDayTap = useCallback(
     (targetK: number) => {
       if (isDraggingRef.current || hasMovedRef.current) return;
+      currentVelocityRef.current = 0;
       startSnapSpring(targetK);
     },
     [startSnapSpring]
@@ -228,14 +235,26 @@ export function ClockDial({
     return () => el.removeEventListener("wheel", handleWheel);
   }, [handleWheel]);
 
-  // НАДЕЖНЫЙ ПЕРЕХВАТЧИК ТАЧ-СОБЫТИЙ: БЛОКИРУЕТ СВАЙП "НАЗАД" В БРАУЗЕРЕ
+  // НАДЕЖНЫЙ ПЕРЕХВАТЧИК ТАЧ-СОБЫТИЙ: МУЛЬТИСКРОЛЛИНГ И МГНОВЕННАЯ ОСТАНОВКА
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
     const onTouchStart = (e: TouchEvent) => {
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-      if (dragRafRef.current) cancelAnimationFrame(dragRafRef.current);
+      const wasAnimating = animFrameRef.current !== null || Math.abs(currentVelocityRef.current) > 0.03;
+      wasSpinningRef.current = wasAnimating;
+
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+        animFrameRef.current = null;
+      }
+      if (dragRafRef.current) {
+        cancelAnimationFrame(dragRafRef.current);
+        dragRafRef.current = null;
+      }
+
+      // Непрерывное сохранение текущего смещения в момент касания
+      touchStartOffsetRef.current = floatOffsetRef.current;
 
       isDraggingRef.current = true;
       hasMovedRef.current = false;
@@ -259,7 +278,7 @@ export function ClockDial({
         if (Math.abs(diffY) > 8 && Math.abs(diffY) > Math.abs(diffX)) {
           gestureLockRef.current = "vertical";
           return;
-        } else if (Math.abs(diffX) > 8) {
+        } else if (Math.abs(diffX) > 6) {
           gestureLockRef.current = "horizontal";
           hasMovedRef.current = true;
         }
@@ -282,7 +301,7 @@ export function ClockDial({
           if (pendingTouchX.current !== null && touchStartX.current !== null) {
             const moveDiff = pendingTouchX.current - touchStartX.current;
             const PX_PER_DAY = 52;
-            const nextOffset = -moveDiff / PX_PER_DAY;
+            const nextOffset = touchStartOffsetRef.current - moveDiff / PX_PER_DAY;
 
             floatOffsetRef.current = nextOffset;
             setFloatOffset(nextOffset);
@@ -292,7 +311,7 @@ export function ClockDial({
               lastHapticDayRef.current = currentRounded;
               try {
                 if (typeof navigator !== "undefined" && navigator.vibrate) {
-                  navigator.vibrate(6);
+                  navigator.vibrate(5);
                 }
               } catch {}
             }
@@ -309,11 +328,24 @@ export function ClockDial({
       }
 
       isDraggingRef.current = false;
+      const wasSpinning = wasSpinningRef.current;
+      wasSpinningRef.current = false;
       touchStartX.current = null;
       touchStartY.current = null;
 
+      // ЛЕГКАЯ ОСТАНОВКА: при тапе по вращающемуся циферблату моментально тормозим и фиксируем ближайший день
+      if (!hasMovedRef.current) {
+        if (wasSpinning) {
+          currentVelocityRef.current = 0;
+          startSnapSpring(Math.round(floatOffsetRef.current));
+        }
+        gestureLockRef.current = null;
+        return;
+      }
+
       if (gestureLockRef.current !== "horizontal") {
         gestureLockRef.current = null;
+        startSnapSpring(Math.round(floatOffsetRef.current));
         return;
       }
 
@@ -329,15 +361,27 @@ export function ClockDial({
         const dt = latest.t - oldest.t;
         const dx = latest.x - oldest.x;
 
-        if (dt > 15) {
+        if (dt > 12) {
           const pxPerMs = dx / dt;
           releaseVelocity = -(pxPerMs * 16.6) / 52;
         }
       }
 
-      if (Math.abs(releaseVelocity) > 0.035) {
-        startInertia(releaseVelocity);
+      // МУЛЬТИСКРОЛЛИНГ: если человек повторно смахивает в ту же сторону — складываем накопленную скорость
+      let finalVelocity = releaseVelocity;
+      if (
+        Math.abs(releaseVelocity) > 0.035 &&
+        Math.abs(currentVelocityRef.current) > 0.04 &&
+        Math.sign(releaseVelocity) === Math.sign(currentVelocityRef.current)
+      ) {
+        finalVelocity = releaseVelocity + currentVelocityRef.current * 0.82;
+      }
+      finalVelocity = Math.max(-2.8, Math.min(2.8, finalVelocity));
+
+      if (Math.abs(finalVelocity) > 0.035) {
+        startInertia(finalVelocity);
       } else {
+        currentVelocityRef.current = 0;
         startSnapSpring(Math.round(floatOffsetRef.current));
       }
     };
@@ -404,6 +448,14 @@ export function ClockDial({
     <div
       ref={containerRef}
       style={{ touchAction: "pan-y", overscrollBehaviorX: "none" }}
+      onClick={() => {
+        if (animFrameRef.current) {
+          cancelAnimationFrame(animFrameRef.current);
+          animFrameRef.current = null;
+          currentVelocityRef.current = 0;
+          startSnapSpring(Math.round(floatOffsetRef.current));
+        }
+      }}
       className="relative flex h-56 w-full select-none flex-col items-center justify-center overflow-hidden rounded-3xl border border-cyan-500/20 bg-[#06080D]/95 shadow-2xl backdrop-blur-md cursor-ew-resize"
     >
       {/* ЧИСЛО И МЕСЯЦ В ЛЕВОМ ВЕРХНЕМ УГЛУ */}
@@ -426,13 +478,13 @@ export function ClockDial({
       {/* ВРАЩАЮЩАЯСЯ ЗЕМЛЯ НА ЗАДНЕМ ПЛАНЕ */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
         <div
-          className="absolute left-1/2 -translate-x-1/2 rounded-full blur-2xl pointer-events-none"
+          className="absolute left-1/2 -translate-x-1/2 rounded-full pointer-events-none"
           style={{
             width: `${earthSize + 40}px`,
             height: `${earthSize + 40}px`,
             top: `${horizonTopY - 20}px`,
             background:
-              "radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, rgba(14, 165, 233, 0.15) 50%, transparent 75%)",
+              "radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, rgba(14, 165, 233, 0.12) 45%, transparent 72%)",
           }}
         />
 
@@ -463,9 +515,7 @@ export function ClockDial({
                   <stop offset="100%" stopColor="#0284c7" stopOpacity="0.24" />
                 </linearGradient>
 
-                <filter id="subtleCoast" x="-10%" y="-10%" width="120%" height="120%">
-                  <feDropShadow dx="0" dy="0" stdDeviation="1.5" floodColor="#38bdf8" floodOpacity="0.4" />
-                </filter>
+                {/* Subtle coast stroke used instead of software rasterized filter */}
 
                 <linearGradient id="orbitDarkDim" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#06080D" stopOpacity="0.94" />
@@ -491,9 +541,8 @@ export function ClockDial({
                 <g
                   transform="translate(270 270) scale(1.35) translate(-270 -270)"
                   fill="url(#softLandGrad)"
-                  stroke="rgba(56, 189, 248, 0.55)"
-                  strokeWidth="0.8"
-                  filter="url(#subtleCoast)"
+                  stroke="rgba(56, 189, 248, 0.65)"
+                  strokeWidth="0.85"
                 >
                   <path d="M 235,130 Q 250,105 275,90 Q 320,78 375,78 Q 430,82 465,100 Q 475,125 460,150 Q 445,175 425,195 Q 410,215 395,245 Q 380,250 375,230 Q 365,260 355,245 Q 348,225 342,230 Q 332,225 328,195 Q 322,180 305,168 Q 285,165 270,160 Q 245,165 235,165 Q 225,150 235,130 Z" />
                   <path d="M 230,192 Q 260,186 285,190 Q 305,198 322,196 Q 324,215 325,235 Q 336,245 332,260 Q 320,290 305,325 Q 290,355 275,355 Q 260,355 250,325 Q 240,290 225,265 Q 208,245 212,225 Q 215,205 230,192 Z" />

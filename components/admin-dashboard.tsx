@@ -356,12 +356,12 @@ export function AdminDashboard({
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Панель Учителя</h1>
           <p className="text-xs text-zinc-400 mt-0.5">2026–2027 учебный год</p>
         </div>
-        <div className="flex items-center justify-end gap-2.5 sm:gap-3 shrink-0">
+        <div className="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 shrink-0 w-full sm:w-auto">
           <ThemeSwitcher />
           <form action={logoutAction}>
             <button
               type="submit"
-              className="flex items-center gap-1.5 rounded-xl border border-red-200/80 bg-red-50/70 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400 min-h-[36px]"
+              className="flex items-center gap-1.5 rounded-xl border border-red-200/80 bg-red-50/70 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400 min-h-[36px] shrink-0"
             >
               <LogOut className="h-3.5 w-3.5" />
               <span>Выйти</span>
@@ -384,7 +384,7 @@ export function AdminDashboard({
           let activeClasses = "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 shadow-md";
           if (theme === "clock") {
             activeClasses = "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-[0_0_16px_rgba(56,189,248,0.25)] backdrop-blur-md";
-          } else if (theme === "standart" || theme === "standart-plus") {
+          } else if (theme === "standart") {
             activeClasses = "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_16px_rgba(16,185,129,0.2)] backdrop-blur-md";
           } else if (theme === "garden") {
             activeClasses = "bg-[#FEC868]/20 text-[#FEC868] border-[#FEC868]/40 shadow-[0_0_16px_rgba(254,200,104,0.2)]";
@@ -522,9 +522,7 @@ export function AdminDashboard({
                           ? "text-[#473C33]"
                           : theme === "clock"
                           ? "text-cyan-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]"
-                          : (theme === "standart" || theme === "standart-plus")
-                          ? "text-emerald-400 font-bold"
-                          : "text-zinc-800 dark:text-zinc-200"
+                          : "text-emerald-400 font-bold"
                       }`}
                     >
                       {selectedDayOfWeek === 7

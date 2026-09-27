@@ -3,118 +3,80 @@
 @tailwind utilities;
 
 /* ==========================================================================
-   1. БАЗОВАЯ ТЕМА (BASE)
+   1. ЕДИНАЯ ТЕМА «СТАНДАРТ» (STANDART)
+   Современный, чистый и контрастный изумрудный интерфейс
    ========================================================================== */
 :root,
-html[data-theme="base"] {
-  --bg-main: #ffffff;
-  --bg-card: rgba(255, 255, 255, 0.9);
-  --bg-surface: #f1f5f9;
-  --text-primary: #0f172a;
-  --text-secondary: #64748b;
-  --border-color: rgba(226, 232, 240, 0.8);
-  --accent-color: #10b981;
-  --accent-contrast: #ffffff;
-  --btn-primary-bg: #0f172a;
-  --btn-primary-text: #ffffff;
-  --btn-primary-hover: #1e293b;
-  --btn-radius: 0.75rem;
-}
-
-html[data-theme="base"].dark {
-  --bg-main: #06080d;
-  --bg-card: rgba(18, 24, 38, 0.75);
-  --bg-surface: #141c2e;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --border-color: rgba(255, 255, 255, 0.1);
-  --accent-color: #059669;
-  --accent-contrast: #ffffff;
-  --btn-primary-bg: #f8fafc;
-  --btn-primary-text: #0f172a;
-  --btn-primary-hover: #e2e8f0;
-  --btn-radius: 0.75rem;
-}
-
-/* ==========================================================================
-   2. ЕДИНАЯ ТЕМА «СТАНДАРТ» (STANDART / STANDART +)
-   ========================================================================== */
-html[data-theme="standart"],
-html[data-theme="standart-plus"] {
-  --bg-main: #070c09;
-  --bg-card: rgba(13, 23, 18, 0.88);
-  --bg-surface: rgba(19, 34, 26, 0.92);
-  --text-primary: #f0fdf4;
-  --text-secondary: #94a3b8;
+html[data-theme="standart"] {
+  --bg-main: #060A08;
+  --bg-card: rgba(12, 22, 17, 0.88);
+  --bg-surface: rgba(17, 32, 24, 0.94);
+  --text-primary: #F0FDF4;
+  --text-secondary: #94A3B8;
   --border-color: rgba(52, 211, 153, 0.16);
-  --accent-color: #10b981;
-  --accent-hover: #34d399;
-  --accent-glow: rgba(16, 185, 129, 0.25);
-  --btn-primary-bg: #10b981;
-  --btn-primary-text: #022c1b;
-  --btn-primary-hover: #34d399;
+  --accent-color: #10B981;
+  --accent-hover: #34D399;
+  --accent-glow: rgba(16, 185, 129, 0.28);
+  --btn-primary-bg: #10B981;
+  --btn-primary-text: #022C1B;
+  --btn-primary-hover: #34D399;
   --btn-radius: 0.875rem;
   --glass-blur: blur(12px);
 }
 
-html[data-theme="standart"] .glass-panel,
-html[data-theme="standart-plus"] .glass-panel {
-  background: rgba(13, 23, 18, 0.85);
+html[data-theme="standart"] .glass-panel {
+  background: rgba(12, 22, 17, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(52, 211, 153, 0.15);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35), inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(52, 211, 153, 0.16);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-html[data-theme="standart"] .glass-interactive:hover,
-html[data-theme="standart-plus"] .glass-interactive:hover {
-  background: rgba(19, 34, 26, 0.92);
+html[data-theme="standart"] .glass-interactive:hover {
+  background: rgba(17, 32, 24, 0.92);
   border-color: rgba(52, 211, 153, 0.45);
   box-shadow: 0 8px 24px -4px rgba(16, 185, 129, 0.2);
   transform: translateY(-1.5px);
 }
 
-html[data-theme="standart"] .standart-date-btn,
-html[data-theme="standart-plus"] .standart-date-btn {
+html[data-theme="standart"] .standart-date-btn {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(52, 211, 153, 0.14);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  color: #94a3b8;
+  color: #94A3B8;
   transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 
-html[data-theme="standart"] .standart-date-btn:hover,
-html[data-theme="standart-plus"] .standart-date-btn:hover {
+html[data-theme="standart"] .standart-date-btn:hover {
   border-color: rgba(52, 211, 153, 0.4);
   background: rgba(16, 185, 129, 0.08);
-  color: #f0fdf4;
+  color: #F0FDF4;
 }
 
-html[data-theme="standart"] .standart-date-btn.selected-date,
-html[data-theme="standart-plus"] .standart-date-btn.selected-date {
-  background: #10b981;
-  border-color: #34d399;
-  color: #022c1b;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+html[data-theme="standart"] .standart-date-btn.selected-date {
+  background: #10B981;
+  border-color: #34D399;
+  color: #022C1B;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.4);
   font-weight: 800;
 }
 
 /* ==========================================================================
-   3. ТЕМА «CLOCK» (Неоновый Циановый Космос)
+   2. ТЕМА «CLOCK» (Неоновый Циановый Космос)
    ========================================================================== */
 html[data-theme="clock"] {
-  --bg-main: #06080d;
-  --bg-card: rgba(12, 17, 26, 0.7);
-  --bg-surface: rgba(18, 25, 40, 0.8);
-  --text-primary: #ffffff;
-  --text-secondary: #94a3b8;
+  --bg-main: #06080D;
+  --bg-card: rgba(12, 17, 26, 0.72);
+  --bg-surface: rgba(18, 25, 40, 0.82);
+  --text-primary: #FFFFFF;
+  --text-secondary: #94A3B8;
   --border-color: rgba(56, 189, 248, 0.22);
-  --accent-color: #38bdf8;
-  --accent-hover: #22d3ee;
+  --accent-color: #38BDF8;
+  --accent-hover: #22D3EE;
   --accent-glow: rgba(34, 211, 238, 0.45);
   --btn-primary-bg: rgba(14, 165, 233, 0.16);
-  --btn-primary-text: #38bdf8;
+  --btn-primary-text: #38BDF8;
   --btn-primary-hover: rgba(14, 165, 233, 0.32);
   --btn-radius: 0.85rem;
   --glass-blur: blur(16px);
@@ -122,7 +84,7 @@ html[data-theme="clock"] {
 
 html[data-theme="clock"] .theme-btn {
   background: rgba(14, 165, 233, 0.16) !important;
-  color: #38bdf8 !important;
+  color: #38BDF8 !important;
   border: 1px solid rgba(56, 189, 248, 0.38) !important;
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
@@ -132,7 +94,7 @@ html[data-theme="clock"] .theme-btn {
 html[data-theme="clock"] .theme-btn:hover {
   background: rgba(14, 165, 233, 0.3) !important;
   border-color: rgba(56, 189, 248, 0.7) !important;
-  color: #ffffff !important;
+  color: #FFFFFF !important;
   box-shadow: 0 0 24px rgba(56, 189, 248, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.3) !important;
   transform: translate3d(0, -1px, 0);
 }
@@ -155,52 +117,52 @@ html[data-theme="clock"] .glass-interactive:hover {
 
 html[data-theme="clock"] .theme-hw-chip {
   background-color: rgba(14, 165, 233, 0.15) !important;
-  color: #38bdf8 !important;
+  color: #38BDF8 !important;
   border: 1px solid rgba(56, 189, 248, 0.35) !important;
 }
 
 html[data-theme="clock"] .theme-room-text {
-  color: #38bdf8 !important;
+  color: #38BDF8 !important;
   text-shadow: 0 0 8px rgba(56, 189, 248, 0.45);
 }
 
 /* ==========================================================================
-   4. ТЕМА «GARDEN» (Ультра-скругление)
+   3. ТЕМА «GARDEN» (Скандинавский мох и ультра-скругление)
    ========================================================================== */
 html[data-theme="garden"] {
   --bg-main: #101611;
   --bg-card: #182019;
-  --bg-surface: #202b21;
-  --text-primary: #f8f6f0;
-  --text-secondary: #abc270;
+  --bg-surface: #202B21;
+  --text-primary: #F8F6F0;
+  --text-secondary: #ABC270;
   --border-color: rgba(171, 194, 112, 0.2);
-  --accent-color: #fec868;
-  --accent-contrast: #473c33;
-  --btn-primary-bg: #473c33;
-  --btn-primary-text: #fec868;
-  --btn-primary-hover: #352c25;
+  --accent-color: #FEC868;
+  --accent-contrast: #473C33;
+  --btn-primary-bg: #473C33;
+  --btn-primary-text: #FEC868;
+  --btn-primary-hover: #352C25;
   --btn-radius: 9999px;
 }
 
 html[data-theme="garden"] .garden-active-tab {
   position: relative;
-  background-color: #fec868;
+  background-color: #FEC868;
   border-top-left-radius: 28px;
   border-top-right-radius: 28px;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   transform: translate3d(0, 0, 0);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 html[data-theme="garden"] .garden-active-tab::before {
   content: "";
   position: absolute;
   bottom: 0;
-  left: -22px;
-  width: 22px;
-  height: 22px;
-  background: radial-gradient(circle at 0 0, transparent 22px, #fec868 22.5px);
+  left: -18px;
+  width: 18px;
+  height: 18px;
+  background: radial-gradient(circle at 0 0, transparent 18px, #FEC868 18.5px);
   pointer-events: none;
 }
 
@@ -208,10 +170,10 @@ html[data-theme="garden"] .garden-active-tab::after {
   content: "";
   position: absolute;
   bottom: 0;
-  right: -22px;
-  width: 22px;
-  height: 22px;
-  background: radial-gradient(circle at 100% 0, transparent 22px, #fec868 22.5px);
+  right: -18px;
+  width: 18px;
+  height: 18px;
+  background: radial-gradient(circle at 100% 0, transparent 18px, #FEC868 18.5px);
   pointer-events: none;
 }
 
@@ -297,11 +259,7 @@ body {
 html[data-theme="standart"] table,
 html[data-theme="standart"] thead,
 html[data-theme="standart"] tbody,
-html[data-theme="standart"] tr,
-html[data-theme="standart-plus"] table,
-html[data-theme="standart-plus"] thead,
-html[data-theme="standart-plus"] tbody,
-html[data-theme="standart-plus"] tr {
+html[data-theme="standart"] tr {
   background-color: transparent !important;
 }
 

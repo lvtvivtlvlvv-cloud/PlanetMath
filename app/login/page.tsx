@@ -42,7 +42,13 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center p-4">
-      <div className="absolute top-4 sm:top-6 right-4 sm:right-6 right-[max(1rem,env(safe-area-inset-right))] z-40">
+      <div
+        className="absolute z-40"
+        style={{
+          top: "max(1rem, env(safe-area-inset-top))",
+          right: "max(1rem, env(safe-area-inset-right))",
+        }}
+      >
         <ThemeSwitcher />
       </div>
 

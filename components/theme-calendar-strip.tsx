@@ -29,7 +29,7 @@ export function ThemeCalendarStrip({
 }: ThemeCalendarStripProps) {
   const { theme } = useAppTheme();
 
-  // 1. ТЕМА CLOCK: планетарный циферблат
+  // 1. ТЕМА CLOCK: планетарный циферблат с Землёй
   if (theme === "clock") {
     return (
       <ClockDial
@@ -46,10 +46,10 @@ export function ThemeCalendarStrip({
     );
   }
 
-  // 2. ТЕМА GARDEN: ультра-скругление (28px)
+  // 2. ТЕМА GARDEN: органические вкладки, физически и визуально сливающиеся с таблицей
   if (theme === "garden") {
     return (
-      <div className="flex items-end justify-between px-3 pt-3">
+      <div className="relative z-10 flex items-end justify-between px-2 pt-2 bg-[#121913] rounded-t-[36px] sm:rounded-t-[44px] border-t border-x border-[#283829]/60">
         {days.map((w) => {
           const isSelected = selectedDayOfWeek === w.dayOfWeek;
           return (
@@ -59,14 +59,14 @@ export function ThemeCalendarStrip({
               onClick={() => onSelectDay(w.dayOfWeek)}
               className={`relative flex flex-1 flex-col items-center justify-center transition-all ${
                 isSelected
-                  ? "garden-active-tab bg-[#FEC868] text-[#473C33] h-16 font-black z-10"
-                  : "text-zinc-400 hover:text-zinc-200 h-14 pb-1"
+                  ? "garden-active-tab bg-[#FEC868] text-[#473C33] h-16 sm:h-18 font-black z-20 rounded-t-[26px] sm:rounded-t-[32px] -mb-[1px] shadow-sm"
+                  : "text-[#abc270]/70 hover:text-[#f8f6f0] h-14 pb-1 rounded-t-2xl hover:bg-white/5"
               }`}
             >
               <span className="text-base sm:text-lg font-black leading-none">
                 {w.dateNumber}
               </span>
-              <span className="text-[10px] uppercase font-bold mt-1">
+              <span className="text-[10px] sm:text-[11px] uppercase font-bold mt-1">
                 {w.short}
               </span>
               {w.isToday && !isSelected && (
@@ -79,88 +79,44 @@ export function ThemeCalendarStrip({
     );
   }
 
-  // 3. ТЕМА СТАНДАРТ (STANDART / STANDART +)
-  if (theme === "standart" || theme === "standart-plus") {
-    return (
-      <div className="glass-panel rounded-2xl p-2 sm:p-2.5">
-        <div className="flex items-center justify-between gap-1.5 sm:gap-2">
-          {days.map((w) => {
-            const isSelected = selectedDayOfWeek === w.dayOfWeek;
-            return (
-              <button
-                key={w.dayOfWeek}
-                type="button"
-                onClick={() => onSelectDay(w.dayOfWeek)}
-                className={`standart-date-btn relative flex flex-1 flex-col items-center justify-center h-14 sm:h-16 rounded-xl transition-all ${
-                  isSelected ? "selected-date font-bold" : "text-emerald-100/70"
-                }`}
-              >
-                <span className="text-base sm:text-lg font-bold leading-none">
-                  {w.dateNumber}
-                </span>
-                <span
-                  className={`text-[10px] sm:text-[11px] font-semibold uppercase mt-1 ${
-                    isSelected ? "text-emerald-950 font-extrabold" : "text-zinc-400"
-                  }`}
-                >
-                  {w.short}
-                </span>
-                {w.isToday && (
-                  <span
-                    className={`absolute top-1.5 right-1.5 h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full ${
-                      isSelected
-                        ? "bg-emerald-950"
-                        : "bg-emerald-400 shadow-[0_0_6px_#10B981]"
-                    }`}
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  // 4. БАЗОВАЯ ТЕМА
+  // 3. ТЕМА «СТАНДАРТ» (Единая обновленная тема)
   return (
-    <div className="flex items-center justify-between gap-1.5 px-2 py-2">
-      {days.map((w) => {
-        const isSelected = selectedDayOfWeek === w.dayOfWeek;
-        const isToday = w.isToday;
-
-        let colorClasses = "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800/60";
-        if (isSelected) {
-          colorClasses = "bg-emerald-600 text-white shadow-sm dark:bg-emerald-600";
-        } else if (isToday) {
-          colorClasses =
-            "bg-zinc-200 text-zinc-900 border border-zinc-300/80 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700";
-        }
-
-        return (
-          <button
-            key={w.dayOfWeek}
-            type="button"
-            onClick={() => onSelectDay(w.dayOfWeek)}
-            className={`flex flex-1 flex-col items-center justify-center h-16 rounded-xl transition-colors duration-150 ${colorClasses}`}
-          >
-            <span className="text-base sm:text-lg font-bold leading-none">
-              {w.dateNumber}
-            </span>
-            <span
-              className={`text-[11px] mt-1 font-medium uppercase ${
-                isSelected
-                  ? "text-emerald-100"
-                  : isToday
-                  ? "text-zinc-700 dark:text-zinc-300 font-semibold"
-                  : "text-zinc-400"
+    <div className="glass-panel rounded-2xl p-2 sm:p-2.5 shadow-md">
+      <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+        {days.map((w) => {
+          const isSelected = selectedDayOfWeek === w.dayOfWeek;
+          return (
+            <button
+              key={w.dayOfWeek}
+              type="button"
+              onClick={() => onSelectDay(w.dayOfWeek)}
+              className={`standart-date-btn relative flex flex-1 flex-col items-center justify-center h-14 sm:h-16 rounded-xl transition-all ${
+                isSelected ? "selected-date font-bold" : "text-emerald-100/70"
               }`}
             >
-              {w.short}
-            </span>
-          </button>
-        );
-      })}
+              <span className="text-base sm:text-lg font-bold leading-none">
+                {w.dateNumber}
+              </span>
+              <span
+                className={`text-[10px] sm:text-[11px] font-semibold uppercase mt-1 ${
+                  isSelected ? "text-emerald-950 font-extrabold" : "text-zinc-400"
+                }`}
+              >
+                {w.short}
+              </span>
+              {w.isToday && (
+                <span
+                  className={`absolute top-1.5 right-1.5 h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full ${
+                    isSelected
+                      ? "bg-emerald-950"
+                      : "bg-emerald-400 shadow-[0_0_6px_#10B981]"
+                  }`}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

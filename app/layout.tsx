@@ -23,15 +23,10 @@ export default function RootLayout({
             __html: `
               try {
                 const raw = localStorage.getItem('app-theme') || 'standart';
-                const t = raw === 'standart-plus' ? 'standart' : raw;
+                const t = (raw === 'clock' || raw === 'garden') ? raw : 'standart';
                 document.documentElement.setAttribute('data-theme', t);
-                if (t === 'clock' || t === 'garden' || t === 'standart' || t === 'standart-plus') {
-                  document.documentElement.classList.add('dark');
-                  document.documentElement.setAttribute('data-mode', 'dark');
-                } else {
-                  document.documentElement.classList.remove('dark');
-                  document.documentElement.setAttribute('data-mode', 'light');
-                }
+                document.documentElement.classList.add('dark');
+                document.documentElement.setAttribute('data-mode', 'dark');
               } catch (e) {}
             `,
           }}

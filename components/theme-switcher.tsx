@@ -1,122 +1,105 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React from "react";
 import { useAppTheme, ThemeType } from "./theme-context";
-import { Palette, Check, ChevronDown } from "lucide-react";
+import { Sparkles, Globe, Flower2 } from "lucide-react";
 
-const THEMES: { id: ThemeType; name: string; desc: string; colors: string[] }[] = [
+interface ThemeOption {
+  id: ThemeType;
+  label: string;
+  mobileLabel: string;
+  icon: React.ComponentType<{ className?: string }>;
+  accentColor: string;
+  activeBg: string;
+  activeText: string;
+}
+
+const THEME_OPTIONS: ThemeOption[] = [
   {
     id: "standart",
-    name: "Стандарт",
-    desc: "Современный изумрудный интерфейс",
-    colors: ["#10b981", "#064e3b", "#070c09"],
-  },
-  {
-    id: "base",
-    name: "Базовая",
-    desc: "Классический светлый дневник",
-    colors: ["#18181b", "#10b981", "#71717a"],
+    label: "Стандарт",
+    mobileLabel: "Станд",
+    icon: Sparkles,
+    accentColor: "#10b981",
+    activeBg: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.25)]",
+    activeText: "text-emerald-300",
   },
   {
     id: "clock",
-    name: "Clock",
-    desc: "Планетарный циферблат с Землёй",
-    colors: ["#38bdf8", "#1e3a8a", "#06080c"],
+    label: "Clock",
+    mobileLabel: "Clock",
+    icon: Globe,
+    accentColor: "#38bdf8",
+    activeBg: "bg-sky-500/20 text-sky-300 border-sky-500/40 shadow-[0_0_12px_rgba(56,189,248,0.25)]",
+    activeText: "text-sky-300",
   },
   {
     id: "garden",
-    name: "Garden",
-    desc: "Скандинавский мох и тёплое золото",
-    colors: ["#fec868", "#abc270", "#182019"],
+    label: "Garden",
+    mobileLabel: "Garden",
+    icon: Flower2,
+    accentColor: "#fec868",
+    activeBg: "bg-[#FEC868]/20 text-[#FEC868] border-[#FEC868]/40 shadow-[0_0_12px_rgba(254,200,104,0.25)]",
+    activeText: "text-[#FEC868]",
   },
 ];
 
 export function ThemeSwitcher() {
   const { theme, setTheme, mounted } = useAppTheme();
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   if (!mounted) {
-    return <div className="h-9 w-24 sm:w-28 rounded-xl bg-white/10 animate-pulse shrink-0" />;
+    return (
+      <div className="h-9 w-48 sm:w-60 rounded-xl bg-white/5 border border-white/10 animate-pulse shrink-0" />
+    );
   }
 
-  const normalizedTheme = theme === "standart-plus" ? "standart" : theme;
-  const currentThemeObj = THEMES.find((t) => t.id === normalizedTheme) || THEMES[0];
+  const currentTheme = (theme === "clock" || theme === "garden") ? theme : "standart";
 
   return (
-    <div className="relative inline-flex items-center" ref={menuRef}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 sm:gap-2 rounded-xl border border-white/15 bg-white/10 px-2.5 sm:px-3 py-1.5 text-xs font-semibold backdrop-blur-md transition hover:bg-white/20 text-zinc-100 shadow-sm shrink-0 min-h-[36px]"
-      >
-        <Palette className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
-        <span className="whitespace-nowrap">{currentThemeObj.name}</span>
-        <div className="flex -space-x-1 shrink-0">
-          {currentThemeObj.colors.map((c, i) => (
-            <span
-              key={i}
-              className="inline-block h-2.5 w-2.5 rounded-full border border-black/40"
-              style={{ backgroundColor: c }}
-            />
-          ))}
-        </div>
-        <ChevronDown className={`h-3 w-3 text-zinc-400 transition-transform duration-200 shrink-0 ${open ? "rotate-180" : ""}`} />
-      </button>
+    <div
+      role="radiogroup"
+      aria-label="Переключатель темы оформления"
+      className="relative inline-flex items-center rounded-xl border border-white/10 bg-black/40 p-0.5 sm:p-1 shadow-inner backdrop-blur-md max-w-full overflow-hidden shrink min-h-[36px]"
+      style={{
+        marginRight: "env(safe-area-inset-right, 0px)",
+      }}
+    >
+      {THEME_OPTIONS.map((opt) => {
+        const isSelected = currentTheme === opt.id;
+        const IconComponent = opt.icon;
 
-      {open && (
-        <div className="absolute right-0 top-full mt-2 z-50 w-72 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-white/15 bg-[#0C1017]/95 p-2 shadow-2xl backdrop-blur-xl">
-          <div className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-            Оформление интерфейса
-          </div>
-          <div className="space-y-1">
-            {THEMES.map((t) => {
-              const isSelected = normalizedTheme === t.id;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => {
-                    setTheme(t.id);
-                    setOpen(false);
-                  }}
-                  className={`flex w-full min-h-[44px] items-center justify-between rounded-xl px-3 py-2 text-left transition ${
-                    isSelected
-                      ? "bg-white/15 font-semibold text-white shadow-inner"
-                      : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
-                  }`}
-                >
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2 text-xs">
-                      <span>{t.name}</span>
-                      <div className="flex -space-x-1">
-                        {t.colors.map((c, i) => (
-                          <span
-                            key={i}
-                            className="inline-block h-2 w-2 rounded-full border border-black/30"
-                            style={{ backgroundColor: c }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <div className="text-[10px] text-zinc-500">{t.desc}</div>
-                  </div>
-                  {isSelected && <Check className="h-4 w-4 text-emerald-400 shrink-0" />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+        return (
+          <button
+            key={opt.id}
+            type="button"
+            role="radio"
+            aria-checked={isSelected}
+            onClick={() => setTheme(opt.id)}
+            className={`relative flex items-center justify-center gap-1 sm:gap-1.5 rounded-lg px-2 sm:px-3 py-1.5 text-xs font-semibold transition-all duration-200 select-none shrink-0 ${
+              isSelected
+                ? `${opt.activeBg} border font-bold scale-[1.02]`
+                : "border border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+            }`}
+          >
+            <IconComponent
+              className={`h-3.5 w-3.5 shrink-0 ${
+                isSelected ? opt.activeText : "text-zinc-500"
+              }`}
+            />
+            <span className="hidden sm:inline whitespace-nowrap">{opt.label}</span>
+            <span className="inline sm:hidden whitespace-nowrap text-[11px] font-medium">
+              {opt.mobileLabel}
+            </span>
+            <span
+              className="inline-block h-1.5 w-1.5 rounded-full shrink-0"
+              style={{
+                backgroundColor: opt.accentColor,
+                opacity: isSelected ? 1 : 0.45,
+              }}
+            />
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -2,13 +2,18 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type ThemeType = "base" | "standart" | "standart-plus" | "clock" | "garden";
+export type ThemeType = "standart" | "clock" | "garden";
 
 interface ThemeContextType {
   theme: ThemeType;
-  setTheme: (theme: ThemeType) => void;
+  setTheme: (theme: ThemeType | string) => void;
   mounted: boolean;
 }
+
+const normalizeTheme = (t: string | null | undefined): ThemeType => {
+  if (t === "clock" || t === "garden") return t;
+  return "standart";
+};
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
@@ -19,25 +24,19 @@ export function ThemeProviderWrapper({ children }: { children: React.ReactNode }
   const applyThemeToDom = (newTheme: ThemeType) => {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
-    const domTheme = newTheme === "standart-plus" ? "standart" : newTheme;
+    const domTheme = normalizeTheme(newTheme);
     root.setAttribute("data-theme", domTheme);
 
-    if (domTheme === "clock" || domTheme === "standart" || domTheme === "garden") {
-      root.setAttribute("data-mode", "dark");
-      root.classList.add("dark");
-    } else {
-      root.setAttribute("data-mode", "light");
-      root.classList.remove("dark");
-    }
+    // Все три темы имеют темный режим
+    root.setAttribute("data-mode", "dark");
+    root.classList.add("dark");
   };
 
   useEffect(() => {
-    let savedTheme: ThemeType = "standart";
+    let savedTheme: "standart" | "clock" | "garden" = "standart";
     try {
-      const stored = localStorage.getItem("app-theme") as ThemeType;
-      if (stored) {
-        savedTheme = stored === "standart-plus" ? "standart" : stored;
-      }
+      const stored = localStorage.getItem("app-theme");
+      savedTheme = normalizeTheme(stored);
     } catch {
       savedTheme = "standart";
     }
@@ -46,8 +45,8 @@ export function ThemeProviderWrapper({ children }: { children: React.ReactNode }
     setMounted(true);
   }, []);
 
-  const setTheme = (newTheme: ThemeType) => {
-    const normalized = newTheme === "standart-plus" ? "standart" : newTheme;
+  const setTheme = (newTheme: ThemeType | string) => {
+    const normalized = normalizeTheme(newTheme);
     setThemeState(normalized);
     try {
       localStorage.setItem("app-theme", normalized);
