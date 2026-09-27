@@ -63,8 +63,9 @@ html[data-theme="standart"] .standart-date-btn.selected-date {
 }
 
 /* ==========================================================================
-   2. ТЕМА «CLOCK» (Неоновый Циановый Космос)
+   2. ТЕМА «PLANET» (Неоновый Циановый Космос)
    ========================================================================== */
+html[data-theme="planet"],
 html[data-theme="clock"] {
   --bg-main: #06080D;
   --bg-card: rgba(12, 17, 26, 0.72);
@@ -82,6 +83,7 @@ html[data-theme="clock"] {
   --glass-blur: blur(16px);
 }
 
+html[data-theme="planet"] .theme-btn,
 html[data-theme="clock"] .theme-btn {
   background: rgba(14, 165, 233, 0.16) !important;
   color: #38BDF8 !important;
@@ -91,6 +93,7 @@ html[data-theme="clock"] .theme-btn {
   box-shadow: 0 0 16px rgba(56, 189, 248, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
 }
 
+html[data-theme="planet"] .theme-btn:hover,
 html[data-theme="clock"] .theme-btn:hover {
   background: rgba(14, 165, 233, 0.3) !important;
   border-color: rgba(56, 189, 248, 0.7) !important;
@@ -99,28 +102,33 @@ html[data-theme="clock"] .theme-btn:hover {
   transform: translate3d(0, -1px, 0);
 }
 
+html[data-theme="planet"] .theme-btn:active,
 html[data-theme="clock"] .theme-btn:active {
   transform: translate3d(0, 0, 0) scale(0.98);
 }
 
+html[data-theme="planet"] .glass-panel,
 html[data-theme="clock"] .glass-panel {
   background: rgba(10, 14, 22, 0.75);
   border: 1px solid rgba(56, 189, 248, 0.2);
   backdrop-filter: blur(16px);
 }
 
+html[data-theme="planet"] .glass-interactive:hover,
 html[data-theme="clock"] .glass-interactive:hover {
   border-color: rgba(34, 211, 238, 0.7) !important;
   box-shadow: 0 0 24px -2px rgba(34, 211, 238, 0.35), inset 0 1px 2px rgba(56, 189, 248, 0.25) !important;
   transform: translate3d(0, -2px, 0);
 }
 
+html[data-theme="planet"] .theme-hw-chip,
 html[data-theme="clock"] .theme-hw-chip {
   background-color: rgba(14, 165, 233, 0.15) !important;
   color: #38BDF8 !important;
   border: 1px solid rgba(56, 189, 248, 0.35) !important;
 }
 
+html[data-theme="planet"] .theme-room-text,
 html[data-theme="clock"] .theme-room-text {
   color: #38BDF8 !important;
   text-shadow: 0 0 8px rgba(56, 189, 248, 0.45);
@@ -130,51 +138,42 @@ html[data-theme="clock"] .theme-room-text {
    3. ТЕМА «GARDEN» (Скандинавский мох и ультра-скругление)
    ========================================================================== */
 html[data-theme="garden"] {
-  --bg-main: #101611;
-  --bg-card: #182019;
-  --bg-surface: #202B21;
+  --bg-main: #0B120C;
+  --bg-card: rgba(20, 30, 21, 0.9);
+  --bg-surface: rgba(26, 39, 28, 0.94);
   --text-primary: #F8F6F0;
   --text-secondary: #ABC270;
-  --border-color: rgba(171, 194, 112, 0.2);
+  --border-color: rgba(171, 194, 112, 0.22);
   --accent-color: #FEC868;
-  --accent-contrast: #473C33;
-  --btn-primary-bg: #473C33;
-  --btn-primary-text: #FEC868;
-  --btn-primary-hover: #352C25;
+  --accent-contrast: #382C1E;
+  --btn-primary-bg: #FEC868;
+  --btn-primary-text: #382C1E;
+  --btn-primary-hover: #FFE29A;
   --btn-radius: 9999px;
+  --glass-blur: blur(14px);
 }
 
-html[data-theme="garden"] .garden-active-tab {
-  position: relative;
-  background-color: #FEC868;
-  border-top-left-radius: 28px;
-  border-top-right-radius: 28px;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  transform: translate3d(0, 0, 0);
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+html[data-theme="garden"] .glass-panel {
+  background: rgba(20, 30, 21, 0.88);
+  border: 1px solid rgba(171, 194, 112, 0.2);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 1px 0 rgba(254, 200, 104, 0.1);
 }
 
-html[data-theme="garden"] .garden-active-tab::before {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: -18px;
-  width: 18px;
-  height: 18px;
-  background: radial-gradient(circle at 0 0, transparent 18px, #FEC868 18.5px);
-  pointer-events: none;
+html[data-theme="garden"] .theme-btn {
+  background: #FEC868 !important;
+  color: #382C1E !important;
+  border: 1px solid rgba(254, 200, 104, 0.5) !important;
+  border-radius: 9999px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 14px rgba(254, 200, 104, 0.3) !important;
 }
 
-html[data-theme="garden"] .garden-active-tab::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  right: -18px;
-  width: 18px;
-  height: 18px;
-  background: radial-gradient(circle at 100% 0, transparent 18px, #FEC868 18.5px);
-  pointer-events: none;
+html[data-theme="garden"] .theme-btn:hover {
+  background: #FFE29A !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(254, 200, 104, 0.45) !important;
 }
 
 /* ==========================================================================

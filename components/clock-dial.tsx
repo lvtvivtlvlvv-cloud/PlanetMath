@@ -418,10 +418,10 @@ export function ClockDial({
   const ANGLE_STEP = 13.5;
   const horizonTopY = 82;
 
-  // Вращение глобуса без привязки к дням недели
+  // Вращение глобуса синхронно с направлением движения расписания
   const earthRotationAngle = useMemo(() => {
     const epochDays = Math.floor(dragAnchorDateRef.current.getTime() / (24 * 60 * 60 * 1000));
-    return ((epochDays + floatOffset) * 10.5) % 360;
+    return ((-epochDays - floatOffset) * 13.5) % 360;
   }, [floatOffset]);
 
   // Непрерывная дуга дат: 9 элементов вокруг центрального дня

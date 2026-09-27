@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type ThemeType = "standart" | "clock" | "garden";
+export type ThemeType = "standart" | "planet" | "garden";
 
 interface ThemeContextType {
   theme: ThemeType;
@@ -11,7 +11,8 @@ interface ThemeContextType {
 }
 
 const normalizeTheme = (t: string | null | undefined): ThemeType => {
-  if (t === "clock" || t === "garden") return t;
+  if (t === "planet" || t === "clock") return "planet";
+  if (t === "garden") return "garden";
   return "standart";
 };
 
@@ -27,13 +28,13 @@ export function ThemeProviderWrapper({ children }: { children: React.ReactNode }
     const domTheme = normalizeTheme(newTheme);
     root.setAttribute("data-theme", domTheme);
 
-    // Все три темы имеют темный режим
+    // Все темы имеют темный режим
     root.setAttribute("data-mode", "dark");
     root.classList.add("dark");
   };
 
   useEffect(() => {
-    let savedTheme: "standart" | "clock" | "garden" = "standart";
+    let savedTheme: ThemeType = "standart";
     try {
       const stored = localStorage.getItem("app-theme");
       savedTheme = normalizeTheme(stored);

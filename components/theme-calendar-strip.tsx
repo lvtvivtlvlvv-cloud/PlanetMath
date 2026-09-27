@@ -29,8 +29,8 @@ export function ThemeCalendarStrip({
 }: ThemeCalendarStripProps) {
   const { theme } = useAppTheme();
 
-  // 1. ТЕМА CLOCK: планетарный циферблат с Землёй
-  if (theme === "clock") {
+  // 1. ТЕМА PLANET: планетарный циферблат с Землёй
+  if (theme === "planet") {
     return (
       <ClockDial
         currentDate={currentDate || new Date()}
@@ -46,35 +46,44 @@ export function ThemeCalendarStrip({
     );
   }
 
-  // 2. ТЕМА GARDEN: органические вкладки, физически и визуально сливающиеся с таблицей
+  // 2. ТЕМА GARDEN: органические сверхскругленные дни, физически соединяющиеся с таблицей
   if (theme === "garden") {
     return (
-      <div className="relative z-10 flex items-end justify-between px-2 pt-2 bg-[#121913] rounded-t-[36px] sm:rounded-t-[44px] border-t border-x border-[#283829]/60">
-        {days.map((w) => {
-          const isSelected = selectedDayOfWeek === w.dayOfWeek;
-          return (
-            <button
-              key={w.dayOfWeek}
-              type="button"
-              onClick={() => onSelectDay(w.dayOfWeek)}
-              className={`relative flex flex-1 flex-col items-center justify-center transition-all ${
-                isSelected
-                  ? "garden-active-tab bg-[#FEC868] text-[#473C33] h-16 sm:h-18 font-black z-20 rounded-t-[26px] sm:rounded-t-[32px] -mb-[1px] shadow-sm"
-                  : "text-[#abc270]/70 hover:text-[#f8f6f0] h-14 pb-1 rounded-t-2xl hover:bg-white/5"
-              }`}
-            >
-              <span className="text-base sm:text-lg font-black leading-none">
-                {w.dateNumber}
-              </span>
-              <span className="text-[10px] sm:text-[11px] uppercase font-bold mt-1">
-                {w.short}
-              </span>
-              {w.isToday && !isSelected && (
-                <span className="h-1.5 w-1.5 rounded-full bg-[#FEC868] mt-0.5" />
-              )}
-            </button>
-          );
-        })}
+      <div className="relative z-10 w-full rounded-t-[40px] sm:rounded-t-[50px] bg-[#141E15] border-t-2 border-x-2 border-[#2D3E2F] px-2.5 sm:px-4 pt-3.5 pb-2.5 shadow-xl">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+          {days.map((w) => {
+            const isSelected = selectedDayOfWeek === w.dayOfWeek;
+            return (
+              <button
+                key={w.dayOfWeek}
+                type="button"
+                onClick={() => onSelectDay(w.dayOfWeek)}
+                className={`relative flex flex-1 flex-col items-center justify-center py-2.5 sm:py-3 rounded-[22px] sm:rounded-[28px] transition-all duration-200 select-none ${
+                  isSelected
+                    ? "bg-[#FEC868] text-[#382C1E] shadow-[0_6px_20px_rgba(254,200,104,0.4)] font-black scale-[1.04] z-20"
+                    : "text-[#ABC270]/80 hover:text-[#F8F6F0] hover:bg-white/5 font-semibold"
+                }`}
+              >
+                <span className="text-base sm:text-lg font-black leading-none">
+                  {w.dateNumber}
+                </span>
+                <span
+                  className={`text-[10px] sm:text-[11px] uppercase font-bold mt-1 tracking-wider ${
+                    isSelected ? "text-[#382C1E]" : "text-[#ABC270]/60"
+                  }`}
+                >
+                  {w.short}
+                </span>
+                {w.isToday && !isSelected && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#FEC868] mt-1 shadow-[0_0_6px_#FEC868]" />
+                )}
+                {isSelected && (
+                  <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-x-[6px] border-x-transparent border-t-[7px] border-t-[#FEC868] z-30" />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
     );
   }

@@ -194,18 +194,21 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
     }
   };
 
+  const isPlanet = theme === "planet";
+  const isGarden = theme === "garden";
+
   const roomColorClass =
-    theme === "clock"
+    isPlanet
       ? "theme-room-text"
-      : theme === "garden"
+      : isGarden
       ? "text-[#FEC868]"
       : "text-emerald-400";
 
   const hwBadgeClass =
-    theme === "clock"
+    isPlanet
       ? "theme-hw-chip"
-      : theme === "garden"
-      ? "bg-black/35 text-[#FEC868] border border-[#FEC868]/40 rounded-full px-3 py-1 font-bold"
+      : isGarden
+      ? "bg-[#1B291D] text-[#FEC868] border border-[#FEC868]/40 rounded-full px-3 py-1 font-bold"
       : "bg-emerald-950/50 text-emerald-300 border border-emerald-500/20";
 
   return (
@@ -283,43 +286,55 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                 ? "animate-week-left"
                 : ""
             } ${
-              theme === "garden"
-                ? "rounded-b-[44px] sm:rounded-b-[54px] bg-[#FEC868] p-5 sm:p-7 shadow-2xl text-[#473C33] border-b border-x border-[#FEC868] -mt-[1px] relative z-0"
+              isGarden
+                ? "rounded-b-[40px] sm:rounded-b-[50px] bg-[#141E15] p-5 sm:p-7 shadow-2xl text-[#F8F6F0] border-b-2 border-x-2 border-[#2D3E2F] relative z-0"
                 : "space-y-3 pt-1"
             }`}
           >
             {/* ПОДПИСЬ ТЕКУЩЕЙ ВЫБРАННОЙ ДАТЫ */}
-            <div className="mb-3">
-              <span
-                className={`font-bold text-sm tracking-wide ${
-                  theme === "garden"
-                    ? "text-[#473C33] font-black"
-                    : theme === "clock"
-                    ? "text-cyan-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]"
-                    : "text-emerald-400 font-bold"
-                }`}
-              >
-                {selectedDayOfWeek === 7
-                  ? `Воскресенье, ${activeDateFormatted} — Выходной день`
-                  : `Уроки на ${activeDateFormatted} (${SHORT_WEEKDAYS[selectedDayOfWeek - 1].toUpperCase()})`}
-              </span>
+            <div className={`mb-4 ${isGarden ? "pb-3.5 border-b border-[#243526]" : ""}`}>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span
+                  className={`font-bold text-sm tracking-wide ${
+                    isGarden
+                      ? "text-[#F8F6F0] font-extrabold flex items-center gap-2"
+                      : isPlanet
+                      ? "text-cyan-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]"
+                      : "text-emerald-400 font-bold"
+                  }`}
+                >
+                  {isGarden && <span className="h-2.5 w-2.5 rounded-full bg-[#FEC868] shadow-[0_0_8px_#FEC868] shrink-0" />}
+                  {selectedDayOfWeek === 7
+                    ? `Воскресенье, ${activeDateFormatted} — Выходной день`
+                    : `Уроки на ${activeDateFormatted} (${SHORT_WEEKDAYS[selectedDayOfWeek - 1].toUpperCase()})`}
+                </span>
+                {isGarden && (
+                  <span className="text-[11px] font-bold text-[#ABC270] uppercase tracking-wider px-3.5 py-0.5 rounded-full bg-[#1C2B1D] border border-[#2E4230]">
+                    {selectedDayOfWeek === 7 ? "Выходной" : SHORT_WEEKDAYS[selectedDayOfWeek - 1].toUpperCase()}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="space-y-3 min-h-[380px]">
               {activeDayLessons.length === 0 ? (
                 <div
-                  className={`flex h-64 flex-col items-center justify-center border border-dashed p-8 text-center text-sm ${
-                    theme === "garden"
-                      ? "rounded-[38px] border-2 border-dashed border-[#473C33]/30 text-[#473C33] bg-[#fec868]/40"
-                      : theme === "clock"
-                      ? "rounded-3xl border-cyan-500/20 text-cyan-300/80 bg-cyan-950/10"
-                      : "rounded-3xl border-zinc-800 text-zinc-400"
+                  className={`flex h-64 flex-col items-center justify-center p-8 text-center text-sm ${
+                    isGarden
+                      ? "rounded-[34px] border-2 border-dashed border-[#2D412F] text-[#ABC270] bg-[#111A12]/80"
+                      : isPlanet
+                      ? "rounded-3xl border border-cyan-500/20 text-cyan-300/80 bg-cyan-950/10"
+                      : "rounded-3xl border border-dashed border-zinc-800 text-zinc-400"
                   }`}
                 >
                   {selectedDayOfWeek === 7 ? (
                     <>
-                      <span className="text-base font-bold text-cyan-300">Воскресенье — выходной</span>
-                      <span className="text-xs text-zinc-400 mt-1">В этот день занятий нет, уроки начнутся в понедельник</span>
+                      <span className={`text-base font-bold ${isGarden ? "text-[#FEC868]" : "text-cyan-300"}`}>
+                        Воскресенье — выходной
+                      </span>
+                      <span className={`text-xs mt-1 ${isGarden ? "text-[#ABC270]" : "text-zinc-400"}`}>
+                        В этот день занятий нет, уроки начнутся в понедельник
+                      </span>
                     </>
                   ) : (
                     <span>В этот день занятий нет</span>
@@ -339,14 +354,14 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                       <div className="flex w-12 sm:w-14 flex-col justify-between py-1 text-right shrink-0">
                         <span
                           className={`text-xs sm:text-sm font-bold ${
-                            theme === "garden" ? "text-[#473C33]" : "text-zinc-100"
+                            isGarden ? "text-[#ABC270] font-black" : "text-zinc-100"
                           }`}
                         >
                           {l.startTime}
                         </span>
                         <span
                           className={`text-xs sm:text-sm font-medium ${
-                            theme === "garden" ? "text-[#473C33]/70" : "text-zinc-400"
+                            isGarden ? "text-[#ABC270]/60 font-semibold" : "text-zinc-400"
                           }`}
                         >
                           {l.endTime}
@@ -354,9 +369,9 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                       </div>
 
                       <div
-                        className={`group flex-1 p-4 shadow-sm transition ${
-                          theme === "garden"
-                            ? "bg-[#182019] text-white border border-[#2D3A2F] rounded-[28px] sm:rounded-[36px] shadow-lg"
+                        className={`group flex-1 p-4 sm:p-5 shadow-sm transition ${
+                          isGarden
+                            ? "bg-[#1A271C] text-white border border-[#2D412F] hover:border-[#ABC270]/40 rounded-[28px] sm:rounded-[36px] shadow-lg"
                             : "glass-panel glass-interactive rounded-2xl sm:rounded-3xl"
                         }`}
                       >
@@ -378,10 +393,10 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                               return (
                                 <div
                                   key={h.id}
-                                  className={`p-3 ${
-                                    theme === "garden"
-                                      ? "rounded-2xl bg-[#121913] border border-[#283829]"
-                                      : theme === "clock"
+                                  className={`p-3.5 ${
+                                    isGarden
+                                      ? "rounded-[22px] bg-[#111A12] border border-[#243626]"
+                                      : isPlanet
                                       ? "rounded-xl bg-[#090D15]/80 border border-cyan-500/25"
                                       : "rounded-xl border border-zinc-700/60 bg-black/20"
                                   }`}
@@ -408,7 +423,11 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                                       <button
                                         type="button"
                                         onClick={() => setActiveHwModal(h)}
-                                        className="theme-btn px-3 py-1 text-xs font-bold"
+                                        className={
+                                          isGarden
+                                            ? "rounded-full px-4 py-1.5 text-xs font-black bg-[#FEC868] text-[#382C1E] hover:bg-[#FFE29A] shadow-md transition"
+                                            : "theme-btn px-3 py-1 text-xs font-bold"
+                                        }
                                       >
                                         Сдать
                                       </button>
@@ -424,9 +443,11 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                                   )}
 
                                   {sub?.teacherComment && (
-                                    <div className={`mt-2 rounded-lg p-2 text-xs ${
-                                      theme === "clock"
+                                    <div className={`mt-2 rounded-xl p-2.5 text-xs ${
+                                      isPlanet
                                         ? "bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"
+                                        : isGarden
+                                        ? "bg-[#FEC868]/10 text-[#FEC868] border border-[#FEC868]/20"
                                         : "bg-emerald-500/10 text-emerald-300"
                                     }`}>
                                       <span className="font-semibold">Комментарий учителя: </span>

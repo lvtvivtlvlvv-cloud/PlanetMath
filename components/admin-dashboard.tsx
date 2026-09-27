@@ -335,18 +335,21 @@ export function AdminDashboard({
     return Array.from(new Set(submissions.map((s) => s.subjectName)));
   }, [submissions]);
 
+  const isPlanet = theme === "planet";
+  const isGarden = theme === "garden";
+
   const roomColorClass =
-    theme === "clock"
+    isPlanet
       ? "theme-room-text"
-      : theme === "garden"
+      : isGarden
       ? "text-[#FEC868]"
       : "text-emerald-400";
 
   const hwBadgeClass =
-    theme === "clock"
+    isPlanet
       ? "theme-hw-chip"
-      : theme === "garden"
-      ? "bg-black/25 text-[#FEC868] border border-[#FEC868]/30"
+      : isGarden
+      ? "bg-[#1B291D] text-[#FEC868] border border-[#FEC868]/40 rounded-full px-3 py-1 font-bold"
       : "bg-emerald-950/50 text-emerald-300 border border-emerald-500/20";
 
   return (
@@ -382,11 +385,11 @@ export function AdminDashboard({
           const isActive = activeTab === tab.id;
 
           let activeClasses = "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 shadow-md";
-          if (theme === "clock") {
+          if (isPlanet) {
             activeClasses = "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-[0_0_16px_rgba(56,189,248,0.25)] backdrop-blur-md";
           } else if (theme === "standart") {
             activeClasses = "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_16px_rgba(16,185,129,0.2)] backdrop-blur-md";
-          } else if (theme === "garden") {
+          } else if (isGarden) {
             activeClasses = "bg-[#FEC868]/20 text-[#FEC868] border-[#FEC868]/40 shadow-[0_0_16px_rgba(254,200,104,0.2)]";
           }
 
@@ -510,21 +513,22 @@ export function AdminDashboard({
                       ? "animate-week-left"
                       : ""
                   } ${
-                    theme === "garden"
-                      ? "rounded-b-[38px] rounded-tr-[38px] bg-[#FEC868] p-5 sm:p-6 shadow-2xl text-[#473C33]"
+                    isGarden
+                      ? "rounded-b-[40px] sm:rounded-b-[50px] bg-[#141E15] p-5 sm:p-7 shadow-2xl text-[#F8F6F0] border-b-2 border-x-2 border-[#2D3E2F] relative z-0"
                       : "space-y-4 pt-1"
                   }`}
                 >
-                  <div className="flex justify-between items-center mb-3">
+                  <div className={`flex justify-between items-center mb-4 ${isGarden ? "pb-3.5 border-b border-[#243526]" : ""}`}>
                     <span
                       className={`font-bold text-sm tracking-wide ${
-                        theme === "garden"
-                          ? "text-[#473C33]"
-                          : theme === "clock"
+                        isGarden
+                          ? "text-[#F8F6F0] font-extrabold flex items-center gap-2"
+                          : isPlanet
                           ? "text-cyan-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]"
                           : "text-emerald-400 font-bold"
                       }`}
                     >
+                      {isGarden && <span className="h-2.5 w-2.5 rounded-full bg-[#FEC868] shadow-[0_0_8px_#FEC868] shrink-0" />}
                       {selectedDayOfWeek === 7
                         ? `Воскресенье, ${activeDateFormatted} — Выходной день`
                         : `Уроки на ${activeDateFormatted} (${SHORT_WEEKDAYS[selectedDayOfWeek - 1].toUpperCase()})`}
@@ -537,7 +541,11 @@ export function AdminDashboard({
                           setLessonDayOfWeek(selectedDayOfWeek);
                           setIsAddLessonOpen(true);
                         }}
-                        className="theme-btn flex items-center gap-1.5 px-4 py-2 text-xs font-bold shadow-md"
+                        className={
+                          isGarden
+                            ? "rounded-full px-4 py-2 text-xs font-black bg-[#FEC868] text-[#382C1E] hover:bg-[#FFE29A] shadow-md flex items-center gap-1.5 transition"
+                            : "theme-btn flex items-center gap-1.5 px-4 py-2 text-xs font-bold shadow-md"
+                        }
                       >
                         <Plus className="h-3.5 w-3.5" />
                         <span>Добавить занятие</span>
@@ -548,18 +556,18 @@ export function AdminDashboard({
                   <div className="space-y-3 min-h-[380px]">
                     {activeDayLessons.length === 0 ? (
                       <div
-                        className={`flex h-64 flex-col items-center justify-center rounded-3xl border border-dashed p-8 text-center text-sm ${
-                          theme === "garden"
-                            ? "border-[#473C33]/30 text-[#473C33]"
-                            : theme === "clock"
-                            ? "border-cyan-500/20 text-cyan-300/80 bg-cyan-950/10"
-                            : "border-zinc-800 text-zinc-400"
+                        className={`flex h-64 flex-col items-center justify-center p-8 text-center text-sm ${
+                          isGarden
+                            ? "rounded-[34px] border-2 border-dashed border-[#2D412F] text-[#ABC270] bg-[#111A12]/80"
+                            : isPlanet
+                            ? "rounded-3xl border border-cyan-500/20 text-cyan-300/80 bg-cyan-950/10"
+                            : "rounded-3xl border border-dashed border-zinc-800 text-zinc-400"
                         }`}
                       >
                         {selectedDayOfWeek === 7 ? (
                           <>
-                            <span className="text-base font-bold text-cyan-300">Воскресенье — выходной</span>
-                            <span className="text-xs text-zinc-400 mt-1">Занятий нет, учебный процесс возобновится в понедельник</span>
+                            <span className={`text-base font-bold ${isGarden ? "text-[#FEC868]" : "text-cyan-300"}`}>Воскресенье — выходной</span>
+                            <span className={`text-xs mt-1 ${isGarden ? "text-[#ABC270]" : "text-zinc-400"}`}>Занятий нет, учебный процесс возобновится в понедельник</span>
                           </>
                         ) : (
                           <span>Уроков в этот день нет</span>
@@ -580,14 +588,14 @@ export function AdminDashboard({
                             <div className="flex w-12 sm:w-14 flex-col justify-between py-1 text-right shrink-0">
                               <span
                                 className={`text-xs sm:text-sm font-bold ${
-                                  theme === "garden" ? "text-[#473C33]" : "text-zinc-100"
+                                  isGarden ? "text-[#ABC270] font-black" : "text-zinc-100"
                                 }`}
                               >
                                 {l.startTime}
                               </span>
                               <span
                                 className={`text-xs sm:text-sm font-medium ${
-                                  theme === "garden" ? "text-[#473C33]/70" : "text-zinc-400"
+                                  isGarden ? "text-[#ABC270]/60 font-semibold" : "text-zinc-400"
                                 }`}
                               >
                                 {l.endTime}
@@ -595,10 +603,10 @@ export function AdminDashboard({
                             </div>
 
                             <div
-                              className={`group flex-1 rounded-2xl sm:rounded-3xl p-4 shadow-sm transition ${
-                                theme === "garden"
-                                  ? "bg-[#182019] text-white border border-[#2D3A2F]"
-                                  : "glass-panel glass-interactive"
+                              className={`group flex-1 p-4 sm:p-5 shadow-sm transition ${
+                                isGarden
+                                  ? "bg-[#1A271C] text-white border border-[#2D412F] hover:border-[#ABC270]/40 rounded-[28px] sm:rounded-[36px] shadow-lg"
+                                  : "glass-panel glass-interactive rounded-2xl sm:rounded-3xl"
                               }`}
                             >
                               <div className="flex items-start justify-between">
