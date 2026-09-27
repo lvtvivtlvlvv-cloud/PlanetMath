@@ -29,6 +29,7 @@ export default async function AdminPage() {
     db.homework.findMany({
       include: {
         classGroup: true,
+        attachments: true,
         _count: { select: { submissions: true } },
       },
       orderBy: { targetDate: "desc" },
@@ -78,13 +79,24 @@ export default async function AdminPage() {
     description: h.description,
     targetDate: h.targetDate.toISOString().split("T")[0],
     submissionsCount: h._count.submissions,
+    attachments: (h.attachments || []).map((a) => ({
+      id: a.id,
+      fileName: a.fileName,
+      fileUrl: a.fileUrl,
+      fileType: a.fileType,
+      fileSize: a.fileSize,
+      expiresAt: a.expiresAt.toISOString(),
+    })),
   }));
 
   const formattedSubmissions = submissions.map((s) => ({
     id: s.id,
+    homeworkId: s.homeworkId,
+    studentId: s.studentId,
     studentName: s.student.fullName,
     subjectName: s.homework.subjectName,
     homeworkTitle: s.homework.title,
+    targetDate: s.homework.targetDate.toISOString().split("T")[0],
     content: s.content,
     submittedAt: s.submittedAt.toISOString(),
     status: s.status,

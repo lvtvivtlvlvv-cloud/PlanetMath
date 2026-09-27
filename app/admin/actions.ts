@@ -169,12 +169,32 @@ export async function deleteHomeworkAction(homeworkId: string) {
   revalidatePath("/student");
 }
 
-export async function gradeSubmissionAction(submissionId: string, grade: number, comment?: string) {
+export async function gradeSubmissionAction(
+  submissionId: string,
+  grade: number,
+  comment?: string,
+  annotationsJson?: string,
+  tasksJson?: string
+) {
   if (grade < 1 || grade > 5) throw new Error("Оценка должна быть от 1 до 5");
+
+  let packedComment = comment ?? "";
+  if (annotationsJson || tasksJson) {
+    try {
+      const payload = {
+        text: comment ?? "",
+        annotations: annotationsJson ? JSON.parse(annotationsJson) : [],
+        tasks: tasksJson ? JSON.parse(tasksJson) : {},
+      };
+      packedComment = JSON.stringify(payload);
+    } catch {
+      packedComment = comment ?? "";
+    }
+  }
 
   await db.homeworkSubmission.update({
     where: { id: submissionId },
-    data: { grade, teacherComment: comment ?? null, status: "GRADED", gradedAt: new Date() },
+    data: { grade, teacherComment: packedComment, status: "GRADED", gradedAt: new Date() },
   });
 
   revalidatePath("/admin");

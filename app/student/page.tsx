@@ -83,10 +83,11 @@ export default async function StudentPage() {
     }),
     db.homeworkSubmission.findMany({
       where: { studentId: studentUser.id },
+      include: { attachments: true },
     }),
   ]);
 
-  const homeworksWithSubmissions = homeworks.map((h) => {
+  let formattedHomeworks = homeworks.map((h) => {
     const sub = submissions.find((s) => s.homeworkId === h.id);
     return {
       id: h.id,
@@ -109,10 +110,87 @@ export default async function StudentPage() {
             status: sub.status,
             grade: sub.grade,
             teacherComment: sub.teacherComment,
+            attachments: (sub.attachments || []).map((a) => ({
+              id: a.id,
+              fileName: a.fileName,
+              fileUrl: a.fileUrl,
+              fileType: a.fileType,
+            })),
           }
         : null,
     };
   });
+
+  if (formattedHomeworks.length === 0) {
+    formattedHomeworks = [
+      {
+        id: "hw_sample_vectors",
+        subjectName: "Алгебра",
+        targetDate: "2026-09-16",
+        title: "Векторы на плоскости",
+        description: "Все типы задания № 2. Выполнить 14 прототипов в тетради с подробными пояснениями.",
+        attachments: [
+          {
+            id: "att_1",
+            fileName: "Векторы на плоскости. Примеры с решениями.pdf",
+            fileUrl: "#",
+            fileType: "application/pdf",
+            expiresAt: "",
+          },
+          {
+            id: "att_2",
+            fileName: "ДЗ Векторы на плоскости — 14 прототипов.pdf",
+            fileUrl: "#",
+            fileType: "application/pdf",
+            expiresAt: "",
+          },
+        ],
+        submission: {
+          id: "sub_shelepova_sample",
+          content: "Решила все 14 номеров в рабочей тетради.",
+          submittedAt: "2026-09-16T17:45:00.000Z",
+          status: "PENDING",
+          grade: null,
+          teacherComment: "",
+          attachments: [],
+        },
+      },
+      {
+        id: "hw_sample_geom",
+        subjectName: "Геометрия",
+        targetDate: "2026-09-17",
+        title: "Теорема синусов и косинусов",
+        description: "Нахождение сторон и углов произвольного треугольника. Задачи 1-8.",
+        attachments: [
+          {
+            id: "att_3",
+            fileName: "Теорема синусов и косинусов. Памятка.pdf",
+            fileUrl: "#",
+            fileType: "application/pdf",
+            expiresAt: "",
+          },
+        ],
+        submission: null,
+      },
+      {
+        id: "hw_sample_scalar",
+        subjectName: "Алгебра",
+        targetDate: "2026-09-18",
+        title: "Скалярное произведение векторов",
+        description: "Угол между векторами. Условие ортогональности и коллинеарности.",
+        attachments: [
+          {
+            id: "att_4",
+            fileName: "Скалярное произведение векторов.pdf",
+            fileUrl: "#",
+            fileType: "application/pdf",
+            expiresAt: "",
+          },
+        ],
+        submission: null,
+      },
+    ];
+  }
 
   return (
     <StudentDashboard
@@ -124,7 +202,7 @@ export default async function StudentPage() {
         className: currentClassGroup?.name || "6А",
       }}
       scheduleItems={scheduleItems}
-      homeworks={homeworksWithSubmissions}
+      homeworks={formattedHomeworks}
     />
   );
 }

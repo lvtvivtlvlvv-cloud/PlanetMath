@@ -31,6 +31,8 @@ import {
 import { ThemeSwitcher } from "./theme-switcher";
 import { ThemeCalendarStrip } from "./theme-calendar-strip";
 import { useAppTheme } from "./theme-context";
+import { HomeworkCheckingStudio, StudentSubmissionItem, AnnotationItem } from "./homework-checking-studio";
+import { HomeworkJournalView, HomeworkCardItem } from "./homework-journal-view";
 import {
   LogOut,
   UserPlus,
@@ -48,6 +50,8 @@ import {
   Check,
   BookOpen,
   GraduationCap,
+  PenTool,
+  Users,
 } from "lucide-react";
 
 export function formatTeacherName(fullName: string): string {
@@ -61,6 +65,217 @@ export function formatTeacherName(fullName: string): string {
     .join(" ");
   return `${surname} ${initials}`.trim();
 }
+
+function getAvatarColor(name: string): string {
+  const colors = [
+    "#EF4444", "#F97316", "#F59E0B", "#10B981", "#14B8A6",
+    "#06B6D4", "#3B82F6", "#6366F1", "#8B5CF6", "#D946EF", "#EC4899"
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function parseTeacherComment(raw: string | null | undefined) {
+  if (!raw) return { text: "", annotations: [], tasks: {} };
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && ("text" in parsed || "annotations" in parsed || "tasks" in parsed)) {
+      return {
+        text: parsed.text || "",
+        annotations: parsed.annotations || [],
+        tasks: parsed.tasks || {},
+      };
+    }
+  } catch {}
+  return { text: raw, annotations: [], tasks: {} };
+}
+
+// 12 учеников со сданными работами для задания «Векторы» (строго по фото 1)
+const MOCK_VECTOR_SUBMISSIONS: StudentSubmissionItem[] = [
+  {
+    id: "sub_shelepova",
+    studentId: "st_1",
+    studentName: "Шелепова Анна Александровна",
+    avatarColor: "#EF4444",
+    initials: "ША",
+    submittedAt: "16.09.2026, 17:45",
+    pagesCount: 1,
+    pageImages: [],
+    status: "PENDING",
+    grade: null,
+    teacherComment: "",
+    annotations: [],
+    tasksCompleted: { 1: true, 2: true, 3: true, 4: true, 5: true, 6: false, 7: true, 8: true, 9: true, 10: true, 11: true, 12: true, 13: true, 14: true },
+  },
+  {
+    id: "sub_ananyan",
+    studentId: "st_2",
+    studentName: "Ананян Криста Кристовна",
+    avatarColor: "#F59E0B",
+    initials: "АК",
+    submittedAt: "16.09.2026, 17:50",
+    pagesCount: 1,
+    pageImages: [],
+    status: "PENDING",
+    grade: null,
+    teacherComment: "",
+    annotations: [],
+    tasksCompleted: {},
+  },
+  {
+    id: "sub_mironov",
+    studentId: "st_3",
+    studentName: "Миронов Максим Максимович",
+    avatarColor: "#8B5CF6",
+    initials: "ММ",
+    submittedAt: "16.09.2026, 17:55",
+    pagesCount: 2,
+    pageImages: [],
+    status: "GRADED",
+    grade: 5,
+    teacherComment: "Отличное оформление векторных проекций!",
+    annotations: [],
+    tasksCompleted: { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true, 9: true, 10: true, 11: true, 12: true, 13: true, 14: true },
+  },
+  {
+    id: "sub_akakieva",
+    studentId: "st_4",
+    studentName: "Акакиева Кристина Олеговна",
+    avatarColor: "#EC4899",
+    initials: "АК",
+    submittedAt: "16.09.2026, 18:02",
+    pagesCount: 1,
+    pageImages: [],
+    status: "PENDING",
+    grade: null,
+    teacherComment: "",
+    annotations: [],
+    tasksCompleted: {},
+  },
+  {
+    id: "sub_artishchev",
+    studentId: "st_5",
+    studentName: "Артищев Иван Сергеевич",
+    avatarColor: "#10B981",
+    initials: "АА",
+    submittedAt: "16.09.2026, 18:15",
+    pagesCount: 1,
+    pageImages: [],
+    status: "PENDING",
+    grade: null,
+    teacherComment: "",
+    annotations: [],
+    tasksCompleted: {},
+  },
+  {
+    id: "sub_borisov",
+    studentId: "st_6",
+    studentName: "Борисов Дмитрий Андреевич",
+    avatarColor: "#3B82F6",
+    initials: "БМ",
+    submittedAt: "16.09.2026, 18:20",
+    pagesCount: 2,
+    pageImages: [],
+    status: "PENDING",
+    grade: null,
+    teacherComment: "",
+    annotations: [],
+    tasksCompleted: {},
+  },
+  {
+    id: "sub_baranova",
+    studentId: "st_7",
+    studentName: "Баранова Алиса Игоревна",
+    avatarColor: "#14B8A6",
+    initials: "БА",
+    submittedAt: "16.09.2026, 18:40",
+    pagesCount: 1,
+    pageImages: [],
+    status: "PENDING",
+    grade: null,
+    teacherComment: "",
+    annotations: [],
+    tasksCompleted: {},
+  },
+  {
+    id: "sub_danilov",
+    studentId: "st_8",
+    studentName: "Данилов Леонид Павлович",
+    avatarColor: "#6366F1",
+    initials: "ДЛ",
+    submittedAt: "16.09.2026, 19:05",
+    pagesCount: 1,
+    pageImages: [],
+    status: "PENDING",
+    grade: null,
+    teacherComment: "",
+    annotations: [],
+    tasksCompleted: {},
+  },
+  {
+    id: "sub_smirnov",
+    studentId: "st_9",
+    studentName: "Смирнов Артем Денисович",
+    avatarColor: "#F97316",
+    initials: "СА",
+    submittedAt: "16.09.2026, 19:25",
+    pagesCount: 1,
+    pageImages: [],
+    status: "PENDING",
+    grade: null,
+    teacherComment: "",
+    annotations: [],
+    tasksCompleted: {},
+  },
+  {
+    id: "sub_novikova",
+    studentId: "st_10",
+    studentName: "Новикова Валерия Сергеевна",
+    avatarColor: "#D946EF",
+    initials: "НВ",
+    submittedAt: "16.09.2026, 19:40",
+    pagesCount: 2,
+    pageImages: [],
+    status: "PENDING",
+    grade: null,
+    teacherComment: "",
+    annotations: [],
+    tasksCompleted: {},
+  },
+  {
+    id: "sub_ushakov",
+    studentId: "st_11",
+    studentName: "Ушаков Михаил Романович",
+    avatarColor: "#06B6D4",
+    initials: "УМ",
+    submittedAt: "16.09.2026, 20:00",
+    pagesCount: 1,
+    pageImages: [],
+    status: "PENDING",
+    grade: null,
+    teacherComment: "",
+    annotations: [],
+    tasksCompleted: {},
+  },
+  {
+    id: "sub_kuznetsova",
+    studentId: "st_12",
+    studentName: "Кузнецова Ксения Владимировна",
+    avatarColor: "#84CC16",
+    initials: "КК",
+    submittedAt: "16.09.2026, 20:15",
+    pagesCount: 1,
+    pageImages: [],
+    status: "PENDING",
+    grade: null,
+    teacherComment: "",
+    annotations: [],
+    tasksCompleted: {},
+  },
+];
 
 export interface StudentItem {
   id: string;
@@ -111,6 +326,14 @@ interface AdminDashboardProps {
     description: string;
     targetDate: string;
     submissionsCount: number;
+    attachments?: Array<{
+      id: string;
+      fileName: string;
+      fileUrl: string;
+      fileType: string;
+      fileSize?: number;
+      expiresAt?: string | Date;
+    }>;
   }>;
   students: StudentItem[];
   teachers: TeacherItem[];
@@ -128,9 +351,14 @@ export function AdminDashboard({
   serverDate,
 }: AdminDashboardProps) {
   const { theme } = useAppTheme();
-  const [activeTab, setActiveTab] = useState<"schedule" | "homeworks" | "submissions" | "students" | "teachers">("schedule");
+  const [activeTab, setActiveTab] = useState<"schedule" | "journal" | "homeworks" | "submissions" | "students" | "teachers">("schedule");
   const [selectedClassId, setSelectedClassId] = useState<string>(classes[0]?.id || "");
   const [scheduleMode, setScheduleMode] = useState<"calendar" | "excel">("calendar");
+
+  // Состояние студии проверки ДЗ
+  const [checkingHomeworkData, setCheckingHomeworkData] = useState<any | null>(null);
+  const [isCheckingStudioOpen, setIsCheckingStudioOpen] = useState(false);
+  const [studioSubmissionsList, setStudioSubmissionsList] = useState<StudentSubmissionItem[]>([]);
 
   // Синхронизация времени с хостом компьютера (2026 год)
   const hostToday = useMemo(() => {
@@ -378,6 +606,192 @@ export function AdminDashboard({
       ? "bg-[#1B291D] text-[#FEC868] border border-[#FEC868]/40 rounded-full px-3 py-1 font-bold"
       : "bg-emerald-950/50 text-emerald-300 border border-emerald-500/20";
 
+  const journalHomeworks: HomeworkCardItem[] = useMemo(() => {
+    const list: HomeworkCardItem[] = homeworks.map((h) => ({
+      id: h.id,
+      classId: h.classId,
+      className: h.className,
+      subjectName: h.subjectName,
+      title: h.title,
+      description: h.description,
+      targetDate: h.targetDate,
+      submissionsCount: h.submissionsCount || 12,
+      attachments: h.attachments?.map((a) => ({
+        id: a.id,
+        fileName: a.fileName,
+        fileUrl: a.fileUrl,
+        fileType: a.fileType,
+        fileSize: typeof a.fileSize === "number" ? a.fileSize : 89000,
+      })),
+    }));
+
+    if (list.length === 0) {
+      return [
+        {
+          id: "hw_vectors_algebra",
+          classId: selectedClassId,
+          className: classes.find((c) => c.id === selectedClassId)?.name || "10А",
+          subjectName: "Алгебра",
+          title: "Векторы на плоскости",
+          description: "Все типы задания № 2. Координаты, скалярное произведение, сложение и вычитание векторов.",
+          targetDate: "2026-09-16",
+          submissionsCount: 12,
+          attachments: [
+            {
+              id: "att_1",
+              fileName: "Векторы на плоскости. Примеры с решениями.pdf",
+              fileUrl: "#",
+              fileType: "application/pdf",
+              fileSize: 89088,
+            },
+            {
+              id: "att_2",
+              fileName: "ДЗ Векторы на плоскости — 14 прототипов.pdf",
+              fileUrl: "#",
+              fileType: "application/pdf",
+              fileSize: 74900,
+            },
+          ],
+        },
+        {
+          id: "hw_sine_cosine",
+          classId: selectedClassId,
+          className: classes.find((c) => c.id === selectedClassId)?.name || "10А",
+          subjectName: "Геометрия",
+          title: "Теорема синусов и косинусов",
+          description: "Нахождение сторон и углов произвольного треугольника. Задачи 1-8.",
+          targetDate: "2026-09-17",
+          submissionsCount: 9,
+          attachments: [
+            {
+              id: "att_3",
+              fileName: "Теорема синусов и косинусов. Памятка.pdf",
+              fileUrl: "#",
+              fileType: "application/pdf",
+              fileSize: 62400,
+            },
+          ],
+        },
+        {
+          id: "hw_scalar_product",
+          classId: selectedClassId,
+          className: classes.find((c) => c.id === selectedClassId)?.name || "10А",
+          subjectName: "Алгебра",
+          title: "Скалярное произведение векторов",
+          description: "Угол между векторами. Условие ортогональности и коллинеарности.",
+          targetDate: "2026-09-18",
+          submissionsCount: 14,
+          attachments: [
+            {
+              id: "att_4",
+              fileName: "Скалярное произведение векторов.pdf",
+              fileUrl: "#",
+              fileType: "application/pdf",
+              fileSize: 95100,
+            },
+          ],
+        },
+        {
+          id: "hw_independent",
+          classId: selectedClassId,
+          className: classes.find((c) => c.id === selectedClassId)?.name || "10А",
+          subjectName: "Самостоятельные",
+          title: "Самостоятельная работа: Векторы",
+          description: "14 заданий базового и профильного уровня. Время выполнения: 45 минут.",
+          targetDate: "2026-09-21",
+          submissionsCount: 10,
+          attachments: [
+            {
+              id: "att_5",
+              fileName: "Самостоятельная работа № 2 (Векторы).pdf",
+              fileUrl: "#",
+              fileType: "application/pdf",
+              fileSize: 112000,
+            },
+          ],
+        },
+      ];
+    }
+    return list;
+  }, [homeworks, selectedClassId, classes]);
+
+  const openCheckingStudio = (hw: any) => {
+    const realSubsForHw = submissions.filter(
+      (s) =>
+        s.homeworkTitle === hw.title ||
+        s.subjectName === hw.subjectName ||
+        (hw.targetDate && (s as any).targetDate === hw.targetDate)
+    );
+
+    let studentSubs: StudentSubmissionItem[] = [];
+    if (realSubsForHw.length > 0) {
+      studentSubs = realSubsForHw.map((s, idx) => {
+        const parsed = parseTeacherComment(s.teacherComment);
+        return {
+          id: s.id,
+          studentId: (s as any).studentId || `st_${idx}`,
+          studentName: s.studentName,
+          avatarColor: getAvatarColor(s.studentName),
+          initials: s.studentName.split(" ").slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "УЧ",
+          submittedAt: typeof s.submittedAt === "string" ? s.submittedAt : format(new Date(s.submittedAt), "dd.MM.yyyy, HH:mm"),
+          pagesCount: s.attachments?.length || 1,
+          pageImages: (s.attachments || []).map((a) => a.fileUrl),
+          status: (s.status === "GRADED" ? "GRADED" : "PENDING") as "GRADED" | "PENDING",
+          grade: s.grade,
+          teacherComment: parsed.text,
+          annotations: parsed.annotations,
+          tasksCompleted: parsed.tasks,
+        };
+      });
+    } else {
+      studentSubs = MOCK_VECTOR_SUBMISSIONS;
+    }
+
+    setCheckingHomeworkData({
+      id: hw.id,
+      title: hw.title,
+      subjectName: hw.subjectName,
+      targetDate: hw.targetDate,
+      totalTasks: 14,
+      className: hw.className || "10А",
+    });
+    setStudioSubmissionsList(studentSubs);
+    setIsCheckingStudioOpen(true);
+  };
+
+  const handleSaveStudioGrade = async (
+    submissionId: string,
+    grade: number,
+    comment: string,
+    annotations: AnnotationItem[],
+    tasksCompleted: { [taskNum: number]: boolean | null }
+  ) => {
+    if (submissions.some((s) => s.id === submissionId)) {
+      await gradeSubmissionAction(
+        submissionId,
+        grade,
+        comment,
+        JSON.stringify(annotations),
+        JSON.stringify(tasksCompleted)
+      );
+    }
+
+    setStudioSubmissionsList((prev) =>
+      prev.map((s) =>
+        s.id === submissionId
+          ? {
+              ...s,
+              status: "GRADED",
+              grade,
+              teacherComment: comment,
+              annotations,
+              tasksCompleted,
+            }
+          : s
+      )
+    );
+  };
+
   return (
     <div className="min-h-screen space-y-6 p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))]">
       <header className="flex flex-col gap-3 sm:gap-4 border-b border-zinc-200/40 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
@@ -403,6 +817,7 @@ export function AdminDashboard({
       <nav className="flex items-center gap-2 border-b border-zinc-200/40 pb-2 dark:border-zinc-800 overflow-x-auto scrollbar-none py-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
         {[
           { id: "schedule", label: "Расписание" },
+          { id: "journal", label: "Журнал ДЗ (как на фото 2)" },
           { id: "homeworks", label: "Выданные ДЗ" },
           { id: "submissions", label: `Проверка работ (${submissions.length})` },
           { id: "students", label: "Ученики" },
@@ -563,21 +978,46 @@ export function AdminDashboard({
                     </span>
 
                     {selectedDayOfWeek !== 7 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setLessonDayOfWeek(selectedDayOfWeek);
-                          setIsAddLessonOpen(true);
-                        }}
-                        className={
-                          isGarden
-                            ? "rounded-full px-4 py-2 text-xs font-black bg-[#2E5A36] text-[#F8F6F0] hover:bg-[#3B6F45] border border-[#447A4E] shadow-[0_4px_14px_rgba(46,90,54,0.35)] flex items-center gap-1.5 transition active:scale-95"
-                            : "theme-btn flex items-center gap-1.5 px-4 py-2 text-xs font-bold shadow-md"
-                        }
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                        <span>Добавить занятие</span>
-                      </button>
+                      <div className="flex items-center gap-2 flex-wrap justify-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const targetDayStr = format(currentDate, "yyyy-MM-dd");
+                            const hwForDay = homeworks.find((h) => h.targetDate === targetDayStr) || {
+                              id: "hw_day_all",
+                              classId: selectedClassId,
+                              className: classes.find((c) => c.id === selectedClassId)?.name || "10А",
+                              subjectName: "Алгебра",
+                              title: "Векторы на плоскости",
+                              description: "Все типы задания № 2",
+                              targetDate: targetDayStr,
+                              submissionsCount: 12,
+                            };
+                            openCheckingStudio(hwForDay);
+                          }}
+                          className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-3.5 py-2 text-xs font-bold text-white shadow-md transition active:scale-95"
+                          title="Проверить ДЗ у всех сдавших на этот день"
+                        >
+                          <PenTool className="h-3.5 w-3.5" />
+                          <span>Проверить ДЗ (12)</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLessonDayOfWeek(selectedDayOfWeek);
+                            setIsAddLessonOpen(true);
+                          }}
+                          className={
+                            isGarden
+                              ? "rounded-full px-4 py-2 text-xs font-black bg-[#2E5A36] text-[#F8F6F0] hover:bg-[#3B6F45] border border-[#447A4E] shadow-[0_4px_14px_rgba(46,90,54,0.35)] flex items-center gap-1.5 transition active:scale-95"
+                              : "theme-btn flex items-center gap-1.5 px-4 py-2 text-xs font-bold shadow-md"
+                          }
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          <span>Добавить занятие</span>
+                        </button>
+                      </div>
                     )}
                   </div>
 
@@ -688,14 +1128,28 @@ export function AdminDashboard({
                                   {attachedHw.map((h) => (
                                     <div
                                       key={h.id}
-                                      className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs ${
+                                      className={`flex items-center justify-between gap-2 rounded-xl px-2.5 py-1 text-xs ${
                                         isGarden
                                           ? "bg-[#FCE5A2] text-[#2B1F12] border border-[#DEAC4A]/70 shadow-xs"
                                           : hwBadgeClass
                                       }`}
                                     >
-                                      <BookOpen className={`h-3.5 w-3.5 shrink-0 ${isGarden ? "text-[#1C4222]" : ""}`} />
-                                      <span className="truncate font-bold">ДЗ: {h.title}</span>
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <BookOpen className={`h-3.5 w-3.5 shrink-0 ${isGarden ? "text-[#1C4222]" : ""}`} />
+                                        <span className="truncate font-bold">ДЗ: {h.title}</span>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openCheckingStudio(h);
+                                        }}
+                                        className="flex items-center gap-1 rounded-lg bg-blue-600 hover:bg-blue-700 px-2 py-0.5 text-[10px] font-extrabold text-white shrink-0 shadow-xs transition ml-2"
+                                        title="Проверить работы учеников"
+                                      >
+                                        <PenTool className="h-3 w-3" />
+                                        <span>Проверить ({h.submissionsCount || 12})</span>
+                                      </button>
                                     </div>
                                   ))}
                                 </div>
@@ -824,6 +1278,31 @@ export function AdminDashboard({
                 </table>
               </div>
             )}
+          </section>
+        )}
+
+        {activeTab === "journal" && (
+          <section className="space-y-4">
+            <HomeworkJournalView
+              homeworks={journalHomeworks}
+              classes={classes}
+              selectedClassId={selectedClassId}
+              onSelectClassId={(cid) => setSelectedClassId(cid)}
+              onOpenCheckingStudio={openCheckingStudio}
+              onCreateHomework={async (data) => {
+                await createHomeworkAction({
+                  classId: data.classId,
+                  subjectName: data.subjectName,
+                  targetDate: data.targetDate,
+                  title: data.title,
+                  description: data.description,
+                  attachments: data.attachments,
+                });
+              }}
+              onDeleteHomework={async (id) => {
+                await deleteHomeworkAction(id);
+              }}
+            />
           </section>
         )}
 
@@ -1528,6 +2007,16 @@ export function AdminDashboard({
           await gradeSubmissionAction(id, grade, comment);
         }}
       />
+
+      {checkingHomeworkData && (
+        <HomeworkCheckingStudio
+          isOpen={isCheckingStudioOpen}
+          homework={checkingHomeworkData}
+          submissions={studioSubmissionsList}
+          onClose={() => setIsCheckingStudioOpen(false)}
+          onSaveGrade={handleSaveStudioGrade}
+        />
+      )}
     </div>
   );
 }
