@@ -77,7 +77,7 @@ export default function LoginPage() {
                 required
                 value={login}
                 onChange={(e) => setLogin(e.target.value)}
-                placeholder="admin или логин ученика"
+                placeholder="Логин"
                 className="h-10 w-full rounded-xl border border-zinc-200/80 bg-transparent pl-9 pr-3 text-sm focus:outline-none dark:border-zinc-700"
               />
             </div>
@@ -106,10 +106,6 @@ export default function LoginPage() {
             {loading ? "Авторизация..." : "Войти в систему"}
           </button>
         </form>
-
-        <div className="mt-6 border-t border-zinc-200/40 pt-4 text-center text-[11px] text-zinc-400">
-          Демо: admin / admin123 (учитель) | user / user123 (ученик)
-        </div>
       </div>
     </div>
   );

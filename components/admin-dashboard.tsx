@@ -803,7 +803,7 @@ export function AdminDashboard({
       <nav className="flex items-center gap-2 border-b border-zinc-200/40 pb-2 dark:border-zinc-800 overflow-x-auto scrollbar-none py-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
         {[
           { id: "schedule", label: "Расписание" },
-          { id: "journal", label: "Журнал ДЗ (как на фото 2)" },
+          { id: "journal", label: "Журнал ДЗ" },
           { id: "homeworks", label: "Выданные ДЗ" },
           { id: "submissions", label: `Проверка работ (${submissions.length})` },
           { id: "students", label: "Ученики" },

@@ -1353,20 +1353,32 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
         </div>
       )}
 
-      {/* Модальное окно просмотра проверенной работы с пометками учителя (как на фото 1) */}
+      {/* Модальное окно просмотра проверенной работы с пометками учителя */}
       {viewCheckedHwModal && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-zinc-900/90 p-2 sm:p-4 backdrop-blur-md overflow-hidden text-zinc-900 font-sans">
+        <div className="fixed inset-0 z-50 flex flex-col bg-zinc-950/90 p-2 sm:p-4 backdrop-blur-md overflow-hidden text-zinc-100 font-sans">
           {/* Header */}
-          <div className="flex h-14 w-full items-center justify-between rounded-t-3xl bg-white px-4 sm:px-6 border-b border-zinc-200 shadow-sm shrink-0">
+          <div className={`flex h-14 w-full items-center justify-between rounded-t-3xl px-4 sm:px-6 border-b shadow-sm shrink-0 ${
+            isPlanet
+              ? "bg-[#090D18]/95 border-sky-500/25 text-zinc-100 backdrop-blur-xl"
+              : isGarden
+              ? "bg-[#141C16]/95 border-[#FEC868]/25 text-zinc-100 backdrop-blur-xl"
+              : "bg-[#0C121A]/95 border-emerald-500/25 text-zinc-100 backdrop-blur-xl"
+          }`}>
             <div className="flex items-center gap-3 min-w-0">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100 text-blue-700 font-bold text-xs shrink-0">
+              <span className={`flex h-8 w-8 items-center justify-center rounded-xl font-bold text-xs shrink-0 ${
+                isPlanet
+                  ? "bg-sky-500/20 text-sky-300 border border-sky-500/30"
+                  : isGarden
+                  ? "bg-[#FEC868]/20 text-[#FEC868] border border-[#FEC868]/30"
+                  : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+              }`}>
                 ДЗ
               </span>
               <div className="min-w-0">
-                <h3 className="text-sm sm:text-base font-extrabold text-zinc-900 truncate">
+                <h3 className="text-sm sm:text-base font-extrabold text-zinc-100 truncate">
                   {viewCheckedHwModal.title}
                 </h3>
-                <p className="text-[11px] font-semibold text-zinc-500">
+                <p className="text-[11px] font-semibold text-zinc-400">
                   {viewCheckedHwModal.subjectName} • Проверено учителем
                 </p>
               </div>
@@ -1376,7 +1388,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
               <button
                 type="button"
                 onClick={() => setCheckedPageRotation((prev) => (prev + 90) % 360)}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-600 hover:bg-zinc-100 transition"
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white transition"
                 title="Повернуть лист на 90°"
               >
                 <RotateCw className="h-4 w-4" />
@@ -1385,7 +1397,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
               <button
                 type="button"
                 onClick={() => setCheckedZoom((prev) => (prev === 1 ? 1.25 : prev === 1.25 ? 1.5 : 1))}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-600 hover:bg-zinc-100 transition"
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white transition"
                 title="Масштаб"
               >
                 {checkedZoom > 1 ? <ZoomOut className="h-4 w-4" /> : <ZoomIn className="h-4 w-4" />}
@@ -1395,7 +1407,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                 <a
                   href={parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment).modifiedImageUrl}
                   download={`Проверенное_ДЗ_${viewCheckedHwModal.subjectName}.jpg`}
-                  className="hidden sm:flex items-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 shadow-xs"
+                  className="hidden sm:flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-zinc-200 hover:bg-white/15 shadow-xs"
                 >
                   <Download className="h-3.5 w-3.5" />
                   <span>Скачать с пометками</span>
@@ -1404,7 +1416,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="hidden sm:flex items-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 shadow-xs"
+                  className="hidden sm:flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-zinc-200 hover:bg-white/15 shadow-xs"
                 >
                   <Download className="h-3.5 w-3.5" />
                   <span>Печать / PDF</span>
@@ -1414,7 +1426,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
               <button
                 type="button"
                 onClick={() => setViewCheckedHwModal(null)}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 hover:bg-zinc-100 hover:text-zinc-800 transition"
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white transition"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1422,7 +1434,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
           </div>
 
           {/* Body: Center Viewport + Right Grading Sidebar */}
-          <div className="flex flex-1 overflow-hidden rounded-b-3xl bg-white flex-col md:flex-row">
+          <div className="flex flex-1 overflow-hidden rounded-b-3xl bg-[#05070A] flex-col md:flex-row">
             {/* Center: Actual checked homework with teacher's annotations or modified image */}
             {(() => {
               const feedback = parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment);
@@ -1578,15 +1590,21 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
               }
 
               return (
-                <aside className="w-full md:w-80 shrink-0 border-t md:border-t-0 md:border-l border-zinc-200 bg-zinc-50/80 p-4 sm:p-5 flex flex-col justify-between overflow-y-auto max-h-[220px] md:max-h-none">
+                <aside className={`w-full md:w-80 shrink-0 border-t md:border-t-0 md:border-l p-4 sm:p-5 flex flex-col justify-between overflow-y-auto max-h-[240px] md:max-h-none ${
+                  isPlanet
+                    ? "bg-[#070A12]/95 border-sky-500/20 text-zinc-100"
+                    : isGarden
+                    ? "bg-[#111713]/95 border-[#FEC868]/20 text-zinc-100"
+                    : "bg-[#0A0E15]/95 border-emerald-500/20 text-zinc-100"
+                }`}>
                   <div className="space-y-4 sm:space-y-5">
                     {/* 1. Выполнение заданий (если отмечены учителем) */}
                     {taskEntries.length > 0 && (
                       <div>
-                        <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-zinc-200">
                           Выполнение заданий ({taskEntries.length} задач)
                         </h4>
-                        <p className="text-[11px] text-zinc-500 mt-0.5">
+                        <p className="text-[11px] text-zinc-400 mt-0.5">
                           Отметки преподавателя по номерам:
                         </p>
 
@@ -1596,10 +1614,10 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                               key={num}
                               className={`flex h-9 items-center justify-center rounded-xl text-xs font-black shadow-xs ${
                                 isOk === true
-                                  ? "bg-emerald-500 text-white"
+                                  ? "bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.3)]"
                                   : isOk === false
-                                  ? "bg-rose-500 text-white"
-                                  : "bg-zinc-200 text-zinc-600"
+                                  ? "bg-rose-500 text-white shadow-[0_0_10px_rgba(244,63,94,0.3)]"
+                                  : "bg-white/10 text-zinc-300"
                               }`}
                             >
                               {num}
@@ -1610,8 +1628,8 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                     )}
 
                     {/* 2. Итоговая оценка */}
-                    <div className="pt-3 sm:pt-4 border-t border-zinc-200 space-y-2">
-                      <span className="text-xs font-black text-zinc-900 block">
+                    <div className="pt-3 sm:pt-4 border-t border-white/10 space-y-2">
+                      <span className="text-xs font-black text-zinc-200 block">
                         Итоговая оценка учителя:
                       </span>
 
@@ -1620,7 +1638,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                           {gradeVal}
                         </div>
                         <div>
-                          <div className="text-xs font-extrabold text-zinc-900">
+                          <div className="text-xs font-extrabold text-zinc-100">
                             {gradeText}
                           </div>
                           <div className="text-[10px] text-zinc-400">
@@ -1631,22 +1649,28 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
                     </div>
 
                     {/* 3. Комментарий учителя */}
-                    <div className="pt-3 sm:pt-4 border-t border-zinc-200">
-                      <span className="text-xs font-black text-zinc-900 block mb-1">
+                    <div className="pt-3 sm:pt-4 border-t border-white/10">
+                      <span className="text-xs font-black text-zinc-200 block mb-1">
                         Замечания преподавателя:
                       </span>
-                      <div className="rounded-2xl border border-zinc-200 bg-white p-3.5 text-xs text-zinc-800 leading-relaxed shadow-xs">
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-3.5 text-xs text-zinc-200 leading-relaxed shadow-xs">
                         {feedback.text || "Работа проверена преподавателем. Все требования выполнены."}
                       </div>
                     </div>
                   </div>
 
                   {/* Close Button */}
-                  <div className="pt-4 border-t border-zinc-200">
+                  <div className="pt-4 border-t border-white/10">
                     <button
                       type="button"
                       onClick={() => setViewCheckedHwModal(null)}
-                      className="w-full rounded-xl bg-zinc-900 py-2.5 text-xs font-black text-white hover:bg-zinc-800 transition"
+                      className={`w-full rounded-xl py-2.5 text-xs font-black transition ${
+                        isPlanet
+                          ? "bg-sky-500 text-slate-950 hover:bg-sky-400 shadow-[0_0_16px_rgba(56,189,248,0.3)]"
+                          : isGarden
+                          ? "bg-[#FEC868] text-zinc-950 hover:bg-[#ffe082] shadow-[0_0_16px_rgba(254,200,104,0.3)]"
+                          : "bg-emerald-600 text-white hover:bg-emerald-500 shadow-[0_0_16px_rgba(16,185,129,0.3)]"
+                      }`}
                     >
                       Закрыть просмотр
                     </button>

@@ -34,6 +34,8 @@ import {
   ZoomOut,
   SlidersHorizontal,
 } from "lucide-react";
+import { useAppTheme } from "./theme-context";
+import { ThemeSwitcher } from "./theme-switcher";
 
 export interface AnnotationStroke {
   id: string;
@@ -164,6 +166,79 @@ export function HomeworkCheckingStudio({
   const [isLeftCollapsed, setIsLeftCollapsed] = useState<boolean>(false);
   const [isRightCollapsed, setIsRightCollapsed] = useState<boolean>(false);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
+
+  const { theme } = useAppTheme();
+  const isPlanet = theme === "planet";
+  const isGarden = theme === "garden";
+
+  // Dynamic theme styling matching the chosen theme
+  const themeTokens = {
+    headerBg: isPlanet
+      ? "bg-[#090D18]/95 border-sky-500/25 text-zinc-100 backdrop-blur-xl"
+      : isGarden
+      ? "bg-[#141C16]/95 border-[#FEC868]/25 text-zinc-100 backdrop-blur-xl"
+      : "bg-[#0C121A]/95 border-emerald-500/25 text-zinc-100 backdrop-blur-xl",
+
+    sidebarBg: isPlanet
+      ? "bg-[#070A12]/95 border-sky-500/20 text-zinc-100 backdrop-blur-xl"
+      : isGarden
+      ? "bg-[#111713]/95 border-[#FEC868]/20 text-zinc-100 backdrop-blur-xl"
+      : "bg-[#0A0E15]/95 border-emerald-500/20 text-zinc-100 backdrop-blur-xl",
+
+    panelSubHeaderBg: isPlanet
+      ? "bg-sky-950/30 border-sky-500/20 text-zinc-200"
+      : isGarden
+      ? "bg-[#1A251D]/50 border-[#FEC868]/20 text-zinc-200"
+      : "bg-emerald-950/30 border-emerald-500/20 text-zinc-200",
+
+    accentBtn: isPlanet
+      ? "bg-sky-500 hover:bg-sky-400 text-slate-950 shadow-[0_0_16px_rgba(56,189,248,0.35)]"
+      : isGarden
+      ? "bg-[#FEC868] hover:bg-[#ffe082] text-zinc-950 shadow-[0_0_16px_rgba(254,200,104,0.35)]"
+      : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_16px_rgba(16,185,129,0.3)]",
+
+    activeToolBtn: isPlanet
+      ? "bg-sky-500 text-slate-950 shadow-sm"
+      : isGarden
+      ? "bg-[#FEC868] text-zinc-950 shadow-sm"
+      : "bg-emerald-600 text-white shadow-sm",
+
+    activeStudentItem: isPlanet
+      ? "bg-sky-500/15 border-l-4 border-sky-400 text-sky-200"
+      : isGarden
+      ? "bg-[#FEC868]/15 border-l-4 border-[#FEC868] text-[#FEC868]"
+      : "bg-emerald-500/15 border-l-4 border-emerald-500 text-emerald-300",
+
+    focusBtn: isPlanet
+      ? "bg-sky-500 hover:bg-sky-400 text-slate-950 font-black shadow-[0_0_12px_rgba(56,189,248,0.35)]"
+      : isGarden
+      ? "bg-[#FEC868] hover:bg-[#ffe082] text-zinc-950 font-black shadow-[0_0_12px_rgba(254,200,104,0.35)]"
+      : "bg-emerald-600 hover:bg-emerald-500 text-white font-black shadow-[0_0_12px_rgba(16,185,129,0.3)]",
+
+    accentText: isPlanet
+      ? "text-sky-400"
+      : isGarden
+      ? "text-[#FEC868]"
+      : "text-emerald-400",
+
+    accentBorder: isPlanet
+      ? "border-sky-500/30"
+      : isGarden
+      ? "border-[#FEC868]/30"
+      : "border-emerald-500/30",
+
+    collapsedStrip: isPlanet
+      ? "bg-[#070A12] border-sky-500/20 text-sky-300 hover:bg-sky-950/40"
+      : isGarden
+      ? "bg-[#111713] border-[#FEC868]/20 text-[#FEC868] hover:bg-[#1A251D]/60"
+      : "bg-[#0A0E15] border-emerald-500/20 text-emerald-300 hover:bg-emerald-950/40",
+
+    progressBar: isPlanet
+      ? "bg-sky-400"
+      : isGarden
+      ? "bg-[#FEC868]"
+      : "bg-emerald-500",
+  };
 
   // Индекс и переключение между учениками
   const currentStudentIdx = submissions.findIndex((s) => s.id === (currentSubmission?.id || selectedStudentId));
@@ -677,21 +752,21 @@ export function HomeworkCheckingStudio({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#F3F4F6] text-zinc-900 select-none overflow-hidden font-sans">
+    <div className={`fixed inset-0 z-50 flex flex-col select-none overflow-hidden font-sans ${themeTokens.sidebarBg}`}>
       {/* ПЛАВАЮЩИЙ ХАД-ТУЛБАР В РЕЖИМЕ "ТОЛЬКО ФОТО" (СВЕРНУТО ВСЁ, КРОМЕ КАРТИНКИ ФАЙЛА) */}
       {isFocusMode && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 sm:gap-2 bg-zinc-950/90 backdrop-blur-2xl border border-zinc-700/80 p-1.5 sm:p-2 rounded-2xl shadow-2xl text-white max-w-[96vw] overflow-x-auto scrollbar-none animate-in fade-in zoom-in-95 duration-200">
+        <div className={`absolute top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-2xl shadow-2xl max-w-[96vw] overflow-x-auto scrollbar-none animate-in fade-in zoom-in-95 duration-200 border ${themeTokens.headerBg}`}>
           <button
             type="button"
             onClick={() => setIsFocusMode(false)}
-            className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-xs font-black transition shadow-sm active:scale-95 shrink-0"
+            className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition shadow-sm active:scale-95 shrink-0 ${themeTokens.accentBtn}`}
             title="Развернуть все панели [Esc]"
           >
             <Minimize2 className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Развернуть всё</span>
           </button>
 
-          <div className="h-5 w-px bg-zinc-700/80 shrink-0" />
+          <div className="h-5 w-px bg-white/20 shrink-0" />
 
           {/* Переключатель учеников */}
           <div className="flex items-center gap-1 bg-white/5 rounded-xl px-1.5 py-0.5 border border-white/10 shrink-0">
@@ -723,7 +798,7 @@ export function HomeworkCheckingStudio({
             </button>
           </div>
 
-          <div className="h-5 w-px bg-zinc-700/80 shrink-0" />
+          <div className="h-5 w-px bg-white/20 shrink-0" />
 
           {/* Инструменты рисования */}
           <div className="flex items-center bg-white/10 p-0.5 rounded-xl border border-white/10 shrink-0">
@@ -731,7 +806,7 @@ export function HomeworkCheckingStudio({
               type="button"
               onClick={() => setActiveTool("pen")}
               className={`p-1.5 rounded-lg text-xs font-bold transition ${
-                activeTool === "pen" ? "bg-blue-600 text-white shadow-xs" : "text-zinc-400 hover:text-white"
+                activeTool === "pen" ? `${themeTokens.activeToolBtn} shadow-xs` : "text-zinc-400 hover:text-white"
               }`}
               title="Ручка"
             >
@@ -741,7 +816,7 @@ export function HomeworkCheckingStudio({
               type="button"
               onClick={() => setActiveTool("text")}
               className={`p-1.5 rounded-lg text-xs font-bold transition ${
-                activeTool === "text" ? "bg-blue-600 text-white shadow-xs" : "text-zinc-400 hover:text-white"
+                activeTool === "text" ? `${themeTokens.activeToolBtn} shadow-xs` : "text-zinc-400 hover:text-white"
               }`}
               title="Текст"
             >
@@ -751,7 +826,7 @@ export function HomeworkCheckingStudio({
               type="button"
               onClick={() => setActiveTool("eraser")}
               className={`p-1.5 rounded-lg text-xs font-bold transition ${
-                activeTool === "eraser" ? "bg-blue-600 text-white shadow-xs" : "text-zinc-400 hover:text-white"
+                activeTool === "eraser" ? `${themeTokens.activeToolBtn} shadow-xs` : "text-zinc-400 hover:text-white"
               }`}
               title="Ластик"
             >
@@ -767,7 +842,7 @@ export function HomeworkCheckingStudio({
                 type="button"
                 onClick={() => setPenColor(c.hex)}
                 className={`h-5 w-5 rounded-full transition-transform ${
-                  penColor === c.hex ? "scale-115 ring-2 ring-blue-400 ring-offset-1 ring-offset-black" : "hover:scale-105"
+                  penColor === c.hex ? "scale-115 ring-2 ring-white ring-offset-1 ring-offset-black" : "hover:scale-105"
                 }`}
                 style={{ backgroundColor: c.hex }}
                 title={c.name}
@@ -805,7 +880,7 @@ export function HomeworkCheckingStudio({
             </button>
           </div>
 
-          <div className="h-5 w-px bg-zinc-700/80 shrink-0" />
+          <div className="h-5 w-px bg-white/20 shrink-0" />
 
           {/* Оценка */}
           <div className="flex items-center gap-1 bg-white/5 p-0.5 rounded-xl border border-white/10 shrink-0">
@@ -816,7 +891,7 @@ export function HomeworkCheckingStudio({
                 onClick={() => setCurrentGrade(g)}
                 className={`h-7 w-7 rounded-lg text-xs font-black transition ${
                   currentGrade === g
-                    ? "bg-blue-600 text-white shadow-xs"
+                    ? `${themeTokens.accentBtn} shadow-xs scale-105`
                     : "text-zinc-400 hover:text-white hover:bg-white/10"
                 }`}
                 title={`Оценка ${g}`}
@@ -831,14 +906,14 @@ export function HomeworkCheckingStudio({
             type="button"
             disabled={isSaving}
             onClick={() => handleSaveGrade(false)}
-            className="flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 text-xs font-black transition shadow-xs disabled:opacity-50 shrink-0"
+            className={`flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-black transition shadow-xs disabled:opacity-50 shrink-0 ${themeTokens.accentBtn}`}
             title="Сохранить оценку"
           >
             <Save className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">{isSaving ? "..." : "Сохранить"}</span>
           </button>
 
-          <div className="h-5 w-px bg-zinc-700/80 shrink-0" />
+          <div className="h-5 w-px bg-white/20 shrink-0" />
 
           <button
             type="button"
@@ -851,37 +926,37 @@ export function HomeworkCheckingStudio({
         </div>
       )}
 
-      {/* 1. TOP HEADER TOOLBAR (Matching Image 1) — скрывается в режиме "Только фото" */}
+      {/* 1. TOP HEADER TOOLBAR — адаптирован под выбранную тему */}
       {!isFocusMode && (
-        <header className="flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-4 shadow-xs">
+        <header className={`flex h-14 w-full shrink-0 items-center justify-between border-b px-4 shadow-xs ${themeTokens.headerBg}`}>
           {/* Left Section: Back, Title, Mode */}
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition"
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white transition"
               title="Вернуться назад"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
 
             <div>
-              <h1 className="text-sm sm:text-base font-extrabold tracking-tight text-zinc-900 leading-tight">
+              <h1 className="text-sm sm:text-base font-extrabold tracking-tight text-zinc-100 leading-tight">
                 Проверка домашней работы
               </h1>
-              <p className="text-[11px] font-semibold text-zinc-500 leading-none mt-0.5">
+              <p className="text-[11px] font-semibold text-zinc-400 leading-none mt-0.5">
                 {homework.title} • {homework.subjectName}
               </p>
             </div>
 
-            <div className="hidden md:flex items-center ml-4 pl-4 border-l border-zinc-200 gap-1 bg-zinc-100/80 p-0.5 rounded-xl text-xs font-semibold">
+            <div className="hidden md:flex items-center ml-4 pl-4 border-l border-white/15 gap-1 bg-white/5 p-0.5 rounded-xl text-xs font-semibold border border-white/10">
               <button
                 type="button"
                 onClick={() => setViewMode("single")}
                 className={`px-3 py-1 rounded-lg transition ${
                   viewMode === "single"
-                    ? "bg-white text-zinc-900 shadow-xs font-bold"
-                    : "text-zinc-500 hover:text-zinc-900"
+                    ? `${themeTokens.activeToolBtn} font-bold shadow-xs`
+                    : "text-zinc-400 hover:text-white"
                 }`}
               >
                 По ученикам
@@ -891,11 +966,11 @@ export function HomeworkCheckingStudio({
                 onClick={() => setViewMode("all")}
                 className={`px-3 py-1 rounded-lg transition ${
                   viewMode === "all"
-                    ? "bg-white text-zinc-900 shadow-xs font-bold"
-                    : "text-zinc-500 hover:text-zinc-900"
+                    ? `${themeTokens.activeToolBtn} font-bold shadow-xs`
+                    : "text-zinc-400 hover:text-white"
                 }`}
               >
-                Все работы одним документом
+                Все работы
               </button>
             </div>
 
@@ -903,7 +978,7 @@ export function HomeworkCheckingStudio({
             <button
               type="button"
               onClick={() => setIsFocusMode(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-blue-600 hover:bg-blue-700 text-white shadow-xs hover:shadow-md transition active:scale-95 shrink-0 ml-2"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black shadow-xs hover:shadow-md transition active:scale-95 shrink-0 ml-2 ${themeTokens.focusBtn}`}
               title="Свернуть всё, кроме картинки файла [Клавиша F]"
             >
               <Maximize2 className="h-3.5 w-3.5" />
@@ -914,172 +989,177 @@ export function HomeworkCheckingStudio({
           {/* Center / Right: Drawing Tools (Pen, Text, Eraser, Colors, Thickness, Undo/Redo) */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Main Drawing Tools */}
-            <div className="flex items-center rounded-xl bg-zinc-100 p-1 border border-zinc-200/80">
-            <button
-              type="button"
-              onClick={() => setActiveTool("pen")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                activeTool === "pen"
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "text-zinc-700 hover:bg-white/80"
-              }`}
-              title="Ручка (свободное рисование)"
-            >
-              <PenTool className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Ручка</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTool("text")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                activeTool === "text"
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "text-zinc-700 hover:bg-white/80"
-              }`}
-              title="Текст (кликните на фото, чтобы оставить комментарий)"
-            >
-              <Type className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Текст</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTool("eraser")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                activeTool === "eraser"
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "text-zinc-700 hover:bg-white/80"
-              }`}
-              title="Ластик (удаляет штрихи и текстовые пометки)"
-            >
-              <Eraser className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Ластик</span>
-            </button>
-          </div>
-
-          {/* Color Picker */}
-          <div className="hidden sm:flex items-center gap-1.5 px-2 border-l border-r border-zinc-200">
-            {PALETTE.map((c) => (
+            <div className="flex items-center rounded-xl bg-white/5 p-1 border border-white/10">
               <button
-                key={c.hex}
                 type="button"
-                onClick={() => setPenColor(c.hex)}
-                className={`h-6 w-6 rounded-full transition-transform ${
-                  penColor === c.hex ? "scale-115 ring-2 ring-blue-500 ring-offset-2" : "hover:scale-105"
+                onClick={() => setActiveTool("pen")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                  activeTool === "pen"
+                    ? `${themeTokens.activeToolBtn} shadow-xs`
+                    : "text-zinc-400 hover:text-white hover:bg-white/10"
                 }`}
-                style={{ backgroundColor: c.hex }}
-                title={c.name}
-              />
-            ))}
-          </div>
-
-          {/* Stroke Width Selector */}
-          <div className="hidden md:flex items-center gap-1 bg-zinc-100 rounded-lg p-1">
-            {[2, 4, 8].map((w) => (
-              <button
-                key={w}
-                type="button"
-                onClick={() => setStrokeWidth(w)}
-                className={`flex h-7 w-7 items-center justify-center rounded transition ${
-                  strokeWidth === w ? "bg-white font-bold text-blue-600 shadow-xs" : "text-zinc-500 hover:text-zinc-900"
-                }`}
-                title={`Толщина: ${w}px`}
+                title="Ручка (свободное рисование)"
               >
-                <div
-                  className="rounded-full bg-current"
-                  style={{ width: `${w * 1.5}px`, height: `${w * 1.5}px` }}
-                />
+                <PenTool className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Ручка</span>
               </button>
-            ))}
+
+              <button
+                type="button"
+                onClick={() => setActiveTool("text")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                  activeTool === "text"
+                    ? `${themeTokens.activeToolBtn} shadow-xs`
+                    : "text-zinc-400 hover:text-white hover:bg-white/10"
+                }`}
+                title="Текст (кликните на фото, чтобы оставить комментарий)"
+              >
+                <Type className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Текст</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTool("eraser")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                  activeTool === "eraser"
+                    ? `${themeTokens.activeToolBtn} shadow-xs`
+                    : "text-zinc-400 hover:text-white hover:bg-white/10"
+                }`}
+                title="Ластик (удаляет штрихи и текстовые пометки)"
+              >
+                <Eraser className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Ластик</span>
+              </button>
+            </div>
+
+            {/* Color Picker */}
+            <div className="hidden sm:flex items-center gap-1.5 px-2 border-l border-r border-white/15">
+              {PALETTE.map((c) => (
+                <button
+                  key={c.hex}
+                  type="button"
+                  onClick={() => setPenColor(c.hex)}
+                  className={`h-6 w-6 rounded-full transition-transform ${
+                    penColor === c.hex ? "scale-115 ring-2 ring-white ring-offset-2 ring-offset-black" : "hover:scale-105"
+                  }`}
+                  style={{ backgroundColor: c.hex }}
+                  title={c.name}
+                />
+              ))}
+            </div>
+
+            {/* Stroke Width Selector */}
+            <div className="hidden md:flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg p-1">
+              {[2, 4, 8].map((w) => (
+                <button
+                  key={w}
+                  type="button"
+                  onClick={() => setStrokeWidth(w)}
+                  className={`flex h-7 w-7 items-center justify-center rounded transition ${
+                    strokeWidth === w ? `${themeTokens.activeToolBtn} font-bold shadow-xs` : "text-zinc-400 hover:text-white"
+                  }`}
+                  title={`Толщина: ${w}px`}
+                >
+                  <div
+                    className="rounded-full bg-current"
+                    style={{ width: `${w * 1.5}px`, height: `${w * 1.5}px` }}
+                  />
+                </button>
+              ))}
+            </div>
+
+            {/* Undo / Redo */}
+            <div className="flex items-center gap-0.5">
+              <button
+                type="button"
+                onClick={handleUndo}
+                disabled={!undoStackMap[currentSubmission?.id]?.length}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 disabled:opacity-20"
+                title="Отменить действие"
+              >
+                <Undo2 className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={handleRedo}
+                disabled={!redoStackMap[currentSubmission?.id]?.length}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 disabled:opacity-20"
+                title="Повторить действие"
+              >
+                <Redo2 className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={handleClearPage}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-red-500/20 hover:text-red-400 transition"
+                title="Очистить все пометки"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Rotate & Download Actions */}
+            <div className="flex items-center gap-1 pl-1">
+              <button
+                type="button"
+                onClick={handleRotate}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10"
+                title="Повернуть фото на 90°"
+              >
+                <RotateCw className="h-4 w-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="hidden lg:flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-zinc-200 hover:bg-white/15 shadow-xs"
+                title="Скачать или распечатать с пометками"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span>PDF</span>
+              </button>
+
+              {/* Переключатель тем прямо в шапке проверки ДЗ */}
+              <div className="hidden xl:block shrink-0">
+                <ThemeSwitcher />
+              </div>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
-
-          {/* Undo / Redo */}
-          <div className="flex items-center gap-0.5">
-            <button
-              type="button"
-              onClick={handleUndo}
-              disabled={!undoStackMap[currentSubmission?.id]?.length}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 disabled:opacity-30"
-              title="Отменить действие"
-            >
-              <Undo2 className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={handleRedo}
-              disabled={!redoStackMap[currentSubmission?.id]?.length}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 disabled:opacity-30"
-              title="Повторить действие"
-            >
-              <Redo2 className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={handleClearPage}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-600 hover:bg-red-50 hover:text-red-600 transition"
-              title="Очистить все пометки"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* Rotate & Download Actions */}
-          <div className="flex items-center gap-1 pl-1">
-            <button
-              type="button"
-              onClick={handleRotate}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100"
-              title="Повернуть фото на 90°"
-            >
-              <RotateCw className="h-4 w-4" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="hidden lg:flex items-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 shadow-xs"
-              title="Скачать или распечатать с пометками"
-            >
-              <Download className="h-3.5 w-3.5" />
-              <span>Скачать PDF</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      </header>
+        </header>
       )}
 
       {/* 2. MAIN 3-COLUMN WORKSPACE (Left: Students, Center: Photo Canvas, Right: Grading) */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* LEFT COLUMN: SUBMITTED STUDENTS LIST (Matching Image 1) */}
+        {/* LEFT COLUMN: SUBMITTED STUDENTS LIST — адаптирован под тему */}
         {!isFocusMode && !isLeftCollapsed ? (
-          <aside className="w-64 sm:w-72 shrink-0 border-r border-zinc-200 bg-white flex flex-col justify-between transition-all">
-            <div className="p-3 border-b border-zinc-100 bg-zinc-50/70 flex items-center justify-between">
+          <aside className={`w-64 sm:w-72 shrink-0 border-r flex flex-col justify-between transition-all ${themeTokens.sidebarBg}`}>
+            <div className={`p-3 border-b flex items-center justify-between ${themeTokens.panelSubHeaderBg}`}>
               <div className="min-w-0 pr-2">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-zinc-800">
+                  <span className="text-xs font-bold text-zinc-200">
                     {homework.targetDate}
                   </span>
-                  <span className="text-[11px] font-semibold text-zinc-500">
+                  <span className="text-[11px] font-semibold text-zinc-400">
                     • {submissions.length} работ
                   </span>
                 </div>
-                <div className="mt-0.5 text-xs font-extrabold text-zinc-900 truncate">
+                <div className="mt-0.5 text-xs font-extrabold text-zinc-100 truncate">
                   {homework.title}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsLeftCollapsed(true)}
-                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-200 transition shrink-0"
+                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition shrink-0"
                 title="Свернуть список учеников"
               >
                 <PanelLeftClose className="h-4 w-4" />
@@ -1087,7 +1167,7 @@ export function HomeworkCheckingStudio({
             </div>
 
             {/* Student list */}
-            <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
+            <div className="flex-1 overflow-y-auto divide-y divide-white/5">
               {submissions.map((sub, idx) => {
                 const isSelected = sub.id === currentSubmission?.id && viewMode === "single";
                 const isGraded = sub.status === "GRADED";
@@ -1101,8 +1181,8 @@ export function HomeworkCheckingStudio({
                     }}
                     className={`flex items-center justify-between p-3 cursor-pointer transition ${
                       isSelected
-                        ? "bg-blue-50/80 border-l-4 border-blue-600"
-                        : "hover:bg-zinc-50"
+                        ? themeTokens.activeStudentItem
+                        : "hover:bg-white/5 text-zinc-300"
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -1115,10 +1195,10 @@ export function HomeworkCheckingStudio({
                       </div>
 
                       <div className="min-w-0">
-                        <div className="truncate text-xs font-bold text-zinc-900">
+                        <div className={`truncate text-xs font-bold ${isSelected ? "text-white font-extrabold" : "text-zinc-200"}`}>
                           {sub.studentName}
                         </div>
-                        <div className="text-[10px] text-zinc-500 mt-0.5">
+                        <div className="text-[10px] text-zinc-400 mt-0.5">
                           {sub.pagesCount || 1} лист • {sub.submittedAt || "16.09.2026, 17:45"}
                         </div>
                       </div>
@@ -1127,11 +1207,11 @@ export function HomeworkCheckingStudio({
                     {/* Status Indicator */}
                     <div className="flex items-center gap-1.5 shrink-0 ml-2">
                       {isGraded ? (
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-700">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-black text-emerald-400 border border-emerald-500/30">
                           {sub.grade || "✓"}
                         </span>
                       ) : (
-                        <span className="h-2.5 w-2.5 rounded-full bg-amber-400" title="Ожидает проверки" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]" title="Ожидает проверки" />
                       )}
                     </div>
                   </div>
@@ -1140,9 +1220,9 @@ export function HomeworkCheckingStudio({
             </div>
 
             {/* Bottom quick summary */}
-            <div className="p-3 border-t border-zinc-200 bg-zinc-50 text-[11px] font-semibold text-zinc-600 flex items-center justify-between">
+            <div className={`p-3 border-t text-[11px] font-semibold text-zinc-300 flex items-center justify-between ${themeTokens.panelSubHeaderBg}`}>
               <span>Проверено:</span>
-              <span className="font-extrabold text-blue-600">
+              <span className={`font-extrabold ${themeTokens.accentText}`}>
                 {gradedCount} из {submissions.length} ({gradedPercentage}%)
               </span>
             </div>
@@ -1151,11 +1231,11 @@ export function HomeworkCheckingStudio({
           <button
             type="button"
             onClick={() => setIsLeftCollapsed(false)}
-            className="h-full w-9 bg-white border-r border-zinc-200 hover:bg-blue-50 flex flex-col items-center justify-start py-4 gap-3 text-zinc-500 hover:text-blue-600 transition z-20 shrink-0 shadow-xs"
+            className={`h-full w-9 border-r flex flex-col items-center justify-start py-4 gap-3 transition z-20 shrink-0 shadow-xs ${themeTokens.collapsedStrip}`}
             title="Развернуть список учеников"
           >
-            <PanelLeftOpen className="h-4 w-4 text-blue-600" />
-            <span className="[writing-mode:vertical-lr] text-[11px] font-extrabold tracking-wider uppercase text-zinc-500">
+            <PanelLeftOpen className="h-4 w-4" />
+            <span className="[writing-mode:vertical-lr] text-[11px] font-extrabold tracking-wider uppercase opacity-80">
               Ученики ({submissions.length})
             </span>
           </button>
@@ -1397,37 +1477,43 @@ export function HomeworkCheckingStudio({
             <button
               type="button"
               onClick={() => setIsFocusMode(false)}
-              className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-2xl bg-zinc-900/95 hover:bg-zinc-800 text-white border border-zinc-700/90 px-4 py-2.5 text-xs font-black shadow-2xl backdrop-blur-md transition active:scale-95 hover:border-blue-500"
+              className={`fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-xs font-black shadow-2xl backdrop-blur-md transition active:scale-95 ${
+                isPlanet
+                  ? "bg-[#090D18]/95 border-sky-500/40 text-sky-200 hover:border-sky-400 shadow-[0_0_20px_rgba(56,189,248,0.3)]"
+                  : isGarden
+                  ? "bg-[#141C16]/95 border-[#FEC868]/40 text-[#FEC868] hover:border-[#FEC868] shadow-[0_0_20px_rgba(254,200,104,0.3)]"
+                  : "bg-[#0C121A]/95 border-emerald-500/40 text-emerald-200 hover:border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+              }`}
               title="Развернуть все панели [Esc]"
             >
-              <Minimize2 className="h-4 w-4 text-blue-400" />
+              <Minimize2 className="h-4 w-4" />
               <span>Развернуть панели</span>
             </button>
           )}
         </main>
 
-        {/* RIGHT COLUMN: TASK CHECKLIST & GRADING (Matching Image 1) */}
+        {/* RIGHT COLUMN: TASK CHECKLIST & GRADING — адаптирован под тему */}
         {!isFocusMode && !isRightCollapsed ? (
-          <aside className="w-72 sm:w-80 shrink-0 border-l border-zinc-200 bg-white flex flex-col justify-between overflow-y-auto transition-all">
-            <div className="p-3 border-b border-zinc-100 bg-zinc-50/70 flex items-center justify-between">
+          <aside className={`w-72 sm:w-80 shrink-0 border-l flex flex-col justify-between overflow-y-auto transition-all ${themeTokens.sidebarBg}`}>
+            <div className={`p-3 border-b flex items-center justify-between ${themeTokens.panelSubHeaderBg}`}>
               <button
                 type="button"
                 onClick={() => setIsRightCollapsed(true)}
-                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-200 transition"
+                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition"
                 title="Свернуть панель оценки"
               >
                 <PanelRightClose className="h-4 w-4" />
               </button>
-              <span className="text-xs font-extrabold text-zinc-800">Оценка и задачи</span>
-              <span className="text-[11px] font-bold text-blue-600">Оценка: {currentGrade}</span>
+              <span className="text-xs font-extrabold text-zinc-100">Оценка и задачи</span>
+              <span className={`text-[11px] font-bold ${themeTokens.accentText}`}>Оценка: {currentGrade}</span>
             </div>
             <div className="p-4 space-y-5">
             {/* 1. Выполнение заданий (Task grid) */}
             <div>
-              <h2 className="text-sm font-extrabold text-zinc-900">
+              <h2 className="text-sm font-extrabold text-zinc-100">
                 Выполнение заданий
               </h2>
-              <p className="text-[11px] text-zinc-500 leading-tight mt-1">
+              <p className="text-[11px] text-zinc-400 leading-tight mt-1">
                 Укажите количество задач для этого ДЗ. Красным отметьте номера, которые ученик не выполнил:
               </p>
 
@@ -1439,7 +1525,7 @@ export function HomeworkCheckingStudio({
                   max={50}
                   value={tasksInput}
                   onChange={(e) => setTasksInput(e.target.value)}
-                  className="h-8 w-20 rounded-xl border border-zinc-300 px-2 text-center text-xs font-bold text-zinc-900 focus:border-blue-500 focus:outline-none"
+                  className="h-8 w-20 rounded-xl border border-white/15 bg-white/5 px-2 text-center text-xs font-bold text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-400"
                 />
                 <button
                   type="button"
@@ -1449,7 +1535,7 @@ export function HomeworkCheckingStudio({
                       setTotalTasksCount(parsed);
                     }
                   }}
-                  className="h-8 flex-1 rounded-xl bg-slate-900 px-3 text-xs font-bold text-white hover:bg-slate-800 transition"
+                  className={`h-8 flex-1 rounded-xl px-3 text-xs font-bold transition ${themeTokens.accentBtn}`}
                 >
                   Создать
                 </button>
@@ -1468,10 +1554,10 @@ export function HomeworkCheckingStudio({
                       onClick={() => handleToggleTask(num)}
                       className={`flex h-9 items-center justify-center rounded-xl text-xs font-bold transition-all shadow-xs ${
                         status === true
-                          ? "bg-emerald-500 text-white font-extrabold"
+                          ? "bg-emerald-500 text-white font-extrabold shadow-[0_0_10px_rgba(16,185,129,0.3)]"
                           : status === false
-                          ? "bg-rose-500 text-white font-extrabold"
-                          : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                          ? "bg-rose-500 text-white font-extrabold shadow-[0_0_10px_rgba(244,63,94,0.3)]"
+                          : "bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10"
                       }`}
                       title={
                         status === true
@@ -1496,23 +1582,23 @@ export function HomeworkCheckingStudio({
                   <span className="h-2 w-2 rounded-full bg-rose-500" /> Ошибка
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-zinc-200" /> Без оценки
+                  <span className="h-2 w-2 rounded-full bg-white/20" /> Без оценки
                 </span>
               </div>
             </div>
 
             {/* 2. Текущая работа & Оценка */}
-            <div className="pt-4 border-t border-zinc-200 space-y-3">
+            <div className="pt-4 border-t border-white/10 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold text-zinc-900">Текущая работа:</span>
-                <span className="text-xs font-bold text-blue-600 truncate max-w-[140px]">
+                <span className="text-xs font-extrabold text-zinc-300">Текущая работа:</span>
+                <span className={`text-xs font-bold truncate max-w-[140px] ${themeTokens.accentText}`}>
                   {currentSubmission?.studentName}
                 </span>
               </div>
 
               {/* Grade Selector 2, 3, 4, 5 */}
               <div>
-                <label className="text-[11px] font-bold text-zinc-500">Итоговая оценка:</label>
+                <label className="text-[11px] font-bold text-zinc-400">Итоговая оценка:</label>
                 <div className="mt-1.5 grid grid-cols-4 gap-2">
                   {[2, 3, 4, 5].map((g) => (
                     <button
@@ -1521,8 +1607,8 @@ export function HomeworkCheckingStudio({
                       onClick={() => setCurrentGrade(g)}
                       className={`flex h-10 items-center justify-center rounded-xl text-base font-black transition ${
                         currentGrade === g
-                          ? "bg-blue-600 text-white shadow-md scale-102"
-                          : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                          ? `${themeTokens.accentBtn} scale-102`
+                          : "bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10 hover:text-white"
                       }`}
                     >
                       {g}
@@ -1533,7 +1619,7 @@ export function HomeworkCheckingStudio({
 
               {/* Comment text */}
               <div>
-                <label className="text-[11px] font-bold text-zinc-500">
+                <label className="text-[11px] font-bold text-zinc-400">
                   Замечания и комментарий:
                 </label>
                 <textarea
@@ -1541,7 +1627,7 @@ export function HomeworkCheckingStudio({
                   value={currentComment}
                   onChange={(e) => setCurrentComment(e.target.value)}
                   placeholder="Например: все верно, но аккуратнее с чертежом..."
-                  className="mt-1 w-full rounded-xl border border-zinc-300 p-2.5 text-xs text-zinc-900 focus:border-blue-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-white/5 p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
                 />
               </div>
 
@@ -1551,7 +1637,7 @@ export function HomeworkCheckingStudio({
                   type="button"
                   disabled={isSaving}
                   onClick={() => handleSaveGrade(false)}
-                  className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-blue-600 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-blue-700 transition disabled:opacity-50"
+                  className={`flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-extrabold transition disabled:opacity-50 ${themeTokens.accentBtn}`}
                 >
                   <Save className="h-4 w-4" />
                   <span>{isSaving ? "Сохранение..." : "Сохранить оценку"}</span>
@@ -1561,7 +1647,7 @@ export function HomeworkCheckingStudio({
                   type="button"
                   disabled={isSaving}
                   onClick={() => handleSaveGrade(true)}
-                  className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-zinc-300 bg-white py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 transition"
+                  className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-white/5 py-2 text-xs font-bold text-zinc-200 hover:bg-white/10 transition"
                 >
                   <span>Сохранить и следующий</span>
                   <ChevronRight className="h-4 w-4" />
@@ -1569,18 +1655,18 @@ export function HomeworkCheckingStudio({
               </div>
             </div>
 
-            {/* 3. Общая статистика (Matching Image 1) */}
-            <div className="pt-4 border-t border-zinc-200 space-y-2">
+            {/* 3. Общая статистика */}
+            <div className="pt-4 border-t border-white/10 space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-extrabold text-zinc-900">Общая статистика</span>
-                <span className="text-zinc-500 text-[11px] font-bold">
+                <span className="font-extrabold text-zinc-200">Общая статистика</span>
+                <span className="text-zinc-400 text-[11px] font-bold">
                   {gradedCount} / {submissions.length}
                 </span>
               </div>
 
-              <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                 <div
-                  className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+                  className={`h-full rounded-full transition-all duration-300 ${themeTokens.progressBar}`}
                   style={{ width: `${gradedPercentage}%` }}
                 />
               </div>
@@ -1595,11 +1681,11 @@ export function HomeworkCheckingStudio({
         <button
           type="button"
           onClick={() => setIsRightCollapsed(false)}
-          className="h-full w-9 bg-white border-l border-zinc-200 hover:bg-blue-50 flex flex-col items-center justify-start py-4 gap-3 text-zinc-500 hover:text-blue-600 transition z-20 shrink-0 shadow-xs"
+          className={`h-full w-9 border-l flex flex-col items-center justify-start py-4 gap-3 transition z-20 shrink-0 shadow-xs ${themeTokens.collapsedStrip}`}
           title="Развернуть панель оценки"
         >
-          <PanelRightOpen className="h-4 w-4 text-blue-600" />
-          <span className="[writing-mode:vertical-lr] text-[11px] font-extrabold tracking-wider uppercase text-zinc-500">
+          <PanelRightOpen className="h-4 w-4" />
+          <span className="[writing-mode:vertical-lr] text-[11px] font-extrabold tracking-wider uppercase opacity-80">
             Оценка ({currentGrade})
           </span>
         </button>
