@@ -29,6 +29,7 @@ export interface HomeworkCardItem {
   targetDate: string; // "2026-09-16"
   submissionsCount: number;
   isOpenForSubmissions?: boolean;
+  targetTrack?: string | null;
   attachments?: Array<{
     id: string;
     fileName: string;
@@ -41,7 +42,7 @@ export interface HomeworkCardItem {
 
 interface HomeworkJournalViewProps {
   homeworks: HomeworkCardItem[];
-  classes: { id: string; name: string }[];
+  classes: { id: string; name: string; grade?: number }[];
   selectedClassId: string;
   onSelectClassId: (id: string) => void;
   onOpenCheckingStudio: (homework: HomeworkCardItem) => void;
@@ -51,6 +52,7 @@ interface HomeworkJournalViewProps {
     targetDate: string;
     title: string;
     description: string;
+    targetTrack?: string | null;
     attachments?: any[];
   }) => Promise<void>;
   onDeleteHomework?: (id: string) => Promise<void>;
@@ -65,22 +67,33 @@ export function HomeworkJournalView({
   onCreateHomework,
   onDeleteHomework,
 }: HomeworkJournalViewProps) {
-  // Subject filter: "Алгебра", "Геометрия", "Самостоятельные", "Результаты" (Matching Image 2)
-  const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>("Алгебра");
+  // Current class & 11th grade check
+  const currentClass = classes.find((c) => c.id === selectedClassId);
+  const is11Class = Boolean(currentClass?.name?.startsWith("11") || currentClass?.grade === 11);
 
-  // Form state for "Новый урок"
+  // Subject filter: "Алгебра", "Геометрия", "Самостоятельные", "Результаты"
+  const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>("Алгебра");
+  const [filterTrack, setFilterTrack] = useState<"ALL" | "База" | "Профиль">("ALL");
+
+  // Form state for "Новое ДЗ"
   const [newSubject, setNewSubject] = useState<string>("Алгебра");
-  const [newDate, setNewDate] = useState<string>("2026-09-21");
+  const [newDate, setNewDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [newTopic, setNewTopic] = useState<string>("");
   const [newComment, setNewComment] = useState<string>("");
+  const [newTargetTrack, setNewTargetTrack] = useState<"ALL" | "База" | "Профиль">("ALL");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Status for accepting submissions per homework
   const [closedMap, setClosedMap] = useState<{ [hwId: string]: boolean }>({});
 
-  // Filter homeworks by active subject pill
+  // Filter homeworks by active subject pill and track (if 11th grade)
   const filteredHomeworks = homeworks.filter((hw) => {
+    if (is11Class && filterTrack !== "ALL") {
+      if (hw.targetTrack && hw.targetTrack !== filterTrack) {
+        return false;
+      }
+    }
     if (selectedSubjectFilter === "Результаты") return true;
     if (selectedSubjectFilter === "Самостоятельные") {
       return (
@@ -110,7 +123,7 @@ export function HomeworkJournalView({
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTopic.trim()) {
-      alert("Укажите тему урока");
+      alert("Укажите тему домашнего задания");
       return;
     }
 
@@ -133,6 +146,7 @@ export function HomeworkJournalView({
         targetDate: newDate,
         title: newTopic,
         description: newComment,
+        targetTrack: is11Class ? (newTargetTrack === "ALL" ? null : newTargetTrack) : null,
         attachments: uploadedAttachments,
       });
 
@@ -140,7 +154,7 @@ export function HomeworkJournalView({
       setNewComment("");
       setSelectedFiles([]);
     } catch (err: any) {
-      alert(err.message || "Ошибка при добавлении урока");
+      alert(err.message || "Ошибка при добавлении ДЗ");
     } finally {
       setIsSubmitting(false);
     }
@@ -176,58 +190,84 @@ export function HomeworkJournalView({
           <button
             type="button"
             onClick={() => {
-              const formEl = document.getElementById("new-lesson-form");
+              const formEl = document.getElementById("new-homework-form");
               formEl?.scrollIntoView({ behavior: "smooth" });
             }}
             className="flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-blue-700 transition"
           >
             <Plus className="h-4 w-4" />
-            <span>Добавить урок</span>
+            <span>Новое ДЗ</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Subject Filter Pills (Matching Image 2) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        {[
-          { label: "Алгебра", count: algebraCount || 4 },
-          { label: "Геометрия", count: geomCount || 3 },
-          { label: "Самостоятельные", count: samostCount || 1 },
-          { label: "Результаты", count: null },
-        ].map((pill) => {
-          const isActive = selectedSubjectFilter === pill.label;
-          return (
-            <button
-              key={pill.label}
-              type="button"
-              onClick={() => setSelectedSubjectFilter(pill.label)}
-              className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-bold transition shadow-xs whitespace-nowrap ${
-                isActive
-                  ? "bg-white text-zinc-900 dark:bg-zinc-800 dark:text-white shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700"
-                  : "bg-zinc-100 dark:bg-zinc-800/50 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200/80"
-              }`}
-            >
-              <span className={`h-2 w-2 rounded-full ${isActive ? "bg-blue-600" : "bg-zinc-400"}`} />
-              <span>{pill.label}</span>
-              {pill.count !== null && (
-                <span className="text-[11px] font-extrabold text-zinc-400">
-                  {pill.count}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      {/* 2. Subject Filter Pills & Track Filters for Grade 11 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {[
+            { label: "Алгебра", count: algebraCount },
+            { label: "Геометрия", count: geomCount },
+            { label: "Самостоятельные", count: samostCount },
+            { label: "Результаты", count: null },
+          ].map((pill) => {
+            const isActive = selectedSubjectFilter === pill.label;
+            return (
+              <button
+                key={pill.label}
+                type="button"
+                onClick={() => setSelectedSubjectFilter(pill.label)}
+                className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-bold transition shadow-xs whitespace-nowrap ${
+                  isActive
+                    ? "bg-white text-zinc-900 dark:bg-zinc-800 dark:text-white shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700"
+                    : "bg-zinc-100 dark:bg-zinc-800/50 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200/80"
+                }`}
+              >
+                <span className={`h-2 w-2 rounded-full ${isActive ? "bg-blue-600" : "bg-zinc-400"}`} />
+                <span>{pill.label}</span>
+                {pill.count !== null && (
+                  <span className="text-[11px] font-extrabold text-zinc-400">
+                    {pill.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {is11Class && (
+          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700 text-xs shrink-0">
+            <span className="text-[11px] font-bold text-zinc-400 px-2">Уровень:</span>
+            {(["ALL", "База", "Профиль"] as const).map((track) => (
+              <button
+                key={track}
+                type="button"
+                onClick={() => setFilterTrack(track)}
+                className={`px-3 py-1 rounded-xl font-bold transition text-xs ${
+                  filterTrack === track
+                    ? track === "Профиль"
+                      ? "bg-purple-600 text-white shadow-xs"
+                      : track === "База"
+                      ? "bg-amber-600 text-white shadow-xs"
+                      : "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-xs"
+                    : "text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                }`}
+              >
+                {track === "ALL" ? "Все (11 класс)" : track}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* 3. Main 2-Column Content (Left: Homework Cards, Right: "Новый урок" Form) */}
+      {/* 3. Main 2-Column Content (Left: Homework Cards, Right: "Новое ДЗ" Form) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: List of Homework Cards (Matching Image 2) */}
         <div className="lg:col-span-8 space-y-5">
           {filteredHomeworks.length === 0 ? (
             <div className="flex h-56 flex-col items-center justify-center rounded-3xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 p-8 text-center text-zinc-400">
               <FileText className="h-8 w-8 mb-2 opacity-50" />
-              <p className="text-sm font-bold">Уроков и домашних заданий не найдено</p>
-              <p className="text-xs mt-1">Добавьте новый урок в панели справа</p>
+              <p className="text-sm font-bold">Домашних заданий не найдено</p>
+              <p className="text-xs mt-1">Добавьте новое ДЗ в панели справа</p>
             </div>
           ) : (
             filteredHomeworks.map((hw) => {
@@ -239,7 +279,7 @@ export function HomeworkJournalView({
 
               return (
                 <div key={hw.id} className="flex items-start gap-4">
-                  {/* Left Date Circle Badge (Matching Image 2: "16 09") */}
+                  {/* Left Date Circle Badge */}
                   <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-900/40 text-blue-600 dark:text-blue-300 font-mono shadow-xs mt-1">
                     <span className="text-sm font-black leading-none">{dayStr}</span>
                     <span className="text-[9px] font-bold leading-none mt-0.5 opacity-80">{monthStr}</span>
@@ -250,10 +290,27 @@ export function HomeworkJournalView({
                     {/* Header: Date + Topic Title + Top Right Actions */}
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <span className="text-xs font-semibold text-zinc-400">
-                          {displayDate}
-                        </span>
-                        <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white tracking-tight">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-zinc-400">
+                            {displayDate}
+                          </span>
+                          {hw.targetTrack === "База" && (
+                            <span className="rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 px-2 py-0.5 text-[10px] font-black uppercase">
+                              База
+                            </span>
+                          )}
+                          {hw.targetTrack === "Профиль" && (
+                            <span className="rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-600 dark:text-purple-400 px-2 py-0.5 text-[10px] font-black uppercase">
+                              Профиль
+                            </span>
+                          )}
+                          {is11Class && (!hw.targetTrack || hw.targetTrack === "ALL") && (
+                            <span className="rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 text-[10px] font-bold">
+                              Весь класс (База + Профиль)
+                            </span>
+                          )}
+                        </div>
+                        <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white tracking-tight mt-0.5">
                           {hw.title}
                         </h2>
                         {hw.description && (
@@ -283,7 +340,7 @@ export function HomeworkJournalView({
                             type="button"
                             onClick={() => onDeleteHomework(hw.id)}
                             className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
-                            title="Удалить урок"
+                            title="Удалить ДЗ"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -318,7 +375,7 @@ export function HomeworkJournalView({
                       </div>
                     )}
 
-                    {/* BIG BUTTON: ПРО ВЕРИТЬ ДЗ / РАБОТЫ И ЗАМЕТКИ (Matching Image 2!) */}
+                    {/* BIG BUTTON: ПРО ВЕРИТЬ ДЗ / РАБОТЫ И ЗАМЕТКИ */}
                     <div className="pt-2">
                       <button
                         type="button"
@@ -342,14 +399,14 @@ export function HomeworkJournalView({
                         {/* Submission Counter Badge & Avatar Icon */}
                         <div className="flex items-center gap-2">
                           <span className="flex h-6 min-w-6 px-1.5 items-center justify-center rounded-full bg-blue-600 text-xs font-black text-white shadow-xs">
-                            {hw.submissionsCount || 12}
+                            {hw.submissionsCount}
                           </span>
                           <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         </div>
                       </button>
                     </div>
 
-                    {/* Status Bar: Приём ДЗ открыт / закрыт (Matching Image 2) */}
+                    {/* Status Bar: Приём ДЗ открыт / закрыт */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
                       <div>
                         <div className="flex items-center gap-2">
@@ -361,7 +418,7 @@ export function HomeworkJournalView({
                         <p className="text-[11px] text-zinc-400 mt-0.5">
                           {isClosed
                             ? "Срок сдачи окончен, отправка новых работ недоступна"
-                            : "Ученики ещё могут отправлять фотографии"}
+                            : "Ученики ещё могут отправлять решения"}
                         </p>
                       </div>
 
@@ -373,12 +430,6 @@ export function HomeworkJournalView({
                         >
                           {isClosed ? "Открыть приём" : "Закрыть приём"}
                         </button>
-                        <button
-                          type="button"
-                          className="rounded-xl border border-zinc-300 dark:border-zinc-700 px-3.5 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 shadow-xs"
-                        >
-                          Добавить ещё один файл ДЗ
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -388,17 +439,17 @@ export function HomeworkJournalView({
           )}
         </div>
 
-        {/* Right Column: "Новый урок" Form Panel (Matching Image 2) */}
+        {/* Right Column: "Новое ДЗ" Form Panel */}
         <div
-          id="new-lesson-form"
+          id="new-homework-form"
           className="lg:col-span-4 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm space-y-5"
         >
           <div>
             <h2 className="text-lg font-black text-zinc-900 dark:text-white">
-              Новый урок
+              Новое ДЗ
             </h2>
             <p className="text-xs text-zinc-400 leading-tight mt-1">
-              Заполните основное и при необходимости приложите несколько PDF.
+              Заполните данные домашнего задания и при необходимости приложите файлы.
             </p>
           </div>
 
@@ -420,7 +471,7 @@ export function HomeworkJournalView({
               </div>
 
               <div>
-                <label className="text-zinc-500 font-semibold block mb-1">Дата</label>
+                <label className="text-zinc-500 font-semibold block mb-1">Срок сдачи</label>
                 <input
                   type="date"
                   value={newDate}
@@ -430,26 +481,68 @@ export function HomeworkJournalView({
               </div>
             </div>
 
-            {/* Тема урока */}
+            {/* Выбор База / Профиль для 11 класса */}
+            {is11Class && (
+              <div>
+                <label className="text-zinc-500 font-semibold block mb-1.5">Кому выдать ДЗ (11 класс)</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNewTargetTrack("ALL")}
+                    className={`h-9 rounded-xl border text-xs font-bold transition flex items-center justify-center ${
+                      newTargetTrack === "ALL"
+                        ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                        : "border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                    }`}
+                  >
+                    Весь класс
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewTargetTrack("База")}
+                    className={`h-9 rounded-xl border text-xs font-bold transition flex items-center justify-center ${
+                      newTargetTrack === "База"
+                        ? "bg-amber-600 text-white border-amber-600 shadow-xs"
+                        : "border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                    }`}
+                  >
+                    База
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewTargetTrack("Профиль")}
+                    className={`h-9 rounded-xl border text-xs font-bold transition flex items-center justify-center ${
+                      newTargetTrack === "Профиль"
+                        ? "bg-purple-600 text-white border-purple-600 shadow-xs"
+                        : "border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                    }`}
+                  >
+                    Профиль
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Тема ДЗ */}
             <div>
-              <label className="text-zinc-500 font-semibold block mb-1">Тема урока</label>
+              <label className="text-zinc-500 font-semibold block mb-1">Тема ДЗ</label>
               <input
                 type="text"
                 value={newTopic}
                 onChange={(e) => setNewTopic(e.target.value)}
-                placeholder="Например, квадратные уравнения"
+                placeholder="Например, Исследование функций"
                 className="w-full h-10 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 text-xs font-medium text-zinc-900 dark:text-white focus:outline-none focus:border-blue-500"
               />
             </div>
 
-            {/* Комментарий */}
+            {/* Комментарий / Описание задания */}
             <div>
-              <label className="text-zinc-500 font-semibold block mb-1">Комментарий</label>
+              <label className="text-zinc-500 font-semibold block mb-1">Описание и комментарий</label>
               <textarea
                 rows={3}
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Что повторить, на что обратить внимание..."
+                placeholder="Номера заданий, что повторить, на что обратить внимание..."
                 className="w-full rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-transparent p-3 text-xs font-medium text-zinc-900 dark:text-white focus:outline-none focus:border-blue-500"
               />
             </div>
@@ -459,10 +552,10 @@ export function HomeworkJournalView({
               <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer transition">
                 <UploadCloud className="h-6 w-6 text-zinc-400 mb-1" />
                 <span className="text-xs font-bold text-zinc-700 dark:text-zinc-200">
-                  Выбрать PDF-файлы
+                  Прикрепить файлы к ДЗ
                 </span>
                 <span className="text-[10px] text-zinc-400 mt-0.5">
-                  Можно несколько, до 30 МБ каждый
+                  PDF или фото, до 30 МБ
                 </span>
                 <input
                   type="file"
@@ -505,7 +598,7 @@ export function HomeworkJournalView({
               disabled={isSubmitting}
               className="w-full h-11 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-zinc-900 font-extrabold text-sm shadow-md hover:bg-slate-800 transition disabled:opacity-50"
             >
-              {isSubmitting ? "Добавление..." : "Добавить урок"}
+              {isSubmitting ? "Сохранение..." : "Добавить ДЗ"}
             </button>
           </form>
         </div>

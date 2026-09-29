@@ -1332,19 +1332,19 @@ export function HomeworkCheckingStudio({
                             <p className="font-bold text-blue-900 text-sm">Выполненное решение ученика:</p>
                             <p className="text-blue-950 leading-relaxed font-sans text-sm">{currentSubmission.content}</p>
                           </div>
-                        ) : homework.subjectName.toLowerCase().includes("математ") || homework.title.toLowerCase().includes("вектор") ? (
+                        ) : homework.subjectName.toLowerCase().includes("математ") || homework.subjectName.toLowerCase().includes("алгебр") || homework.subjectName.toLowerCase().includes("геометр") ? (
                           <div className="space-y-3">
                             <div>
                               <p className="font-bold text-blue-900">1. Задание по теме: {homework.title}</p>
-                              <p className="pl-4 mt-1 text-blue-800">Дано: координаты векторов и числовые коэффициенты. Решение выполнено подробно.</p>
+                              <p className="pl-4 mt-1 text-blue-800">Дано: исходные условия и числовые коэффициенты. Решение выполнено подробно.</p>
                             </div>
                             <div>
-                              <p className="font-bold text-blue-900">2. Вычисление числовых значений и проекций:</p>
-                              <p className="pl-4 mt-1 text-blue-800">|a&#773;| = &radic;(64 + 225) = &radic;289 = 17. Ответ проверен.</p>
+                              <p className="font-bold text-blue-900">2. Вычисление числовых значений и преобразования:</p>
+                              <p className="pl-4 mt-1 text-blue-800">Все промежуточные вычисления проверены, математические формулы применены верно.</p>
                             </div>
                             <div>
                               <p className="font-bold text-blue-900">3. Итоговый ответ к заданию:</p>
-                              <p className="pl-4 mt-1 text-blue-800">Ответ получен строго по алгоритму, график приведен в решении.</p>
+                              <p className="pl-4 mt-1 text-blue-800">Ответ получен строго по алгоритму, пояснения приведены в решении.</p>
                             </div>
                           </div>
                         ) : (

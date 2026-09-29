@@ -16,11 +16,14 @@ export async function createStudentAction(formData: FormData) {
   const fullName = (formData.get("fullName") as string)?.trim();
   const gradeStr = formData.get("grade") as string;
   const letter = (formData.get("letter") as string)?.trim().toUpperCase();
+  const examTrackRaw = (formData.get("examTrack") as string)?.trim();
 
   const grade = parseInt(gradeStr, 10);
   if (!fullName || isNaN(grade) || grade < 1 || grade > 11 || !letter) {
     throw new Error("Некорректные параметры ученика");
   }
+
+  const examTrack = grade === 11 ? (examTrackRaw === "Профиль" ? "Профиль" : "База") : null;
 
   const className = `${grade}${letter}`;
   let classGroup = await db.classGroup.findUnique({ where: { name: className } });
@@ -40,11 +43,30 @@ export async function createStudentAction(formData: FormData) {
       role: "STUDENT",
       classId: classGroup.id,
       plainPasswordForAdmin: password,
+      examTrack,
     },
   });
 
   revalidatePath("/admin");
   return { success: true, login, password };
+}
+
+export async function updateStudentTrackAction(studentId: string, examTrack: "База" | "Профиль") {
+  const user = await db.user.findUnique({
+    where: { id: studentId },
+    include: { classGroup: true },
+  });
+
+  if (!user) throw new Error("Ученик не найден");
+
+  await db.user.update({
+    where: { id: studentId },
+    data: { examTrack },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/student");
+  return { success: true };
 }
 
 export async function deleteStudentAction(userId: string) {
@@ -101,8 +123,11 @@ export async function createHomeworkAction(data: {
   targetDate: string;
   title: string;
   description: string;
+  targetTrack?: string | null;
   attachments?: { fileName: string; fileUrl: string; fileType: string; fileSize: number; expiresAt: string }[];
 }) {
+  const targetTrack = data.targetTrack && data.targetTrack !== "ALL" ? data.targetTrack : null;
+
   await db.homework.create({
     data: {
       classId: data.classId,
@@ -110,6 +135,7 @@ export async function createHomeworkAction(data: {
       targetDate: new Date(data.targetDate),
       title: data.title.trim(),
       description: data.description.trim(),
+      targetTrack,
       attachments: {
         create: data.attachments?.map((a) => ({
           fileName: a.fileName,
@@ -132,6 +158,7 @@ export async function updateHomeworkAction(data: {
   description: string;
   subjectName: string;
   targetDate: string;
+  targetTrack?: string | null;
 }) {
   const submissionsCount = await db.homeworkSubmission.count({
     where: { homeworkId: data.homeworkId },
@@ -141,6 +168,8 @@ export async function updateHomeworkAction(data: {
     throw new Error("Запрещено: ученики уже сдали решения.");
   }
 
+  const targetTrack = data.targetTrack && data.targetTrack !== "ALL" ? data.targetTrack : null;
+
   await db.homework.update({
     where: { id: data.homeworkId },
     data: {
@@ -148,6 +177,7 @@ export async function updateHomeworkAction(data: {
       description: data.description.trim(),
       subjectName: data.subjectName.trim(),
       targetDate: new Date(data.targetDate),
+      targetTrack,
     },
   });
 

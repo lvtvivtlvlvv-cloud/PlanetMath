@@ -71,13 +71,27 @@ export default async function StudentPage() {
     currentClassGroup = defaultClass;
   }
 
+  const is11Grade = currentClassGroup?.grade === 11;
+  const studentTrack = studentUser.examTrack || (is11Grade ? "База" : null);
+
   const [scheduleItems, homeworks, submissions] = await Promise.all([
     db.scheduleItem.findMany({
       where: { classId: studentClassId },
       orderBy: [{ dayOfWeek: "asc" }, { lessonNumber: "asc" }],
     }),
     db.homework.findMany({
-      where: { classId: studentClassId },
+      where: {
+        classId: studentClassId,
+        ...(is11Grade && studentTrack
+          ? {
+              OR: [
+                { targetTrack: null },
+                { targetTrack: "ALL" },
+                { targetTrack: studentTrack },
+              ],
+            }
+          : {}),
+      },
       include: { attachments: true },
       orderBy: { targetDate: "desc" },
     }),
@@ -129,6 +143,7 @@ export default async function StudentPage() {
         fullName: studentUser.fullName,
         login: studentUser.login,
         className: currentClassGroup?.name || "6А",
+        examTrack: is11Grade ? studentTrack : null,
       }}
       scheduleItems={scheduleItems}
       homeworks={formattedHomeworks}

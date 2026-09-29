@@ -3,6 +3,10 @@ import bcrypt from "bcryptjs";
 import fs from "fs/promises";
 import path from "path";
 
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = "file:./dev.db";
+}
+
 const prisma = new PrismaClient();
 
 async function main() {

@@ -23,8 +23,18 @@ export default async function AdminPage() {
     redirect("/login");
   }
 
-  const [classes, scheduleItems, homeworks, submissions, users] = await Promise.all([
-    db.classGroup.findMany({ orderBy: [{ grade: "asc" }, { letter: "asc" }] }),
+  let classes = await db.classGroup.findMany({ orderBy: [{ grade: "asc" }, { letter: "asc" }] });
+  if (classes.length === 0) {
+    await db.classGroup.createMany({
+      data: [
+        { grade: 11, letter: "А", name: "11А" },
+        { grade: 10, letter: "А", name: "10А" },
+      ],
+    });
+    classes = await db.classGroup.findMany({ orderBy: [{ grade: "asc" }, { letter: "asc" }] });
+  }
+
+  const [scheduleItems, homeworks, submissions, users] = await Promise.all([
     db.scheduleItem.findMany({ orderBy: [{ dayOfWeek: "asc" }, { lessonNumber: "asc" }] }),
     db.homework.findMany({
       include: {
@@ -59,6 +69,7 @@ export default async function AdminPage() {
       className: u.classGroup?.name || "",
       grade: u.classGroup?.grade || 0,
       letter: u.classGroup?.letter || "",
+      examTrack: u.examTrack || (u.classGroup?.grade === 11 ? "База" : null),
     }));
 
   const teachers: TeacherItem[] = users
@@ -77,6 +88,7 @@ export default async function AdminPage() {
     subjectName: h.subjectName,
     title: h.title,
     description: h.description,
+    targetTrack: h.targetTrack || null,
     targetDate: h.targetDate.toISOString().split("T")[0],
     submissionsCount: h._count.submissions,
     attachments: (h.attachments || []).map((a) => ({

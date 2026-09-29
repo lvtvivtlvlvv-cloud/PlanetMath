@@ -54,6 +54,7 @@ interface StudentDashboardProps {
     fullName: string;
     login: string;
     className: string;
+    examTrack?: string | null;
   };
   scheduleItems: Array<{
     id: string;
@@ -417,8 +418,17 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
       <header className="flex flex-col gap-3 sm:gap-4 border-b border-zinc-200/40 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Электронный Дневник</h1>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            {user.fullName} • Класс: <span className="font-semibold text-zinc-900 dark:text-zinc-100">{user.className}</span>
+          <p className="text-xs text-zinc-400 mt-0.5 flex items-center flex-wrap gap-1.5">
+            <span>{user.fullName} • Класс: <span className="font-semibold text-zinc-900 dark:text-zinc-100">{user.className}</span></span>
+            {user.examTrack && (
+              <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                user.examTrack === "Профиль"
+                  ? "bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/40"
+                  : "bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40"
+              }`}>
+                Уровень: {user.examTrack}
+              </span>
+            )}
           </p>
         </div>
         <div className="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 shrink-0 w-full sm:w-auto">

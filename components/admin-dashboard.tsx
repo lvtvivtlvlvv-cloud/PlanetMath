@@ -22,6 +22,7 @@ import {
   createHomeworkAction,
   updateHomeworkAction,
   deleteHomeworkAction,
+  updateStudentTrackAction,
   saveScheduleBatchAction,
   addSingleLessonAction,
   deleteSingleLessonAction,
@@ -287,6 +288,7 @@ export interface StudentItem {
   className: string;
   grade: number;
   letter: string;
+  examTrack?: string | null;
 }
 
 export interface TeacherItem {
@@ -325,6 +327,7 @@ interface AdminDashboardProps {
     subjectName: string;
     title: string;
     description: string;
+    targetTrack?: string | null;
     targetDate: string;
     submissionsCount: number;
     attachments?: Array<{
@@ -522,6 +525,7 @@ export function AdminDashboard({
   const [isAddLessonOpen, setIsAddLessonOpen] = useState(false);
   const [lessonDayOfWeek, setLessonDayOfWeek] = useState(1);
   const [isHwModalOpen, setIsHwModalOpen] = useState(false);
+  const [modalTargetTrack, setModalTargetTrack] = useState<"ALL" | "База" | "Профиль">("ALL");
   const [hwPreset, setHwPreset] = useState<{ subjectName: string; targetDate: string } | null>(null);
   const [hwFiles, setHwFiles] = useState<File[]>([]);
   const [hwLoading, setHwLoading] = useState(false);
@@ -529,6 +533,8 @@ export function AdminDashboard({
   const [activeModalData, setActiveModalData] = useState<SubmissionModalData | null>(null);
 
   const [studentSelectedClassId, setStudentSelectedClassId] = useState<string>(classes[0]?.id || "");
+  const [studentTrackFilter, setStudentTrackFilter] = useState<"ALL" | "База" | "Профиль">("ALL");
+  const [updatingStudentId, setUpdatingStudentId] = useState<string | null>(null);
   const [studentSortOrder, setStudentSortOrder] = useState<"asc" | "desc">("asc");
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -539,7 +545,10 @@ export function AdminDashboard({
   };
 
   const currentClassStudents = useMemo(() => {
-    const list = students.filter((s) => s.classId === studentSelectedClassId);
+    let list = students.filter((s) => s.classId === studentSelectedClassId);
+    if (studentTrackFilter !== "ALL") {
+      list = list.filter((s) => (s.examTrack || "База") === studentTrackFilter);
+    }
     list.sort((a, b) => {
       const surA = a.fullName.trim().split(/\s+/)[0] || "";
       const surB = b.fullName.trim().split(/\s+/)[0] || "";
@@ -547,7 +556,7 @@ export function AdminDashboard({
       return studentSortOrder === "asc" ? cmp : -cmp;
     });
     return list;
-  }, [students, studentSelectedClassId, studentSortOrder]);
+  }, [students, studentSelectedClassId, studentSortOrder, studentTrackFilter]);
 
   const [subSubjectFilter, setSubSubjectFilter] = useState<string>("ALL");
   const [subStatusFilter, setSubStatusFilter] = useState<"ALL" | "PENDING" | "GRADED">("ALL");
@@ -608,74 +617,27 @@ export function AdminDashboard({
       : "bg-emerald-950/50 text-emerald-300 border border-emerald-500/20";
 
   const journalHomeworks: HomeworkCardItem[] = useMemo(() => {
-    const list: HomeworkCardItem[] = homeworks.map((h) => ({
-      id: h.id,
-      classId: h.classId,
-      className: h.className,
-      subjectName: h.subjectName,
-      title: h.title,
-      description: h.description,
-      targetDate: h.targetDate,
-      submissionsCount: h.submissionsCount || 12,
-      attachments: h.attachments?.map((a) => ({
-        id: a.id,
-        fileName: a.fileName,
-        fileUrl: a.fileUrl,
-        fileType: a.fileType,
-        fileSize: typeof a.fileSize === "number" ? a.fileSize : 89000,
-      })),
-    }));
-
-    if (list.length === 0) {
-      return [
-        {
-          id: "hw_vectors_algebra",
-          classId: selectedClassId,
-          className: classes.find((c) => c.id === selectedClassId)?.name || "10А",
-          subjectName: "Алгебра",
-          title: "Векторы на плоскости",
-          description: "Все типы задания № 2. Координаты, скалярное произведение, сложение и вычитание векторов.",
-          targetDate: "2026-09-16",
-          submissionsCount: 12,
-          attachments: [],
-        },
-        {
-          id: "hw_sine_cosine",
-          classId: selectedClassId,
-          className: classes.find((c) => c.id === selectedClassId)?.name || "10А",
-          subjectName: "Геометрия",
-          title: "Теорема синусов и косинусов",
-          description: "Нахождение сторон и углов произвольного треугольника. Задачи 1-8.",
-          targetDate: "2026-09-17",
-          submissionsCount: 9,
-          attachments: [],
-        },
-        {
-          id: "hw_scalar_product",
-          classId: selectedClassId,
-          className: classes.find((c) => c.id === selectedClassId)?.name || "10А",
-          subjectName: "Алгебра",
-          title: "Скалярное произведение векторов",
-          description: "Угол между векторами. Условие ортогональности и коллинеарности.",
-          targetDate: "2026-09-18",
-          submissionsCount: 14,
-          attachments: [],
-        },
-        {
-          id: "hw_independent",
-          classId: selectedClassId,
-          className: classes.find((c) => c.id === selectedClassId)?.name || "10А",
-          subjectName: "Самостоятельные",
-          title: "Самостоятельная работа: Векторы",
-          description: "14 заданий базового и профильного уровня. Время выполнения: 45 минут.",
-          targetDate: "2026-09-21",
-          submissionsCount: 10,
-          attachments: [],
-        },
-      ];
-    }
-    return list;
-  }, [homeworks, selectedClassId, classes]);
+    return homeworks
+      .filter((h) => !selectedClassId || h.classId === selectedClassId)
+      .map((h) => ({
+        id: h.id,
+        classId: h.classId,
+        className: h.className,
+        subjectName: h.subjectName,
+        title: h.title,
+        description: h.description,
+        targetDate: h.targetDate,
+        targetTrack: h.targetTrack || null,
+        submissionsCount: h.submissionsCount || 0,
+        attachments: h.attachments?.map((a) => ({
+          id: a.id,
+          fileName: a.fileName,
+          fileUrl: a.fileUrl,
+          fileType: a.fileType,
+          fileSize: typeof a.fileSize === "number" ? a.fileSize : 89000,
+        })),
+      }));
+  }, [homeworks, selectedClassId]);
 
   const openCheckingStudio = (hw: any) => {
     const realSubsForHw = submissions.filter(
@@ -708,7 +670,10 @@ export function AdminDashboard({
         };
       });
     } else {
-      const classStudents = students.filter((st) => !hw.classId || st.classId === hw.classId);
+      let classStudents = students.filter((st) => !hw.classId || st.classId === hw.classId);
+      if (hw.targetTrack && hw.targetTrack !== "ALL") {
+        classStudents = classStudents.filter((st) => (st.examTrack || "База") === hw.targetTrack);
+      }
       const targetList = classStudents.length > 0 ? classStudents : students;
       studentSubs = targetList.map((st) => ({
         id: `sub_${st.id}_${hw.id}`,
@@ -716,7 +681,7 @@ export function AdminDashboard({
         studentName: st.fullName,
         avatarColor: getAvatarColor(st.fullName),
         initials: st.fullName.split(" ").slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "УЧ",
-        submittedAt: `${hw.targetDate || "2026-09-16"}, 16:30`,
+        submittedAt: `${hw.targetDate || format(new Date(), "yyyy-MM-dd")}, 16:30`,
         pagesCount: 1,
         pageImages: [],
         status: "PENDING",
@@ -969,23 +934,18 @@ export function AdminDashboard({
                           type="button"
                           onClick={() => {
                             const targetDayStr = format(currentDate, "yyyy-MM-dd");
-                            const hwForDay = homeworks.find((h) => h.targetDate === targetDayStr) || {
-                              id: "hw_day_all",
-                              classId: selectedClassId,
-                              className: classes.find((c) => c.id === selectedClassId)?.name || "10А",
-                              subjectName: "Алгебра",
-                              title: "Векторы на плоскости",
-                              description: "Все типы задания № 2",
-                              targetDate: targetDayStr,
-                              submissionsCount: 12,
-                            };
-                            openCheckingStudio(hwForDay);
+                            const hwForDay = homeworks.find((h) => h.targetDate === targetDayStr) || (homeworks.length > 0 ? homeworks[0] : null);
+                            if (hwForDay) {
+                              openCheckingStudio(hwForDay);
+                            } else {
+                              setActiveTab("journal");
+                            }
                           }}
                           className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-3.5 py-2 text-xs font-bold text-white shadow-md transition active:scale-95"
-                          title="Проверить ДЗ у всех сдавших на этот день"
+                          title="Проверить домашнее задание"
                         >
                           <PenTool className="h-3.5 w-3.5" />
-                          <span>Проверить ДЗ (12)</span>
+                          <span>Проверить ДЗ</span>
                         </button>
 
                         <button
@@ -1282,6 +1242,7 @@ export function AdminDashboard({
                   targetDate: data.targetDate,
                   title: data.title,
                   description: data.description,
+                  targetTrack: data.targetTrack,
                   attachments: data.attachments,
                 });
               }}
@@ -1332,7 +1293,18 @@ export function AdminDashboard({
                   ) : (
                     sortedHomeworks.map((hw) => (
                       <tr key={hw.id} className="hover:bg-white/5">
-                        <td className="p-3 font-bold">{hw.className}</td>
+                        <td className="p-3 font-bold">
+                          <span>{hw.className}</span>
+                          {hw.targetTrack && (
+                            <span className={`ml-1.5 inline-block rounded-md px-1.5 py-0.5 text-[10px] font-black uppercase ${
+                              hw.targetTrack === "Профиль"
+                                ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                                : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                            }`}>
+                              {hw.targetTrack}
+                            </span>
+                          )}
+                        </td>
                         <td className="p-3 font-medium">{hw.subjectName}</td>
                         <td className="p-3">
                           <span className="font-semibold">{hw.title}</span>
@@ -1492,7 +1464,7 @@ export function AdminDashboard({
                   (document.getElementById("create-student-form") as HTMLFormElement)?.reset();
                 }}
                 id="create-student-form"
-                className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-4"
+                className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-5"
               >
                 <div className="sm:col-span-2">
                   <input
@@ -1521,9 +1493,19 @@ export function AdminDashboard({
                     placeholder="Буква"
                     className="h-9 w-16 rounded-lg border border-zinc-700 bg-transparent px-3 text-xs uppercase focus:outline-none"
                   />
+                  <select
+                    name="examTrack"
+                    className="h-9 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-xs text-zinc-300 focus:outline-none"
+                    title="Для 11 класса: выберите уровень экзамена (Профиль / База)"
+                  >
+                    <option value="База">11 кл: База</option>
+                    <option value="Профиль">11 кл: Профиль</option>
+                  </select>
+                </div>
+                <div>
                   <button
                     type="submit"
-                    className="theme-btn flex-1 px-3 py-1.5 text-xs font-bold"
+                    className="theme-btn w-full h-9 px-3 text-xs font-bold"
                   >
                     Создать
                   </button>
@@ -1532,8 +1514,8 @@ export function AdminDashboard({
             </div>
 
             <div className="glass-panel rounded-2xl p-4 shadow-sm space-y-3">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between flex-wrap">
+                <div className="flex items-center gap-3 flex-wrap">
                   <div>
                     <h3 className="font-bold text-sm">Журнал учащихся</h3>
                     <p className="text-xs text-zinc-500">Ученики выбранного класса</p>
@@ -1547,6 +1529,30 @@ export function AdminDashboard({
                       <option key={c.id} value={c.id} className="text-zinc-900">Класс {c.name}</option>
                     ))}
                   </select>
+
+                  {Boolean(classes.find((c) => c.id === studentSelectedClassId)?.grade === 11 || classes.find((c) => c.id === studentSelectedClassId)?.name.startsWith("11")) && (
+                    <div className="flex items-center gap-1.5 p-1 rounded-xl bg-zinc-800/80 border border-zinc-700 text-xs">
+                      <span className="text-[11px] text-zinc-400 px-1 font-bold">Экзамен:</span>
+                      {(["ALL", "База", "Профиль"] as const).map((tr) => (
+                        <button
+                          key={tr}
+                          type="button"
+                          onClick={() => setStudentTrackFilter(tr)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                            studentTrackFilter === tr
+                              ? tr === "Профиль"
+                                ? "bg-purple-600 text-white shadow-xs"
+                                : tr === "База"
+                                ? "bg-amber-600 text-white shadow-xs"
+                                : "bg-white/20 text-white shadow-xs"
+                              : "text-zinc-400 hover:text-white"
+                          }`}
+                        >
+                          {tr === "ALL" ? "Все" : tr}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <button
@@ -1558,12 +1564,21 @@ export function AdminDashboard({
                 </button>
               </div>
 
+              {Boolean(classes.find((c) => c.id === studentSelectedClassId)?.grade === 11 || classes.find((c) => c.id === studentSelectedClassId)?.name.startsWith("11")) && (
+                <p className="text-[11px] text-zinc-400 bg-blue-950/20 border border-blue-900/30 rounded-xl px-3 py-1.5">
+                  💡 <strong>11 класс:</strong> нажмите на кнопку в колонке <em>«Экзамен»</em>, чтобы переключить ученика между <strong>Базой</strong> и <strong>Профилем</strong>.
+                </p>
+              )}
+
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[650px] text-left text-xs">
                   <thead className="border-b border-zinc-800 uppercase text-zinc-500">
                     <tr>
                       <th className="p-2.5 w-12 text-center">№</th>
                       <th className="p-2.5">ФИО Ученика</th>
+                      {Boolean(classes.find((c) => c.id === studentSelectedClassId)?.grade === 11 || classes.find((c) => c.id === studentSelectedClassId)?.name.startsWith("11")) && (
+                        <th className="p-2.5 text-center w-36">Экзамен (Профиль/База)</th>
+                      )}
                       <th className="p-2.5">Логин</th>
                       <th className="p-2.5">Пароль</th>
                       <th className="p-2.5 w-28 text-center">Копировать</th>
@@ -1573,42 +1588,77 @@ export function AdminDashboard({
                   <tbody className="divide-y divide-zinc-800">
                     {currentClassStudents.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-4 text-center text-zinc-400">
+                        <td
+                          colSpan={
+                            Boolean(classes.find((c) => c.id === studentSelectedClassId)?.grade === 11 || classes.find((c) => c.id === studentSelectedClassId)?.name.startsWith("11"))
+                              ? 7
+                              : 6
+                          }
+                          className="p-4 text-center text-zinc-400"
+                        >
                           В этом классе пока нет зарегистрированных учеников
                         </td>
                       </tr>
                     ) : (
-                      currentClassStudents.map((st, idx) => (
-                        <tr key={st.id} className="hover:bg-white/5">
-                          <td className="p-2.5 text-center font-bold text-zinc-500">{idx + 1}</td>
-                          <td className="p-2.5 font-semibold">{st.fullName}</td>
-                          <td className="p-2.5 font-mono text-zinc-400">{st.login}</td>
-                          <td className="p-2.5 font-mono text-zinc-400">{st.plainPassword}</td>
-                          <td className="p-2.5 text-center">
-                            <button
-                              type="button"
-                              onClick={() => copyToClipboard(`Логин: ${st.login} | Пароль: ${st.plainPassword}`, st.id)}
-                              className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-2 py-1 text-[11px] font-medium hover:bg-white/20 text-zinc-200"
-                            >
-                              {copiedId === st.id ? <Check className="h-3 w-3 text-cyan-400" /> : <Copy className="h-3 w-3" />}
-                              <span>{copiedId === st.id ? "Скопировано" : "Копия"}</span>
-                            </button>
-                          </td>
-                          <td className="p-2.5 text-center">
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                if (confirm(`Удалить ученика ${st.fullName}?`)) {
-                                  await deleteStudentAction(st.id);
-                                }
-                              }}
-                              className="rounded p-1 text-red-400 hover:bg-red-950/40"
-                            >
-                              <Trash2 className="h-3.5 w-3.5 mx-auto" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))
+                      currentClassStudents.map((st, idx) => {
+                        const is11 = Boolean(classes.find((c) => c.id === studentSelectedClassId)?.grade === 11 || classes.find((c) => c.id === studentSelectedClassId)?.name.startsWith("11"));
+                        return (
+                          <tr key={st.id} className="hover:bg-white/5">
+                            <td className="p-2.5 text-center font-bold text-zinc-500">{idx + 1}</td>
+                            <td className="p-2.5 font-semibold">{st.fullName}</td>
+                            {is11 && (
+                              <td className="p-2.5 text-center">
+                                <button
+                                  type="button"
+                                  disabled={updatingStudentId === st.id}
+                                  onClick={async () => {
+                                    setUpdatingStudentId(st.id);
+                                    try {
+                                      const nextTrack = (st.examTrack || "База") === "Профиль" ? "База" : "Профиль";
+                                      await updateStudentTrackAction(st.id, nextTrack);
+                                    } finally {
+                                      setUpdatingStudentId(null);
+                                    }
+                                  }}
+                                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-xl text-xs font-black uppercase transition shadow-xs active:scale-95 ${
+                                    st.examTrack === "Профиль"
+                                      ? "bg-purple-500/20 text-purple-300 border border-purple-500/40 hover:bg-purple-500/30"
+                                      : "bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30"
+                                  }`}
+                                  title="Нажмите, чтобы переключить экзамен (Профиль ↔ База)"
+                                >
+                                  <span>{st.examTrack === "Профиль" ? "Профиль ⚡" : "База 📘"}</span>
+                                </button>
+                              </td>
+                            )}
+                            <td className="p-2.5 font-mono text-zinc-400">{st.login}</td>
+                            <td className="p-2.5 font-mono text-zinc-400">{st.plainPassword}</td>
+                            <td className="p-2.5 text-center">
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard(`Логин: ${st.login} | Пароль: ${st.plainPassword}`, st.id)}
+                                className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-2 py-1 text-[11px] font-medium hover:bg-white/20 text-zinc-200"
+                              >
+                                {copiedId === st.id ? <Check className="h-3 w-3 text-cyan-400" /> : <Copy className="h-3 w-3" />}
+                                <span>{copiedId === st.id ? "Скопировано" : "Копия"}</span>
+                              </button>
+                            </td>
+                            <td className="p-2.5 text-center">
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  if (confirm(`Удалить ученика ${st.fullName}?`)) {
+                                    await deleteStudentAction(st.id);
+                                  }
+                                }}
+                                className="rounded p-1 text-red-400 hover:bg-red-950/40"
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mx-auto" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -1810,18 +1860,48 @@ export function AdminDashboard({
                     targetDate: fd.get("targetDate") as string,
                     title: fd.get("title") as string,
                     description: fd.get("description") as string,
+                    targetTrack: Boolean(classes.find((c) => c.id === selectedClassId)?.grade === 11 || classes.find((c) => c.id === selectedClassId)?.name.startsWith("11"))
+                      ? (modalTargetTrack === "ALL" ? null : modalTargetTrack)
+                      : null,
                     attachments,
                   });
 
                   setIsHwModalOpen(false);
                   setHwFiles([]);
                   setHwPreset(null);
+                  setModalTargetTrack("ALL");
                 } finally {
                   setHwLoading(false);
                 }
               }}
               className="mt-4 space-y-3 text-xs"
             >
+              {Boolean(classes.find((c) => c.id === selectedClassId)?.grade === 11 || classes.find((c) => c.id === selectedClassId)?.name.startsWith("11")) && (
+                <div>
+                  <label className="font-medium text-zinc-400 block mb-1">Кому выдать ДЗ (11 класс)</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["ALL", "База", "Профиль"] as const).map((tr) => (
+                      <button
+                        key={tr}
+                        type="button"
+                        onClick={() => setModalTargetTrack(tr)}
+                        className={`h-8 rounded-lg border text-xs font-bold transition flex items-center justify-center ${
+                          modalTargetTrack === tr
+                            ? tr === "Профиль"
+                              ? "bg-purple-600 text-white border-purple-600 shadow-xs"
+                              : tr === "База"
+                              ? "bg-amber-600 text-white border-amber-600 shadow-xs"
+                              : "bg-blue-600 text-white border-blue-600 shadow-xs"
+                            : "border-zinc-700 text-zinc-400 hover:text-white"
+                        }`}
+                      >
+                        {tr === "ALL" ? "Весь класс" : tr}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="font-medium text-zinc-400">Предмет</label>

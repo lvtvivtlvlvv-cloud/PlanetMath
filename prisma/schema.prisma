@@ -15,6 +15,7 @@ model User {
   fullName              String
   classId               String?
   plainPasswordForAdmin String?
+  examTrack             String?              // "База" | "Профиль" (только для 11 класса)
   classGroup            ClassGroup?          @relation(fields: [classId], references: [id], onDelete: SetNull)
   submissions           HomeworkSubmission[]
   createdAt             DateTime             @default(now())
@@ -55,6 +56,7 @@ model Homework {
   targetDate  DateTime
   title       String
   description String
+  targetTrack String?              // null | "ALL" | "База" | "Профиль" (только для 11 класса)
   createdAt   DateTime             @default(now())
   classGroup  ClassGroup           @relation(fields: [classId], references: [id], onDelete: Cascade)
   attachments Attachment[]
