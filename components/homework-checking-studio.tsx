@@ -25,8 +25,14 @@ import {
   Clock,
   Sparkles,
   Maximize2,
+  Minimize2,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
   ZoomIn,
   ZoomOut,
+  SlidersHorizontal,
 } from "lucide-react";
 
 export interface AnnotationStroke {
@@ -153,6 +159,40 @@ export function HomeworkCheckingStudio({
   const [currentComment, setCurrentComment] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
 
+  // Сворачивание панелей: режим "Только фото" (свернуть всё, кроме файла) или раздельное сворачивание
+  const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
+  const [isLeftCollapsed, setIsLeftCollapsed] = useState<boolean>(false);
+  const [isRightCollapsed, setIsRightCollapsed] = useState<boolean>(false);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+
+  // Индекс и переключение между учениками
+  const currentStudentIdx = submissions.findIndex((s) => s.id === (currentSubmission?.id || selectedStudentId));
+  const handlePrevStudent = () => {
+    if (currentStudentIdx > 0) {
+      setSelectedStudentId(submissions[currentStudentIdx - 1].id);
+    }
+  };
+  const handleNextStudent = () => {
+    if (currentStudentIdx < submissions.length - 1) {
+      setSelectedStudentId(submissions[currentStudentIdx + 1].id);
+    }
+  };
+
+  // Горячая клавиша F для переключения режима "Только фото" и Esc для выхода
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "f" || e.key === "F" || e.key === "а" || e.key === "А") {
+        setIsFocusMode((prev) => !prev);
+      }
+      if (e.key === "Escape" && isFocusMode) {
+        setIsFocusMode(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFocusMode]);
+
   // Load active student state into local form
   useEffect(() => {
     if (currentSubmission) {
@@ -245,9 +285,13 @@ export function HomeworkCheckingStudio({
     };
 
     updateCanvasSize();
+    const timer = setTimeout(updateCanvasSize, 150);
     window.addEventListener("resize", updateCanvasSize);
-    return () => window.removeEventListener("resize", updateCanvasSize);
-  }, [redrawCanvas, currentSubmission?.id]);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", updateCanvasSize);
+    };
+  }, [redrawCanvas, currentSubmission?.id, isFocusMode, isLeftCollapsed, isRightCollapsed, zoomLevel]);
 
   // Push to undo stack
   const saveUndoState = (newAnnotations: AnnotationItem[]) => {
@@ -634,58 +678,243 @@ export function HomeworkCheckingStudio({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#F3F4F6] text-zinc-900 select-none overflow-hidden font-sans">
-      {/* 1. TOP HEADER TOOLBAR (Matching Image 1) */}
-      <header className="flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-4 shadow-xs">
-        {/* Left Section: Back, Title, Mode */}
-        <div className="flex items-center gap-3">
+      {/* ПЛАВАЮЩИЙ ХАД-ТУЛБАР В РЕЖИМЕ "ТОЛЬКО ФОТО" (СВЕРНУТО ВСЁ, КРОМЕ КАРТИНКИ ФАЙЛА) */}
+      {isFocusMode && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 sm:gap-2 bg-zinc-950/90 backdrop-blur-2xl border border-zinc-700/80 p-1.5 sm:p-2 rounded-2xl shadow-2xl text-white max-w-[96vw] overflow-x-auto scrollbar-none animate-in fade-in zoom-in-95 duration-200">
+          <button
+            type="button"
+            onClick={() => setIsFocusMode(false)}
+            className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-xs font-black transition shadow-sm active:scale-95 shrink-0"
+            title="Развернуть все панели [Esc]"
+          >
+            <Minimize2 className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Развернуть всё</span>
+          </button>
+
+          <div className="h-5 w-px bg-zinc-700/80 shrink-0" />
+
+          {/* Переключатель учеников */}
+          <div className="flex items-center gap-1 bg-white/5 rounded-xl px-1.5 py-0.5 border border-white/10 shrink-0">
+            <button
+              type="button"
+              disabled={currentStudentIdx <= 0}
+              onClick={handlePrevStudent}
+              className="p-1 rounded-lg hover:bg-white/10 text-zinc-300 disabled:opacity-30 transition"
+              title="Предыдущий ученик"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <div className="px-1 text-center min-w-[110px] max-w-[170px]">
+              <p className="text-xs font-extrabold truncate text-zinc-100">
+                {currentSubmission?.studentName || "Ученик"}
+              </p>
+              <p className="text-[10px] text-zinc-400 font-mono leading-none">
+                {currentStudentIdx + 1} из {submissions.length}
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={currentStudentIdx >= submissions.length - 1}
+              onClick={handleNextStudent}
+              className="p-1 rounded-lg hover:bg-white/10 text-zinc-300 disabled:opacity-30 transition"
+              title="Следующий ученик"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="h-5 w-px bg-zinc-700/80 shrink-0" />
+
+          {/* Инструменты рисования */}
+          <div className="flex items-center bg-white/10 p-0.5 rounded-xl border border-white/10 shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTool("pen")}
+              className={`p-1.5 rounded-lg text-xs font-bold transition ${
+                activeTool === "pen" ? "bg-blue-600 text-white shadow-xs" : "text-zinc-400 hover:text-white"
+              }`}
+              title="Ручка"
+            >
+              <PenTool className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTool("text")}
+              className={`p-1.5 rounded-lg text-xs font-bold transition ${
+                activeTool === "text" ? "bg-blue-600 text-white shadow-xs" : "text-zinc-400 hover:text-white"
+              }`}
+              title="Текст"
+            >
+              <Type className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTool("eraser")}
+              className={`p-1.5 rounded-lg text-xs font-bold transition ${
+                activeTool === "eraser" ? "bg-blue-600 text-white shadow-xs" : "text-zinc-400 hover:text-white"
+              }`}
+              title="Ластик"
+            >
+              <Eraser className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          {/* Цвета */}
+          <div className="hidden lg:flex items-center gap-1 shrink-0">
+            {PALETTE.map((c) => (
+              <button
+                key={c.hex}
+                type="button"
+                onClick={() => setPenColor(c.hex)}
+                className={`h-5 w-5 rounded-full transition-transform ${
+                  penColor === c.hex ? "scale-115 ring-2 ring-blue-400 ring-offset-1 ring-offset-black" : "hover:scale-105"
+                }`}
+                style={{ backgroundColor: c.hex }}
+                title={c.name}
+              />
+            ))}
+          </div>
+
+          {/* Отмена / Повтор / Поворот */}
+          <div className="flex items-center gap-0.5 shrink-0">
+            <button
+              type="button"
+              onClick={handleUndo}
+              disabled={!undoStackMap[currentSubmission?.id]?.length}
+              className="p-1 rounded-lg text-zinc-400 hover:text-white disabled:opacity-20"
+              title="Отменить"
+            >
+              <Undo2 className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={handleRedo}
+              disabled={!redoStackMap[currentSubmission?.id]?.length}
+              className="p-1 rounded-lg text-zinc-400 hover:text-white disabled:opacity-20"
+              title="Повторить"
+            >
+              <Redo2 className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={handleRotate}
+              className="p-1 rounded-lg text-zinc-400 hover:text-white"
+              title="Повернуть фото"
+            >
+              <RotateCw className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          <div className="h-5 w-px bg-zinc-700/80 shrink-0" />
+
+          {/* Оценка */}
+          <div className="flex items-center gap-1 bg-white/5 p-0.5 rounded-xl border border-white/10 shrink-0">
+            {[2, 3, 4, 5].map((g) => (
+              <button
+                key={g}
+                type="button"
+                onClick={() => setCurrentGrade(g)}
+                className={`h-7 w-7 rounded-lg text-xs font-black transition ${
+                  currentGrade === g
+                    ? "bg-blue-600 text-white shadow-xs"
+                    : "text-zinc-400 hover:text-white hover:bg-white/10"
+                }`}
+                title={`Оценка ${g}`}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+
+          {/* Сохранить */}
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={() => handleSaveGrade(false)}
+            className="flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 text-xs font-black transition shadow-xs disabled:opacity-50 shrink-0"
+            title="Сохранить оценку"
+          >
+            <Save className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{isSaving ? "..." : "Сохранить"}</span>
+          </button>
+
+          <div className="h-5 w-px bg-zinc-700/80 shrink-0" />
+
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition"
-            title="Вернуться назад"
+            className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 shrink-0"
+            title="Закрыть"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
-
-          <div>
-            <h1 className="text-sm sm:text-base font-extrabold tracking-tight text-zinc-900 leading-tight">
-              Проверка домашней работы
-            </h1>
-            <p className="text-[11px] font-semibold text-zinc-500 leading-none mt-0.5">
-              {homework.title} • {homework.subjectName}
-            </p>
-          </div>
-
-          <div className="hidden md:flex items-center ml-4 pl-4 border-l border-zinc-200 gap-1 bg-zinc-100/80 p-0.5 rounded-xl text-xs font-semibold">
-            <button
-              type="button"
-              onClick={() => setViewMode("single")}
-              className={`px-3 py-1 rounded-lg transition ${
-                viewMode === "single"
-                  ? "bg-white text-zinc-900 shadow-xs font-bold"
-                  : "text-zinc-500 hover:text-zinc-900"
-              }`}
-            >
-              По ученикам
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("all")}
-              className={`px-3 py-1 rounded-lg transition ${
-                viewMode === "all"
-                  ? "bg-white text-zinc-900 shadow-xs font-bold"
-                  : "text-zinc-500 hover:text-zinc-900"
-              }`}
-            >
-              Все работы одним документом
-            </button>
-          </div>
         </div>
+      )}
 
-        {/* Center / Right: Drawing Tools (Pen, Text, Eraser, Colors, Thickness, Undo/Redo) */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Main Drawing Tools */}
-          <div className="flex items-center rounded-xl bg-zinc-100 p-1 border border-zinc-200/80">
+      {/* 1. TOP HEADER TOOLBAR (Matching Image 1) — скрывается в режиме "Только фото" */}
+      {!isFocusMode && (
+        <header className="flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-4 shadow-xs">
+          {/* Left Section: Back, Title, Mode */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition"
+              title="Вернуться назад"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+
+            <div>
+              <h1 className="text-sm sm:text-base font-extrabold tracking-tight text-zinc-900 leading-tight">
+                Проверка домашней работы
+              </h1>
+              <p className="text-[11px] font-semibold text-zinc-500 leading-none mt-0.5">
+                {homework.title} • {homework.subjectName}
+              </p>
+            </div>
+
+            <div className="hidden md:flex items-center ml-4 pl-4 border-l border-zinc-200 gap-1 bg-zinc-100/80 p-0.5 rounded-xl text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setViewMode("single")}
+                className={`px-3 py-1 rounded-lg transition ${
+                  viewMode === "single"
+                    ? "bg-white text-zinc-900 shadow-xs font-bold"
+                    : "text-zinc-500 hover:text-zinc-900"
+                }`}
+              >
+                По ученикам
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("all")}
+                className={`px-3 py-1 rounded-lg transition ${
+                  viewMode === "all"
+                    ? "bg-white text-zinc-900 shadow-xs font-bold"
+                    : "text-zinc-500 hover:text-zinc-900"
+                }`}
+              >
+                Все работы одним документом
+              </button>
+            </div>
+
+            {/* Кнопка: Свернуть всё, кроме фото (Focus Mode) */}
+            <button
+              type="button"
+              onClick={() => setIsFocusMode(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-blue-600 hover:bg-blue-700 text-white shadow-xs hover:shadow-md transition active:scale-95 shrink-0 ml-2"
+              title="Свернуть всё, кроме картинки файла [Клавиша F]"
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Свернуть всё, кроме фото</span>
+            </button>
+          </div>
+
+          {/* Center / Right: Drawing Tools (Pen, Text, Eraser, Colors, Thickness, Undo/Redo) */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Main Drawing Tools */}
+            <div className="flex items-center rounded-xl bg-zinc-100 p-1 border border-zinc-200/80">
             <button
               type="button"
               onClick={() => setActiveTool("pen")}
@@ -826,108 +1055,148 @@ export function HomeworkCheckingStudio({
           </div>
         </div>
       </header>
+      )}
 
       {/* 2. MAIN 3-COLUMN WORKSPACE (Left: Students, Center: Photo Canvas, Right: Grading) */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* LEFT COLUMN: SUBMITTED STUDENTS LIST (Matching Image 1) */}
-        <aside className="w-64 sm:w-72 shrink-0 border-r border-zinc-200 bg-white flex flex-col justify-between">
-          <div className="p-3 border-b border-zinc-100 bg-zinc-50/70">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-zinc-800">
-                {homework.targetDate}
-              </span>
-              <span className="text-[11px] font-semibold text-zinc-500">
-                {submissions.length} работ • 35 листов
-              </span>
-            </div>
-            <div className="mt-1 text-xs font-extrabold text-zinc-900 truncate">
-              {homework.title}
-            </div>
-          </div>
-
-          {/* Student list */}
-          <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
-            {submissions.map((sub, idx) => {
-              const isSelected = sub.id === currentSubmission?.id && viewMode === "single";
-              const isGraded = sub.status === "GRADED";
-
-              return (
-                <div
-                  key={sub.id}
-                  onClick={() => {
-                    setSelectedStudentId(sub.id);
-                    setViewMode("single");
-                  }}
-                  className={`flex items-center justify-between p-3 cursor-pointer transition ${
-                    isSelected
-                      ? "bg-blue-50/80 border-l-4 border-blue-600"
-                      : "hover:bg-zinc-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    {/* Two-letter Avatar */}
-                    <div
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-black text-white shadow-xs"
-                      style={{ backgroundColor: sub.avatarColor || "#2563EB" }}
-                    >
-                      {sub.initials || "УЧ"}
-                    </div>
-
-                    <div className="min-w-0">
-                      <div className="truncate text-xs font-bold text-zinc-900">
-                        {sub.studentName}
-                      </div>
-                      <div className="text-[10px] text-zinc-500 mt-0.5">
-                        {sub.pagesCount || 1} лист • {sub.submittedAt || "16.09.2026, 17:45"}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status Indicator */}
-                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                    {isGraded ? (
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-700">
-                        {sub.grade || "✓"}
-                      </span>
-                    ) : (
-                      <span className="h-2.5 w-2.5 rounded-full bg-amber-400" title="Ожидает проверки" />
-                    )}
-                  </div>
+        {!isFocusMode && !isLeftCollapsed ? (
+          <aside className="w-64 sm:w-72 shrink-0 border-r border-zinc-200 bg-white flex flex-col justify-between transition-all">
+            <div className="p-3 border-b border-zinc-100 bg-zinc-50/70 flex items-center justify-between">
+              <div className="min-w-0 pr-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-zinc-800">
+                    {homework.targetDate}
+                  </span>
+                  <span className="text-[11px] font-semibold text-zinc-500">
+                    • {submissions.length} работ
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Bottom quick summary */}
-          <div className="p-3 border-t border-zinc-200 bg-zinc-50 text-[11px] font-semibold text-zinc-600 flex items-center justify-between">
-            <span>Проверено:</span>
-            <span className="font-extrabold text-blue-600">
-              {gradedCount} из {submissions.length} ({gradedPercentage}%)
-            </span>
-          </div>
-        </aside>
-
-        {/* CENTER VIEWPORT: STUDENT'S HANDWRITTEN HOMEWORK PHOTO + DRAWING CANVAS */}
-        <main className="flex-1 overflow-y-auto bg-[#2E3440] p-4 sm:p-6 flex flex-col items-center justify-start relative">
-          {currentSubmission ? (
-            <div className="flex flex-col items-center w-full max-w-4xl space-y-6">
-              {/* Page Header */}
-              <div className="w-full flex items-center justify-between text-xs font-bold text-zinc-300 px-2">
-                <span>
-                  {currentSubmission.studentName}
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-zinc-400">лист 1 из {currentSubmission.pagesCount || 1}</span>
-                  <button
-                    type="button"
-                    onClick={handleRotate}
-                    className="p-1 rounded hover:bg-white/10 text-zinc-300"
-                    title="Повернуть лист"
-                  >
-                    <RotateCw className="h-4 w-4" />
-                  </button>
+                <div className="mt-0.5 text-xs font-extrabold text-zinc-900 truncate">
+                  {homework.title}
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setIsLeftCollapsed(true)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-200 transition shrink-0"
+                title="Свернуть список учеников"
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Student list */}
+            <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
+              {submissions.map((sub, idx) => {
+                const isSelected = sub.id === currentSubmission?.id && viewMode === "single";
+                const isGraded = sub.status === "GRADED";
+
+                return (
+                  <div
+                    key={sub.id}
+                    onClick={() => {
+                      setSelectedStudentId(sub.id);
+                      setViewMode("single");
+                    }}
+                    className={`flex items-center justify-between p-3 cursor-pointer transition ${
+                      isSelected
+                        ? "bg-blue-50/80 border-l-4 border-blue-600"
+                        : "hover:bg-zinc-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {/* Two-letter Avatar */}
+                      <div
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-black text-white shadow-xs"
+                        style={{ backgroundColor: sub.avatarColor || "#2563EB" }}
+                      >
+                        {sub.initials || "УЧ"}
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="truncate text-xs font-bold text-zinc-900">
+                          {sub.studentName}
+                        </div>
+                        <div className="text-[10px] text-zinc-500 mt-0.5">
+                          {sub.pagesCount || 1} лист • {sub.submittedAt || "16.09.2026, 17:45"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Status Indicator */}
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      {isGraded ? (
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-700">
+                          {sub.grade || "✓"}
+                        </span>
+                      ) : (
+                        <span className="h-2.5 w-2.5 rounded-full bg-amber-400" title="Ожидает проверки" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Bottom quick summary */}
+            <div className="p-3 border-t border-zinc-200 bg-zinc-50 text-[11px] font-semibold text-zinc-600 flex items-center justify-between">
+              <span>Проверено:</span>
+              <span className="font-extrabold text-blue-600">
+                {gradedCount} из {submissions.length} ({gradedPercentage}%)
+              </span>
+            </div>
+          </aside>
+        ) : !isFocusMode && isLeftCollapsed ? (
+          <button
+            type="button"
+            onClick={() => setIsLeftCollapsed(false)}
+            className="h-full w-9 bg-white border-r border-zinc-200 hover:bg-blue-50 flex flex-col items-center justify-start py-4 gap-3 text-zinc-500 hover:text-blue-600 transition z-20 shrink-0 shadow-xs"
+            title="Развернуть список учеников"
+          >
+            <PanelLeftOpen className="h-4 w-4 text-blue-600" />
+            <span className="[writing-mode:vertical-lr] text-[11px] font-extrabold tracking-wider uppercase text-zinc-500">
+              Ученики ({submissions.length})
+            </span>
+          </button>
+        ) : null}
+
+        {/* CENTER VIEWPORT: STUDENT'S HANDWRITTEN HOMEWORK PHOTO + DRAWING CANVAS */}
+        <main className={`flex-1 overflow-y-auto bg-[#2E3440] flex flex-col items-center justify-start relative transition-all duration-300 ${
+          isFocusMode ? "p-2 sm:p-4 pt-16 sm:pt-20" : "p-4 sm:p-6"
+        }`}>
+          {currentSubmission ? (
+            <div className={`flex flex-col items-center w-full transition-all duration-300 ${
+              isFocusMode ? "max-w-5xl lg:max-w-6xl space-y-4" : "max-w-4xl space-y-6"
+            }`}>
+              {/* Page Header (hidden in focus mode because HUD toolbar has it) */}
+              {!isFocusMode && (
+                <div className="w-full flex items-center justify-between text-xs font-bold text-zinc-300 px-2">
+                  <span className="truncate">
+                    {currentSubmission.studentName}
+                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-zinc-400">лист 1 из {currentSubmission.pagesCount || 1}</span>
+                    <button
+                      type="button"
+                      onClick={handleRotate}
+                      className="p-1 rounded hover:bg-white/10 text-zinc-300"
+                      title="Повернуть лист на 90°"
+                    >
+                      <RotateCw className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsFocusMode(true)}
+                      className="flex items-center gap-1.5 text-xs font-bold text-zinc-300 hover:text-white bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-xl border border-white/15 transition shadow-xs"
+                      title="Свернуть всё, кроме фото [Клавиша F]"
+                    >
+                      <Maximize2 className="h-3.5 w-3.5 text-blue-400" />
+                      <span>Только фото</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Photo Card with Canvas Layer */}
               <div
@@ -1122,11 +1391,37 @@ export function HomeworkCheckingStudio({
               Работы не выбраны
             </div>
           )}
+
+          {/* Плавающая кнопка развернуть панели в режиме "Только фото" */}
+          {isFocusMode && (
+            <button
+              type="button"
+              onClick={() => setIsFocusMode(false)}
+              className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-2xl bg-zinc-900/95 hover:bg-zinc-800 text-white border border-zinc-700/90 px-4 py-2.5 text-xs font-black shadow-2xl backdrop-blur-md transition active:scale-95 hover:border-blue-500"
+              title="Развернуть все панели [Esc]"
+            >
+              <Minimize2 className="h-4 w-4 text-blue-400" />
+              <span>Развернуть панели</span>
+            </button>
+          )}
         </main>
 
         {/* RIGHT COLUMN: TASK CHECKLIST & GRADING (Matching Image 1) */}
-        <aside className="w-72 sm:w-80 shrink-0 border-l border-zinc-200 bg-white flex flex-col justify-between overflow-y-auto">
-          <div className="p-4 space-y-5">
+        {!isFocusMode && !isRightCollapsed ? (
+          <aside className="w-72 sm:w-80 shrink-0 border-l border-zinc-200 bg-white flex flex-col justify-between overflow-y-auto transition-all">
+            <div className="p-3 border-b border-zinc-100 bg-zinc-50/70 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setIsRightCollapsed(true)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-200 transition"
+                title="Свернуть панель оценки"
+              >
+                <PanelRightClose className="h-4 w-4" />
+              </button>
+              <span className="text-xs font-extrabold text-zinc-800">Оценка и задачи</span>
+              <span className="text-[11px] font-bold text-blue-600">Оценка: {currentGrade}</span>
+            </div>
+            <div className="p-4 space-y-5">
             {/* 1. Выполнение заданий (Task grid) */}
             <div>
               <h2 className="text-sm font-extrabold text-zinc-900">
@@ -1296,6 +1591,19 @@ export function HomeworkCheckingStudio({
             </div>
           </div>
         </aside>
+      ) : !isFocusMode && isRightCollapsed ? (
+        <button
+          type="button"
+          onClick={() => setIsRightCollapsed(false)}
+          className="h-full w-9 bg-white border-l border-zinc-200 hover:bg-blue-50 flex flex-col items-center justify-start py-4 gap-3 text-zinc-500 hover:text-blue-600 transition z-20 shrink-0 shadow-xs"
+          title="Развернуть панель оценки"
+        >
+          <PanelRightOpen className="h-4 w-4 text-blue-600" />
+          <span className="[writing-mode:vertical-lr] text-[11px] font-extrabold tracking-wider uppercase text-zinc-500">
+            Оценка ({currentGrade})
+          </span>
+        </button>
+      ) : null}
       </div>
     </div>
   );
