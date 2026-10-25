@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { verifySessionToken } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { AdminDashboard, StudentItem, TeacherItem } from "@/components/admin-dashboard";
+import { ensureEgeTasksInitialized } from "@/lib/ege-init";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,9 @@ export default async function AdminPage() {
     });
     classes = await db.classGroup.findMany({ orderBy: [{ grade: "asc" }, { letter: "asc" }] });
   }
+
+  // Гарантируем, что банк задач ЕГЭ не пустой при первом открытии
+  await ensureEgeTasksInitialized();
 
   const [scheduleItems, homeworks, submissions, users, egeTasks, egeAssignments] = await Promise.all([
     db.scheduleItem.findMany({ orderBy: [{ dayOfWeek: "asc" }, { lessonNumber: "asc" }] }),

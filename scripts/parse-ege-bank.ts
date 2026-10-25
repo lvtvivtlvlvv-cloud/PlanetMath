@@ -40,20 +40,31 @@ async function main() {
     const fileBuffer = fs.readFileSync(targetPdfPath);
     console.log(`Размер файла: ${(fileBuffer.length / (1024 * 1024)).toFixed(2)} МБ`);
 
-    // Фаза 1: Анализ структуры на первых 2-3 страницах
-    console.log("\n[2/3] Предварительный анализ первых 3 страниц...");
-    const preview = await parsePdfBuffer(fileBuffer, { maxPages: 3, source: "FIPI_PDF" });
-    console.log("----------------- Отчет по структуре -----------------");
-    console.log(preview.sampleSummary);
-    console.log(`Найдено заданий на первых 3 страницах: ${preview.tasks.length}`);
-    console.log("------------------------------------------------------");
+    if (fileBuffer.length === 0) {
+      console.log("[Внимание] Файл пуст (0 байт). Возможно, он был создан без содержимого.");
+      console.log("Загружаем эталонный банк задач ФИПИ (все задания 1–19 ЕГЭ по профильной математике)...");
+      parsedTasks = [...INITIAL_FIPI_TASKS];
+    } else {
+      // Фаза 1: Анализ структуры на первых 2-3 страницах
+      console.log("\n[2/3] Предварительный анализ первых 3 страниц...");
+      const preview = await parsePdfBuffer(fileBuffer, { maxPages: 3, source: "FIPI_PDF" });
+      console.log("----------------- Отчет по структуре -----------------");
+      console.log(preview.sampleSummary);
+      console.log(`Найдено заданий на первых 3 страницах: ${preview.tasks.length}`);
+      console.log("------------------------------------------------------");
 
-    // Фаза 2: Полный парсинг всего файла локально
-    console.log("\n[3/3] Локальный парсинг всего PDF-файла...");
-    const fullResult = await parsePdfBuffer(fileBuffer, { source: "FIPI_PDF" });
-    parsedTasks = fullResult.tasks;
-    console.log(`Всего страниц в документе: ${fullResult.numpages}`);
-    console.log(`Успешно извлечено заданий: ${parsedTasks.length}`);
+      // Фаза 2: Полный парсинг всего файла локально
+      console.log("\n[3/3] Локальный парсинг всего PDF-файла...");
+      const fullResult = await parsePdfBuffer(fileBuffer, { source: "FIPI_PDF" });
+      parsedTasks = fullResult.tasks;
+      console.log(`Всего страниц в документе: ${fullResult.numpages}`);
+      console.log(`Успешно извлечено заданий: ${parsedTasks.length}`);
+
+      if (parsedTasks.length === 0) {
+        console.log("В файле не найдено заданий, загружаем эталонный банк ФИПИ...");
+        parsedTasks = [...INITIAL_FIPI_TASKS];
+      }
+    }
   } else {
     console.log("\n[Внимание] PDF-файл не найден по стандартным путям:");
     CANDIDATE_PATHS.forEach((p) => console.log(` - ${p}`));
