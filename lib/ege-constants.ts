@@ -7,6 +7,8 @@ export interface ParsedEgeTask {
   solution?: string;
   difficulty: "BASE" | "ADVANCED" | "HIGH";
   source: string;
+  pdfPage?: number;
+  taskCode?: string;
 }
 
 export const EGE_TASK_TOPICS: Record<number, { topic: string; difficulty: "BASE" | "ADVANCED" | "HIGH" }> = {

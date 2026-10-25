@@ -112,10 +112,13 @@ model EgeTask {
   solution    String?             // Решение / критерии оценивания
   difficulty  String              @default("BASE") // "BASE" | "ADVANCED" | "HIGH"
   source      String              @default("FIPI") // "FIPI" | "MANUAL" | "IMPORT"
+  pdfPage     Int?                // Номер страницы в PDF (1-based)
+  taskCode    String?             // Код прототипа (например, "1.1", "1.2", "1.3")
   createdAt   DateTime            @default(now())
   assignmentItems EgeAssignmentItem[]
 
   @@index([taskNumber])
+  @@index([taskCode])
 }
 
 model EgeAssignment {

@@ -157,6 +157,8 @@ export default async function StudentPage() {
     title: item.task.title,
     content: item.task.content,
     difficulty: item.task.difficulty,
+    pdfPage: item.task.pdfPage,
+    taskCode: item.task.taskCode,
     studentAnswer: item.studentAnswer,
     studentComment: item.studentComment,
     status: item.status as "ASSIGNED" | "SUBMITTED" | "GRADED",

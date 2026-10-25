@@ -103,6 +103,8 @@ async function main() {
           solution: item.solution || existing.solution,
           difficulty: item.difficulty,
           source: item.source,
+          pdfPage: item.pdfPage ?? existing.pdfPage,
+          taskCode: item.taskCode ?? existing.taskCode,
         },
       });
       updatedCount++;
@@ -117,6 +119,8 @@ async function main() {
           solution: item.solution,
           difficulty: item.difficulty,
           source: item.source,
+          pdfPage: item.pdfPage ?? null,
+          taskCode: item.taskCode ?? null,
         },
       });
       addedCount++;

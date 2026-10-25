@@ -159,6 +159,8 @@ export default async function AdminPage() {
     solution: t.solution,
     difficulty: t.difficulty,
     source: t.source,
+    pdfPage: t.pdfPage,
+    taskCode: t.taskCode,
     createdAt: t.createdAt.toISOString(),
   }));
 

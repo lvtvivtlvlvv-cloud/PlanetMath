@@ -521,6 +521,8 @@ export async function syncFromLocalPdfAction() {
           solution: item.solution || existing.solution,
           difficulty: item.difficulty || existing.difficulty,
           source: item.source || existing.source,
+          pdfPage: item.pdfPage ?? existing.pdfPage,
+          taskCode: item.taskCode ?? existing.taskCode,
         },
       });
       updated++;
@@ -535,6 +537,8 @@ export async function syncFromLocalPdfAction() {
           solution: item.solution || null,
           difficulty: item.difficulty || "BASE",
           source: item.source || "FIPI",
+          pdfPage: item.pdfPage ?? null,
+          taskCode: item.taskCode ?? null,
         },
       });
       added++;

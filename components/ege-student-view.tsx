@@ -17,6 +17,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { submitEgeItemAnswerAction } from "@/app/student/actions";
+import { PdfTaskCrop } from "./pdf-task-crop";
 
 export interface StudentEgeAssignmentItem {
   id: string;
@@ -29,6 +30,8 @@ export interface StudentEgeAssignmentItem {
   title: string;
   content: string;
   difficulty: string;
+  pdfPage?: number | null;
+  taskCode?: string | null;
   studentAnswer?: string | null;
   studentComment?: string | null;
   status: "ASSIGNED" | "SUBMITTED" | "GRADED";
@@ -59,6 +62,12 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
   const [submittingItemId, setSubmittingItemId] = useState<string | null>(null);
   const [itemFeedback, setItemFeedback] = useState<Record<string, { success: boolean; msg: string }>>({});
   const [expandedWorks, setExpandedWorks] = useState<Record<string, boolean>>({});
+  const [toast, setToast] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
+
+  const showToast = (text: string, type: "success" | "error" | "info" = "info") => {
+    setToast({ type, text });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const [isPending, startTransition] = useTransition();
 
@@ -119,7 +128,7 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
     const comm = draftComments[item.id] !== undefined ? draftComments[item.id] : item.studentComment || "";
 
     if (!ans.trim()) {
-      alert("Пожалуйста, введите ваш ответ перед отправкой!");
+      showToast("Пожалуйста, введите ваш ответ перед отправкой!", "error");
       return;
     }
 
@@ -143,15 +152,17 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
                 msg: isCorrect ? "Верно! Ответ правильный (+1 балл)." : "Ответ не совпал с ключом.",
               },
             }));
+            showToast(isCorrect ? "Ответ верный! +1 балл" : "Ответ принят, но не совпал с ключом", isCorrect ? "success" : "info");
           } else {
             setItemFeedback((prev) => ({
               ...prev,
               [item.id]: { success: true, msg: "Решение отправлено учителю на проверку." },
             }));
+            showToast("Решение отправлено учителю на проверку!", "success");
           }
         }
       } catch (err: any) {
-        alert(err.message || "Ошибка при отправке решения");
+        showToast(err.message || "Ошибка при отправке решения", "error");
       } finally {
         setSubmittingItemId(null);
       }
@@ -364,6 +375,31 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
           ))}
         </div>
       )}
+
+      {/* Стилизованные Toast-уведомления */}
+      {toast && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl border backdrop-blur-xl shadow-2xl animate-in slide-in-from-bottom-3 duration-200 ${
+            toast.type === "success"
+              ? "bg-slate-900/95 border-emerald-500/40 text-emerald-300"
+              : toast.type === "error"
+              ? "bg-slate-900/95 border-rose-500/40 text-rose-300"
+              : "bg-slate-900/95 border-cyan-500/40 text-cyan-300"
+          }`}
+        >
+          {toast.type === "success" && <Check className="w-4 h-4 shrink-0 text-emerald-400" />}
+          {toast.type === "error" && <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />}
+          {toast.type === "info" && <Clock className="w-4 h-4 shrink-0 text-cyan-400" />}
+          <span className="text-xs font-semibold">{toast.text}</span>
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            className="p-1 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -400,17 +436,22 @@ function TaskCard({
     <div className="p-4 rounded-xl bg-black/30 border border-white/5 hover:border-white/10 transition space-y-3">
       {/* Шапка карточки задания */}
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center flex-wrap gap-2">
+        <div className="flex items-center flex-wrap gap-2.5">
           <span
-            className={`px-2 py-0.5 rounded-md text-xs font-black ${
+            className={`px-2.5 py-1 rounded-lg text-xs font-black shadow-sm ${
               isPart2
-                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
             }`}
           >
             Задание №{item.taskNumber}
           </span>
-          <span className="text-xs font-bold text-zinc-200">{item.title}</span>
+          <span className="text-xs font-bold text-zinc-100">{item.topic}</span>
+          {item.taskCode && (
+            <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+              Прототип #{item.taskCode}
+            </span>
+          )}
         </div>
 
         {/* Статус выполнения */}
@@ -440,10 +481,13 @@ function TaskCard({
         </div>
       </div>
 
-      {/* Текст условия */}
-      <div className="p-3.5 rounded-xl bg-black/20 border border-white/5 font-mono text-xs text-zinc-200 whitespace-pre-wrap leading-relaxed">
-        {item.content}
-      </div>
+      {/* Визуальный рендер условия задания напрямую из PDF сборника ФИПИ */}
+      <PdfTaskCrop
+        pdfPage={item.pdfPage}
+        taskCode={item.taskCode}
+        fallbackText={item.content}
+        taskNumber={item.taskNumber}
+      />
 
       {/* Поле ввода ответа и отправка */}
       <div className="space-y-2 pt-1">

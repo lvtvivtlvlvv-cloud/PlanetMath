@@ -33,37 +33,52 @@ export const BOOK_TO_EGE_MAP: Record<number, number> = {
 export function extractFipiBookTasks(pagesText: string[], answersMap: Record<string, string>, defaultSource = "FIPI_PDF"): ParsedEgeTask[] {
   const tasks: ParsedEgeTask[] = [];
 
-  // Pages 4 to ~175 contain the task prototypes
-  const textBody = pagesText.slice(4, Math.min(180, pagesText.length)).join("\n");
-  const taskRegex = /Задача\s*(\d{1,2})\.(\d+(?:\.\d+)?)[\.\s]+([\s\S]*?)(?=(?:Задача\s*\d{1,2}\.\d+)|\z)/gi;
+  // Pages 5 to ~250 contain the task prototypes (0-indexed 4 to 250)
+  for (let i = 4; i < Math.min(250, pagesText.length); i++) {
+    const pageNum = i + 1;
+    const pageText = pagesText[i] || "";
+    // Split into chunks starting with "Задача X.Y"
+    const chunks = pageText.split(/(?=Задача\s*\d{1,2}\.\d+)/i);
 
-  let match: RegExpExecArray | null;
-  while ((match = taskRegex.exec(textBody)) !== null) {
-    const bookChapter = parseInt(match[1], 10);
-    const key = `${match[1]}.${match[2]}`;
-    let body = match[3]
-      .replace(/^(?:DEMO|NEW|SIM|Аналоги|Ответ|\s)+/g, "")
-      .replace(/Оглавление[\s\S]*?Ответы/g, "")
-      .replace(/Библиотека MathStart[\s\S]*?ВКонтакте/g, "")
-      .replace(/Ответ:[\s\S]*$/, "")
-      .trim();
+    for (const chunk of chunks) {
+      const match = chunk.match(/^Задача\s*(\d{1,2})\.(\d+(?:\.\d+)?)([\s\S]*)/i);
+      if (!match) continue;
 
-    if (body.length > 20) {
+      const bookChapter = parseInt(match[1], 10);
+      const subCode = match[2];
+      const taskCode = `${bookChapter}.${subCode}`;
+      let body = match[3] || "";
+
+      // Cleanup header annotations and metadata
+      body = body
+        .replace(/^(?:DEMO|NEW|SIM|Аналоги|Ответ|\s)+/g, "")
+        .replace(/Оглавление[\s\S]*?Ответы/g, "")
+        .replace(/Библиотека MathStart[\s\S]*?ВКонтакте/g, "")
+        .replace(/Ответ:[\s\S]*$/, "")
+        .replace(/♦/g, "°") // Fix broken degree symbol from PDF
+        .replace(/\r\n/g, "\n")
+        .trim();
+
+      // Clean dangling geometric diagram labels (e.g. single letters A B C on their own line)
+      body = body.replace(/\n\s*([A-Za-z]\s*)+$/g, "").trim();
+
+      if (body.length < 15) continue;
+
       const egeNum = BOOK_TO_EGE_MAP[bookChapter] || (bookChapter <= 19 ? bookChapter : 1);
       const meta = EGE_TASK_TOPICS[egeNum] || { topic: `Задание №${egeNum}`, difficulty: "BASE" as const };
-      const answer = answersMap[key] || answersMap[`${match[1]}.${match[2].split(".")[0]}`] || undefined;
+      const answer = answersMap[taskCode] || answersMap[`${bookChapter}.${subCode.split(".")[0]}`] || undefined;
       const wellBody = body.toWellFormed().trim();
-      const firstLineChars = Array.from(wellBody.split("\n")[0] || "");
-      const preview = firstLineChars.slice(0, 65).join("").trim();
 
       tasks.push({
         taskNumber: egeNum,
         topic: meta.topic,
-        title: `Задача ${key}: ${preview.length > 5 ? preview : meta.topic}`.toWellFormed(),
+        title: `Задача ${taskCode}`.toWellFormed(),
         content: wellBody,
         answer: answer ? answer.toWellFormed() : undefined,
         difficulty: meta.difficulty,
         source: defaultSource,
+        pdfPage: pageNum,
+        taskCode: taskCode,
       });
     }
   }

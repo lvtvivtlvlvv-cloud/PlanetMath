@@ -38,6 +38,7 @@ import {
   syncFromLocalPdfAction,
 } from "@/app/admin/actions";
 import { EGE_TASK_TOPICS } from "@/lib/ege-constants";
+import { PdfTaskCrop } from "./pdf-task-crop";
 
 export interface EgeTaskItem {
   id: string;
@@ -49,6 +50,8 @@ export interface EgeTaskItem {
   solution?: string | null;
   difficulty: string;
   source: string;
+  pdfPage?: number | null;
+  taskCode?: string | null;
   createdAt: string;
 }
 
@@ -1207,18 +1210,22 @@ export function EgeTaskBankView({
                       className="p-4 rounded-2xl bg-slate-900/70 border border-white/5 hover:border-cyan-500/30 transition-all space-y-2.5 shadow-sm"
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center flex-wrap gap-2">
+                        <div className="flex items-center flex-wrap gap-2.5">
                           <span
-                            className={`px-2.5 py-0.5 rounded-lg text-xs font-black ${
+                            className={`px-2.5 py-1 rounded-lg text-xs font-black shadow-sm ${
                               isPart2
-                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                                : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                                : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
                             }`}
                           >
                             Задание №{t.taskNumber}
                           </span>
-                          <span className="text-xs font-bold text-zinc-200">{t.title}</span>
-                          <span className="text-[10px] text-zinc-400">• {t.topic}</span>
+                          <span className="text-xs font-bold text-zinc-100">{t.topic}</span>
+                          {t.taskCode && (
+                            <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+                              Прототип #{t.taskCode}
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-1.5 shrink-0">
@@ -1243,10 +1250,13 @@ export function EgeTaskBankView({
                         </div>
                       </div>
 
-                      {/* Текст условия */}
-                      <p className="text-xs text-zinc-300 leading-relaxed font-mono whitespace-pre-wrap bg-black/30 p-3.5 rounded-xl border border-white/5">
-                        {t.content}
-                      </p>
+                      {/* Визуальный рендер условия задания напрямую из PDF сборника ФИПИ */}
+                      <PdfTaskCrop
+                        pdfPage={t.pdfPage}
+                        taskCode={t.taskCode}
+                        fallbackText={t.content}
+                        taskNumber={t.taskNumber}
+                      />
 
                       {/* Блок с ответом */}
                       {showAnswer && t.answer && (
