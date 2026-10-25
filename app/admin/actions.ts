@@ -296,3 +296,193 @@ export async function saveScheduleBatchAction(classId: string, rows: EditableSch
   revalidatePath("/student");
   return { success: true };
 }
+
+export async function createEgeTaskAction(data: {
+  taskNumber: number;
+  topic?: string;
+  title: string;
+  content: string;
+  answer?: string;
+  solution?: string;
+  difficulty?: string;
+}) {
+  const taskNumber = Number(data.taskNumber);
+  if (isNaN(taskNumber) || taskNumber < 1 || taskNumber > 19) {
+    throw new Error("Номер задания должен быть от 1 до 19");
+  }
+  if (!data.title?.trim() || !data.content?.trim()) {
+    throw new Error("Название и условие задания обязательны для заполнения");
+  }
+
+  const { EGE_TASK_TOPICS } = await import("@/lib/ege-constants");
+  const meta = EGE_TASK_TOPICS[taskNumber] || { topic: `Задание №${taskNumber}`, difficulty: "BASE" as const };
+
+  const task = await db.egeTask.create({
+    data: {
+      taskNumber,
+      topic: data.topic?.trim() || meta.topic,
+      title: data.title.trim(),
+      content: data.content.trim(),
+      answer: data.answer?.trim() || null,
+      solution: data.solution?.trim() || null,
+      difficulty: data.difficulty || meta.difficulty,
+      source: "MANUAL",
+    },
+  });
+
+  revalidatePath("/admin");
+  return { success: true, taskId: task.id };
+}
+
+export async function deleteEgeTaskAction(taskId: string) {
+  await db.egeTask.delete({ where: { id: taskId } });
+  revalidatePath("/admin");
+  return { success: true };
+}
+
+export async function createEgeAssignmentAction(data: {
+  title: string;
+  teacherComment?: string;
+  targetType: "student" | "class";
+  targetId: string; // studentId or classId
+  targetTrack?: string | null; // "База" | "Профиль" | "ALL"
+  deadline?: string;
+  countsByType: Record<number, number>; // e.g. { 1: 5, 12: 2 }
+}) {
+  const title = data.title?.trim();
+  if (!title) throw new Error("Укажите название работы");
+
+  const counts = data.countsByType || {};
+  const requestedTaskNumbers = Object.entries(counts)
+    .filter(([_, count]) => Number(count) > 0)
+    .map(([num, count]) => ({ taskNumber: Number(num), count: Number(count) }));
+
+  if (requestedTaskNumbers.length === 0) {
+    throw new Error("Выберите хотя бы один тип задания и укажите количество");
+  }
+
+  // Определяем список учеников, которым выдается работа
+  let recipientStudents: { id: string; fullName: string }[] = [];
+
+  if (data.targetType === "student") {
+    const student = await db.user.findUnique({
+      where: { id: data.targetId },
+      select: { id: true, fullName: true, examTrack: true },
+    });
+    if (!student) throw new Error("Ученик не найден");
+    recipientStudents = [student];
+  } else {
+    // Выдача классу
+    const usersInClass = await db.user.findMany({
+      where: {
+        classId: data.targetId,
+        role: "STUDENT",
+        ...(data.targetTrack && data.targetTrack !== "ALL"
+          ? {
+              OR: [
+                { examTrack: data.targetTrack },
+                { examTrack: null },
+              ],
+            }
+          : {}),
+      },
+      select: { id: true, fullName: true, examTrack: true },
+    });
+
+    if (usersInClass.length === 0) {
+      throw new Error("В выбранном классе нет учеников для назначения");
+    }
+    recipientStudents = usersInClass;
+  }
+
+  const deadlineDate = data.deadline ? new Date(data.deadline) : null;
+
+  // Предзагружаем пул заданий по каждому запрошенному номеру
+  const tasksByNumber: Record<number, any[]> = {};
+  for (const { taskNumber } of requestedTaskNumbers) {
+    const tasks = await db.egeTask.findMany({
+      where: { taskNumber },
+      orderBy: { createdAt: "asc" },
+    });
+    tasksByNumber[taskNumber] = tasks;
+  }
+
+  // Создаем работы для каждого ученика
+  for (const student of recipientStudents) {
+    const assignment = await db.egeAssignment.create({
+      data: {
+        title,
+        teacherComment: data.teacherComment?.trim() || null,
+        targetClassId: data.targetType === "class" ? data.targetId : null,
+        studentId: student.id,
+        targetTrack: data.targetTrack || null,
+        deadline: deadlineDate,
+      },
+    });
+
+    let orderIndex = 0;
+    const itemsToCreate: { assignmentId: string; taskId: string; studentId: string; orderIndex: number; maxScore: number }[] = [];
+
+    for (const { taskNumber, count } of requestedTaskNumbers) {
+      const pool = tasksByNumber[taskNumber] || [];
+      if (pool.length === 0) continue;
+
+      // Перемешиваем или выбираем нужное количество
+      for (let i = 0; i < count; i++) {
+        const pickedTask = pool[i % pool.length];
+        const isPart2 = taskNumber >= 13;
+        const maxScore = taskNumber >= 17 ? 3 : isPart2 ? 2 : 1;
+
+        itemsToCreate.push({
+          assignmentId: assignment.id,
+          taskId: pickedTask.id,
+          studentId: student.id,
+          orderIndex: orderIndex++,
+          maxScore,
+        });
+      }
+    }
+
+    if (itemsToCreate.length > 0) {
+      await db.egeAssignmentItem.createMany({
+        data: itemsToCreate,
+      });
+    }
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/student");
+  return { success: true, countAssigned: recipientStudents.length };
+}
+
+export async function deleteEgeAssignmentAction(assignmentId: string) {
+  await db.egeAssignment.delete({ where: { id: assignmentId } });
+  revalidatePath("/admin");
+  revalidatePath("/student");
+  return { success: true };
+}
+
+export async function reseedEgeTasksAction() {
+  const { INITIAL_FIPI_TASKS } = await import("@/lib/ege-constants");
+  for (const item of INITIAL_FIPI_TASKS) {
+    const existing = await db.egeTask.findFirst({
+      where: { taskNumber: item.taskNumber, title: item.title },
+    });
+    if (!existing) {
+      await db.egeTask.create({
+        data: {
+          taskNumber: item.taskNumber,
+          topic: item.topic,
+          title: item.title,
+          content: item.content,
+          answer: item.answer,
+          solution: item.solution,
+          difficulty: item.difficulty,
+          source: "FIPI",
+        },
+      });
+    }
+  }
+  revalidatePath("/admin");
+  return { success: true };
+}

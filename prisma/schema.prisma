@@ -18,6 +18,8 @@ model User {
   examTrack             String?              // "База" | "Профиль" (только для 11 класса)
   classGroup            ClassGroup?          @relation(fields: [classId], references: [id], onDelete: SetNull)
   submissions           HomeworkSubmission[]
+  egeAssignments        EgeAssignment[]
+  egeAssignmentItems    EgeAssignmentItem[]
   createdAt             DateTime             @default(now())
 
   @@index([login])
@@ -98,4 +100,60 @@ model Attachment {
   submission   HomeworkSubmission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
   @@index([expiresAt])
+}
+
+model EgeTask {
+  id          String              @id @default(cuid())
+  taskNumber  Int                 // 1-19 (Номер задания профильного ЕГЭ)
+  topic       String              // Тема (например, "Планиметрия: треугольники", "Векторы", "Уравнения")
+  title       String              // Краткое название задания
+  content     String              // Условие задания
+  answer      String?             // Правильный ответ (для самопроверки/учителя)
+  solution    String?             // Решение / критерии оценивания
+  difficulty  String              @default("BASE") // "BASE" | "ADVANCED" | "HIGH"
+  source      String              @default("FIPI") // "FIPI" | "MANUAL" | "IMPORT"
+  createdAt   DateTime            @default(now())
+  assignmentItems EgeAssignmentItem[]
+
+  @@index([taskNumber])
+}
+
+model EgeAssignment {
+  id             String              @id @default(cuid())
+  title          String              // Название работы (например: "Тренировочная работа: Задания 1, 6, 12")
+  teacherComment String?             // Комментарий / инструкции учителя
+  assignedBy     String              @default("Учитель")
+  targetClassId  String?             // ID класса, если выдано всему классу
+  studentId      String?             // ID ученика, если выдано персонально
+  targetTrack    String?             // "База" | "Профиль" | "ALL"
+  deadline       DateTime?           // Срок выполнения
+  createdAt      DateTime            @default(now())
+  student        User?               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  items          EgeAssignmentItem[]
+
+  @@index([studentId])
+  @@index([targetClassId])
+}
+
+model EgeAssignmentItem {
+  id             String        @id @default(cuid())
+  assignmentId   String
+  taskId         String
+  studentId      String        // Кому назначено
+  orderIndex     Int           @default(0)
+  studentAnswer  String?       // Ответ ученика
+  studentComment String?       // Комментарий / пояснение ученика
+  status         String        @default("ASSIGNED") // "ASSIGNED" | "SUBMITTED" | "GRADED"
+  score          Int?          // Балл (0, 1, 2...)
+  maxScore       Int           @default(1)
+  teacherFeedback String?      // Замечание учителя
+  submittedAt    DateTime?     // Время сдачи
+  gradedAt       DateTime?     // Время проверки
+  assignment     EgeAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  task           EgeTask       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  student        User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([assignmentId])
+  @@index([studentId])
+  @@index([taskId])
 }

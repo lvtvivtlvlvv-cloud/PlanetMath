@@ -86,3 +86,61 @@ export async function submitHomeworkAction(data: {
   revalidatePath("/student");
   revalidatePath("/admin");
 }
+
+export async function submitEgeItemAnswerAction(data: {
+  itemId: string;
+  studentId: string;
+  studentAnswer: string;
+  studentComment?: string;
+}) {
+  const item = await db.egeAssignmentItem.findUnique({
+    where: { id: data.itemId },
+    include: { task: true, assignment: true },
+  });
+
+  if (!item) throw new Error("Задание не найдено");
+  if (item.studentId !== data.studentId) throw new Error("Нет доступа к данному заданию");
+
+  if (item.assignment.deadline) {
+    const dl = new Date(item.assignment.deadline);
+    dl.setHours(23, 59, 59, 999);
+    if (new Date() > dl) {
+      throw new Error("Срок сдачи работы истек.");
+    }
+  }
+
+  const cleanAns = data.studentAnswer.trim().toLowerCase().replace(",", ".");
+  let isCorrect: boolean | null = null;
+  let score = item.score;
+  let status = "SUBMITTED";
+
+  // Для заданий 1-12 с кратким числовым ответом проверяем автоматически
+  if (item.task.taskNumber <= 12 && item.task.answer) {
+    const targetAns = item.task.answer.trim().toLowerCase().replace(",", ".");
+    if (cleanAns === targetAns) {
+      isCorrect = true;
+      score = 1;
+      status = "GRADED";
+    } else {
+      isCorrect = false;
+      score = 0;
+      status = "GRADED";
+    }
+  }
+
+  await db.egeAssignmentItem.update({
+    where: { id: item.id },
+    data: {
+      studentAnswer: data.studentAnswer.trim(),
+      studentComment: data.studentComment?.trim() || null,
+      status,
+      score,
+      submittedAt: new Date(),
+      gradedAt: status === "GRADED" ? new Date() : item.gradedAt,
+    },
+  });
+
+  revalidatePath("/student");
+  revalidatePath("/admin");
+  return { success: true, status, score, isCorrect };
+}

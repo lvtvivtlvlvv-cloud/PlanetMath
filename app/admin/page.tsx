@@ -34,7 +34,7 @@ export default async function AdminPage() {
     classes = await db.classGroup.findMany({ orderBy: [{ grade: "asc" }, { letter: "asc" }] });
   }
 
-  const [scheduleItems, homeworks, submissions, users] = await Promise.all([
+  const [scheduleItems, homeworks, submissions, users, egeTasks, egeAssignments] = await Promise.all([
     db.scheduleItem.findMany({ orderBy: [{ dayOfWeek: "asc" }, { lessonNumber: "asc" }] }),
     db.homework.findMany({
       include: {
@@ -55,6 +55,16 @@ export default async function AdminPage() {
     db.user.findMany({
       include: { classGroup: true },
       orderBy: { fullName: "asc" },
+    }),
+    db.egeTask.findMany({
+      orderBy: [{ taskNumber: "asc" }, { createdAt: "asc" }],
+    }),
+    db.egeAssignment.findMany({
+      include: {
+        items: true,
+        student: true,
+      },
+      orderBy: { createdAt: "desc" },
     }),
   ]);
 
@@ -135,6 +145,37 @@ export default async function AdminPage() {
     teacherName: s.teacherName,
   }));
 
+  const formattedEgeTasks = egeTasks.map((t) => ({
+    id: t.id,
+    taskNumber: t.taskNumber,
+    topic: t.topic,
+    title: t.title,
+    content: t.content,
+    answer: t.answer,
+    solution: t.solution,
+    difficulty: t.difficulty,
+    source: t.source,
+    createdAt: t.createdAt.toISOString(),
+  }));
+
+  const formattedEgeAssignments = egeAssignments.map((a) => {
+    const itemsCount = a.items.length;
+    const completedCount = a.items.filter((i) => i.status === "GRADED" || i.status === "SUBMITTED").length;
+    return {
+      id: a.id,
+      title: a.title,
+      teacherComment: a.teacherComment,
+      targetClassId: a.targetClassId,
+      studentId: a.studentId,
+      targetTrack: a.targetTrack,
+      deadline: a.deadline ? a.deadline.toISOString().split("T")[0] : null,
+      createdAt: a.createdAt.toISOString(),
+      studentName: a.student?.fullName,
+      itemsCount,
+      completedCount,
+    };
+  });
+
   return (
     <AdminDashboard
       serverDate={new Date().toISOString()}
@@ -144,6 +185,8 @@ export default async function AdminPage() {
       submissions={formattedSubmissions}
       students={students}
       teachers={teachers}
+      egeTasks={formattedEgeTasks}
+      egeAssignments={formattedEgeAssignments}
     />
   );
 }

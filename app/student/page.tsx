@@ -74,7 +74,7 @@ export default async function StudentPage() {
   const is11Grade = currentClassGroup?.grade === 11;
   const studentTrack = studentUser.examTrack || (is11Grade ? "База" : null);
 
-  const [scheduleItems, homeworks, submissions] = await Promise.all([
+  const [scheduleItems, homeworks, submissions, egeItems] = await Promise.all([
     db.scheduleItem.findMany({
       where: { classId: studentClassId },
       orderBy: [{ dayOfWeek: "asc" }, { lessonNumber: "asc" }],
@@ -98,6 +98,17 @@ export default async function StudentPage() {
     db.homeworkSubmission.findMany({
       where: { studentId: studentUser.id },
       include: { attachments: true },
+    }),
+    db.egeAssignmentItem.findMany({
+      where: { studentId: studentUser.id },
+      include: {
+        task: true,
+        assignment: true,
+      },
+      orderBy: [
+        { assignment: { createdAt: "desc" } },
+        { orderIndex: "asc" },
+      ],
     }),
   ]);
 
@@ -135,6 +146,27 @@ export default async function StudentPage() {
     };
   });
 
+  const formattedEgeItems = egeItems.map((item) => ({
+    id: item.id,
+    assignmentId: item.assignmentId,
+    assignmentTitle: item.assignment.title,
+    assignmentDeadline: item.assignment.deadline ? safeIsoDate(item.assignment.deadline) : null,
+    teacherComment: item.assignment.teacherComment,
+    taskNumber: item.task.taskNumber,
+    topic: item.task.topic,
+    title: item.task.title,
+    content: item.task.content,
+    difficulty: item.task.difficulty,
+    studentAnswer: item.studentAnswer,
+    studentComment: item.studentComment,
+    status: item.status as "ASSIGNED" | "SUBMITTED" | "GRADED",
+    score: item.score,
+    maxScore: item.maxScore,
+    teacherFeedback: item.teacherFeedback,
+    submittedAt: item.submittedAt ? safeIsoFull(item.submittedAt) : null,
+    gradedAt: item.gradedAt ? safeIsoFull(item.gradedAt) : null,
+  }));
+
   return (
     <StudentDashboard
       serverDate={new Date().toISOString()}
@@ -147,6 +179,7 @@ export default async function StudentPage() {
       }}
       scheduleItems={scheduleItems}
       homeworks={formattedHomeworks}
+      egeItems={formattedEgeItems}
     />
   );
 }

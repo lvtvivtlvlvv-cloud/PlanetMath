@@ -3,13 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "prisma db push --skip-generate && next dev -p 3000 -H 0.0.0.0",
-    "build": "prisma db push --skip-generate && next build",
+    "dev": "next dev -p 3000 -H 0.0.0.0",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "setup": "prisma db push && tsx prisma/clean-and-setup-admin.ts",
-    "db:push": "prisma db push",
-    "seed": "tsx prisma/seed.ts"
+    "setup": "npx prisma db push && npx tsx prisma/clean-and-setup-admin.ts",
+    "db:push": "npx prisma db push",
+    "seed": "npx tsx prisma/seed.ts",
+    "parse:pdf": "npx tsx scripts/parse-ege-bank.ts"
   },
   "dependencies": {
     "@prisma/client": "5.19.0",
@@ -20,6 +21,7 @@
     "lucide-react": "^0.441.0",
     "next": "14.2.13",
     "next-themes": "^0.3.0",
+    "pdf-parse": "^2.4.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^2.5.2"
@@ -27,6 +29,7 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.16.5",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^18.3.8",
     "@types/react-dom": "^18.3.0",
     "eslint": "^8.57.0",

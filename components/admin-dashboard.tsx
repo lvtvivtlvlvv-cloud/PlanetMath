@@ -34,6 +34,7 @@ import { ThemeCalendarStrip } from "./theme-calendar-strip";
 import { useAppTheme } from "./theme-context";
 import { HomeworkCheckingStudio, StudentSubmissionItem, AnnotationItem } from "./homework-checking-studio";
 import { HomeworkJournalView, HomeworkCardItem } from "./homework-journal-view";
+import { EgeTaskBankView, EgeTaskItem, EgeAssignmentRecord } from "./ege-task-bank-view";
 import {
   LogOut,
   UserPlus,
@@ -341,6 +342,8 @@ interface AdminDashboardProps {
   }>;
   students: StudentItem[];
   teachers: TeacherItem[];
+  egeTasks?: EgeTaskItem[];
+  egeAssignments?: EgeAssignmentRecord[];
 }
 
 const SHORT_WEEKDAYS = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"];
@@ -352,10 +355,12 @@ export function AdminDashboard({
   homeworks,
   students,
   teachers,
+  egeTasks = [],
+  egeAssignments = [],
   serverDate,
 }: AdminDashboardProps) {
   const { theme } = useAppTheme();
-  const [activeTab, setActiveTab] = useState<"schedule" | "journal" | "homeworks" | "submissions" | "students" | "teachers">("schedule");
+  const [activeTab, setActiveTab] = useState<"schedule" | "journal" | "homeworks" | "submissions" | "ege" | "students" | "teachers">("schedule");
   const [selectedClassId, setSelectedClassId] = useState<string>(classes[0]?.id || "");
   const [scheduleMode, setScheduleMode] = useState<"calendar" | "excel">("calendar");
 
@@ -771,6 +776,7 @@ export function AdminDashboard({
           { id: "journal", label: "Журнал ДЗ" },
           { id: "homeworks", label: "Выданные ДЗ" },
           { id: "submissions", label: `Проверка работ (${submissions.length})` },
+          { id: "ege", label: `Банк задач ЕГЭ (${egeTasks.length})` },
           { id: "students", label: "Ученики" },
           { id: "teachers", label: `Учителя (${teachers.length})` },
         ].map((tab) => {
@@ -1664,6 +1670,28 @@ export function AdminDashboard({
                 </table>
               </div>
             </div>
+          </section>
+        )}
+
+        {activeTab === "ege" && (
+          <section className="space-y-6">
+            <EgeTaskBankView
+              tasks={egeTasks}
+              assignments={egeAssignments}
+              students={students.map((s) => ({
+                id: s.id,
+                fullName: s.fullName,
+                className: s.className,
+                classId: s.classId,
+                grade: s.grade,
+                examTrack: s.examTrack,
+              }))}
+              classes={classes.map((c) => ({
+                id: c.id,
+                name: c.name,
+                grade: c.grade,
+              }))}
+            />
           </section>
         )}
 

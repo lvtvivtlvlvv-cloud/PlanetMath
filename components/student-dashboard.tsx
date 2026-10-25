@@ -43,7 +43,9 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  GraduationCap,
 } from "lucide-react";
+import { EgeStudentView, StudentEgeAssignmentItem } from "./ege-student-view";
 
 const SHORT_WEEKDAYS = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"];
 
@@ -94,9 +96,10 @@ interface StudentDashboardProps {
       }>;
     } | null;
   }>;
+  egeItems?: StudentEgeAssignmentItem[];
 }
 
-export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }: StudentDashboardProps) {
+export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = [], serverDate }: StudentDashboardProps) {
   const { theme } = useAppTheme();
 
   // Синхронизация времени с хостом компьютера (2026 год)
@@ -261,12 +264,16 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
       ? "bg-[#1B291D] text-[#FEC868] border border-[#FEC868]/40 rounded-full px-3 py-1 font-bold"
       : "bg-emerald-950/50 text-emerald-300 border border-emerald-500/20";
 
-  // Табы студента: Расписание vs Домашние задания
-  const [activeTab, setActiveTab] = useState<"schedule" | "homework">("schedule");
+  // Табы студента: Расписание vs Домашние задания vs Задания ЕГЭ
+  const [activeTab, setActiveTab] = useState<"schedule" | "homework" | "ege">("schedule");
   const [isTabContentCollapsed, setIsTabContentCollapsed] = useState<boolean>(false);
   const [isHwFiltersCollapsed, setIsHwFiltersCollapsed] = useState<boolean>(false);
   const [isCalendarCollapsed, setIsCalendarCollapsed] = useState<boolean>(false);
   const [collapsedHwIds, setCollapsedHwIds] = useState<Record<string, boolean>>({});
+
+  const pendingEgeCount = useMemo(() => {
+    return egeItems.filter((i) => i.status === "ASSIGNED").length;
+  }, [egeItems]);
 
   // По умолчанию на вкладке ДЗ включается кнопка "Надо сдать" (не сданные ДЗ)
   const [hwStatusFilter, setHwStatusFilter] = useState<"ALL" | "NEED_SUBMIT" | "PENDING" | "GRADED">("NEED_SUBMIT");
@@ -274,7 +281,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const handleTabClick = (tabId: "schedule" | "homework") => {
+  const handleTabClick = (tabId: "schedule" | "homework" | "ege") => {
     if (activeTab === tabId) {
       // Клик по уже активной вкладке сворачивает / разворачивает её
       setIsTabContentCollapsed((prev) => !prev);
@@ -461,6 +468,13 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
               icon: BookOpen,
               badge: unsubmittedCount > 0 ? `${unsubmittedCount} сдать` : null,
               totalCount: homeworks.length,
+            },
+            {
+              id: "ege",
+              label: "Задания ЕГЭ",
+              icon: GraduationCap,
+              badge: pendingEgeCount > 0 ? `${pendingEgeCount} сдать` : null,
+              totalCount: egeItems.length,
             },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
@@ -1274,6 +1288,13 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
         </section>
       )}
 
+      {/* ВКЛАДКА: ЗАДАНИЯ И ТРЕНИРОВОЧНЫЕ РАБОТЫ ЕГЭ */}
+      {!isTabContentCollapsed && activeTab === "ege" && (
+        <section className="space-y-4 sm:space-y-5 animate-tab-enter">
+          <EgeStudentView studentId={user.id} items={egeItems} />
+        </section>
+      )}
+
       {/* Модальное окно сдачи ДЗ */}
       {activeHwModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
@@ -1728,6 +1749,27 @@ export function StudentDashboard({ user, scheduleItems, homeworks, serverDate }:
           {unsubmittedCount > 0 && (
             <span className="absolute -top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-rose-500 text-[9px] font-black text-white flex items-center justify-center animate-pulse">
               {unsubmittedCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("ege");
+            setIsTabContentCollapsed(false);
+          }}
+          className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-xl transition text-xs font-bold ${
+            activeTab === "ege" && !isTabContentCollapsed
+              ? "text-cyan-400 bg-cyan-500/10"
+              : "text-zinc-400 hover:text-white"
+          }`}
+        >
+          <GraduationCap className="h-4 w-4 mb-0.5" />
+          <span className="text-[10px]">ЕГЭ</span>
+          {pendingEgeCount > 0 && (
+            <span className="absolute -top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-cyan-500 text-[9px] font-black text-zinc-950 flex items-center justify-center animate-pulse">
+              {pendingEgeCount}
             </span>
           )}
         </button>
