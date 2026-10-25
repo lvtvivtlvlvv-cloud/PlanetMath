@@ -488,71 +488,9 @@ export async function reseedEgeTasksAction() {
 }
 
 export async function syncFromLocalPdfAction() {
-  const { parseLocalFipiPdf } = await import("@/lib/ege-parser");
-  const { INITIAL_FIPI_TASKS } = await import("@/lib/ege-constants");
-
-  const pdfTasks = await parseLocalFipiPdf();
-  const allTasks = [...pdfTasks];
-
-  for (const item of INITIAL_FIPI_TASKS) {
-    if (!allTasks.some((t) => t.taskNumber === item.taskNumber && t.title === item.title)) {
-      allTasks.push(item);
-    }
-  }
-
-  let added = 0;
-  let updated = 0;
-
-  for (const item of allTasks) {
-    const existing = await db.egeTask.findFirst({
-      where: {
-        taskNumber: item.taskNumber,
-        title: item.title,
-      },
-    });
-
-    if (existing) {
-      await db.egeTask.update({
-        where: { id: existing.id },
-        data: {
-          content: item.content,
-          topic: item.topic || existing.topic,
-          answer: item.answer || existing.answer,
-          solution: item.solution || existing.solution,
-          difficulty: item.difficulty || existing.difficulty,
-          source: item.source || existing.source,
-          pdfPage: item.pdfPage ?? existing.pdfPage,
-          taskCode: item.taskCode ?? existing.taskCode,
-        },
-      });
-      updated++;
-    } else {
-      await db.egeTask.create({
-        data: {
-          taskNumber: item.taskNumber,
-          topic: item.topic || `Задание №${item.taskNumber}`,
-          title: item.title,
-          content: item.content,
-          answer: item.answer || null,
-          solution: item.solution || null,
-          difficulty: item.difficulty || "BASE",
-          source: item.source || "FIPI",
-          pdfPage: item.pdfPage ?? null,
-          taskCode: item.taskCode ?? null,
-        },
-      });
-      added++;
-    }
-  }
-
-  // Update data/ege-tasks.json
-  const fs = await import("fs");
-  const path = await import("path");
-  const jsonPath = path.join(process.cwd(), "data", "ege-tasks.json");
-  const allInDb = await db.egeTask.findMany({ orderBy: [{ taskNumber: "asc" }, { createdAt: "asc" }] });
-  fs.writeFileSync(jsonPath, JSON.stringify(allInDb, null, 2), "utf-8");
-
+  const { ensureEgeTasksInitialized } = await import("@/lib/ege-init");
+  const total = await ensureEgeTasksInitialized();
   revalidatePath("/admin");
   revalidatePath("/student");
-  return { success: true, total: allInDb.length, added, updated };
+  return { success: true, total, added: 0, updated: total };
 }

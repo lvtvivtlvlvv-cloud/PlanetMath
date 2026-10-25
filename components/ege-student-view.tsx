@@ -17,7 +17,8 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { submitEgeItemAnswerAction } from "@/app/student/actions";
-import { PdfTaskCrop } from "./pdf-task-crop";
+import { MathText } from "./math-text";
+import { EgeGeometryDiagram } from "./ege-geometry-diagram";
 
 export interface StudentEgeAssignmentItem {
   id: string;
@@ -481,13 +482,13 @@ function TaskCard({
         </div>
       </div>
 
-      {/* Визуальный рендер условия задания напрямую из PDF сборника ФИПИ */}
-      <PdfTaskCrop
-        pdfPage={item.pdfPage}
-        taskCode={item.taskCode}
-        fallbackText={item.content}
-        taskNumber={item.taskNumber}
-      />
+      {/* Условие задания с KaTeX рендером формул и векторным чертежом */}
+      <div className="flex flex-col lg:flex-row gap-4 items-start justify-between py-1">
+        <div className="flex-1 min-w-0">
+          <MathText text={item.content} className="text-xs sm:text-sm text-zinc-200" />
+        </div>
+        <EgeGeometryDiagram taskNumber={item.taskNumber} text={item.content} />
+      </div>
 
       {/* Поле ввода ответа и отправка */}
       <div className="space-y-2 pt-1">

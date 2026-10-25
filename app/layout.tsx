@@ -1,4 +1,5 @@
 import "./globals.css";
+import "katex/dist/katex.min.css";
 import { ThemeProviderWrapper } from "@/components/theme-context";
 
 export const metadata = {

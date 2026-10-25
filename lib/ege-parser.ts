@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 export * from "./ege-constants";
 import { ParsedEgeTask, EGE_TASK_TOPICS, detectTaskNumberByKeywords } from "./ege-constants";
+import { cleanBrokenPdfMathText } from "./ege-math-cleaner";
 
 export const BOOK_TO_EGE_MAP: Record<number, number> = {
   1: 1,   // Планиметрия 1 -> ЕГЭ 1
@@ -59,8 +60,8 @@ export function extractFipiBookTasks(pagesText: string[], answersMap: Record<str
         .replace(/\r\n/g, "\n")
         .trim();
 
-      // Clean dangling geometric diagram labels (e.g. single letters A B C on their own line)
-      body = body.replace(/\n\s*([A-Za-z]\s*)+$/g, "").trim();
+      // Clean dangling geometric diagram labels and reconstruct broken math formulas
+      body = cleanBrokenPdfMathText(body);
 
       if (body.length < 15) continue;
 

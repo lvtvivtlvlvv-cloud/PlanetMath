@@ -38,7 +38,8 @@ import {
   syncFromLocalPdfAction,
 } from "@/app/admin/actions";
 import { EGE_TASK_TOPICS } from "@/lib/ege-constants";
-import { PdfTaskCrop } from "./pdf-task-crop";
+import { MathText } from "./math-text";
+import { EgeGeometryDiagram } from "./ege-geometry-diagram";
 
 export interface EgeTaskItem {
   id: string;
@@ -424,7 +425,7 @@ export function EgeTaskBankView({
     startTransition(async () => {
       try {
         const res = await syncFromLocalPdfAction();
-        showToast("success", `Синхронизация завершена! Всего в базе: ${res.total} заданий (+${res.added} новых, ${res.updated} обновлено).`);
+        showToast("success", `Синхронизация завершена! Всего в базе: ${res.total} заданий.`);
         window.location.reload();
       } catch (err: any) {
         showToast("error", `Ошибка синхронизации: ${err.message}`);
@@ -1250,13 +1251,13 @@ export function EgeTaskBankView({
                         </div>
                       </div>
 
-                      {/* Визуальный рендер условия задания напрямую из PDF сборника ФИПИ */}
-                      <PdfTaskCrop
-                        pdfPage={t.pdfPage}
-                        taskCode={t.taskCode}
-                        fallbackText={t.content}
-                        taskNumber={t.taskNumber}
-                      />
+                      {/* Условие задания с KaTeX рендером формул и векторным чертежом */}
+                      <div className="flex flex-col lg:flex-row gap-4 items-start justify-between py-1">
+                        <div className="flex-1 min-w-0">
+                          <MathText text={t.content} className="text-xs sm:text-sm text-zinc-200" />
+                        </div>
+                        <EgeGeometryDiagram taskNumber={t.taskNumber} text={t.content} />
+                      </div>
 
                       {/* Блок с ответом */}
                       {showAnswer && t.answer && (
