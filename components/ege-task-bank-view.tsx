@@ -38,6 +38,7 @@ import {
 import { EGE_TASK_TOPICS } from "@/lib/ege-constants";
 import { MathText } from "./math-text";
 import { PdfTaskCrop } from "./pdf-task-crop";
+import { DatePicker } from "./date-picker";
 import { resolvePdfTaskMeta } from "@/lib/ege-math-cleaner";
 
 export interface EgeTaskItem {
@@ -686,10 +687,10 @@ export function EgeTaskBankView({
 
         {/* АДАПТИВНЫЙ СЕГМЕНТИРОВАННЫЙ ПЕРЕКЛЮЧАТЕЛЬ ПОДВКЛАДОК */}
         <div
-          className={`flex flex-wrap sm:flex-nowrap items-center gap-1 p-1 rounded-xl border w-full lg:w-auto ${
+          className={`grid grid-cols-1 sm:grid-cols-3 p-1 gap-1 rounded-xl border w-full lg:w-auto ${
             isLight
-              ? "bg-slate-100 border-slate-200/80"
-              : "bg-black/40 border-white/10 backdrop-blur-md"
+              ? "bg-slate-100 border-slate-200"
+              : "bg-slate-800/60 border-slate-700"
           }`}
         >
           {[
@@ -704,14 +705,14 @@ export function EgeTaskBankView({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveSubTab(tab.id as any)}
-                className={`flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all whitespace-nowrap flex-1 sm:flex-initial cursor-pointer ${
+                className={`w-full h-full py-2 px-3 flex items-center justify-center gap-1.5 text-center font-medium text-xs sm:text-sm transition-all rounded-lg whitespace-nowrap cursor-pointer ${
                   isActive
                     ? isLight
                       ? "bg-sky-600 text-white shadow-xs"
-                      : "bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 shadow-xs"
+                      : "bg-slate-700/90 text-cyan-300 shadow-xs"
                     : isLight
-                    ? "text-slate-600 hover:text-slate-900 hover:bg-white/70"
-                    : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                    ? "bg-transparent text-slate-600 hover:text-slate-900"
+                    : "bg-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5 shrink-0" />
@@ -742,18 +743,24 @@ export function EgeTaskBankView({
                 <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
                   Формат выдачи:
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div
+                  className={`grid grid-cols-2 p-1 gap-1 rounded-xl border ${
+                    isLight
+                      ? "bg-slate-100 border-slate-200"
+                      : "bg-slate-800/60 border-slate-700"
+                  }`}
+                >
                   <button
                     type="button"
                     onClick={() => setTargetType("class")}
-                    className={`h-10 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                    className={`w-full h-full py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                       targetType === "class"
                         ? isLight
-                          ? "bg-sky-600 text-white border-sky-600 shadow-xs"
-                          : "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-xs"
+                          ? "bg-sky-600 text-white shadow-xs"
+                          : "bg-slate-700/90 text-cyan-300 shadow-xs"
                         : isLight
-                        ? "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/70 hover:text-slate-900"
-                        : "bg-slate-900/60 text-zinc-400 border-white/5 hover:bg-white/5"
+                        ? "bg-transparent text-slate-600 hover:text-slate-900"
+                        : "bg-transparent text-slate-400 hover:text-slate-200"
                     }`}
                   >
                     <Users className="h-3.5 w-3.5 shrink-0" />
@@ -762,14 +769,14 @@ export function EgeTaskBankView({
                   <button
                     type="button"
                     onClick={() => setTargetType("student")}
-                    className={`h-10 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                    className={`w-full h-full py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                       targetType === "student"
                         ? isLight
-                          ? "bg-sky-600 text-white border-sky-600 shadow-xs"
-                          : "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-xs"
+                          ? "bg-sky-600 text-white shadow-xs"
+                          : "bg-slate-700/90 text-cyan-300 shadow-xs"
                         : isLight
-                        ? "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/70 hover:text-slate-900"
-                        : "bg-slate-900/60 text-zinc-400 border-white/5 hover:bg-white/5"
+                        ? "bg-transparent text-slate-600 hover:text-slate-900"
+                        : "bg-transparent text-slate-400 hover:text-slate-200"
                     }`}
                   >
                     <User className="h-3.5 w-3.5 shrink-0" />
@@ -860,11 +867,11 @@ export function EgeTaskBankView({
                   <Calendar className={`h-3 w-3 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
                   Срок сдачи (дедлайн):
                 </label>
-                <input
-                  type="date"
+                <DatePicker
                   value={workDeadline}
-                  onChange={(e) => setWorkDeadline(e.target.value)}
-                  className={inputClass}
+                  onChange={setWorkDeadline}
+                  placeholder="Выберите дату сдачи"
+                  allowClear
                 />
               </div>
             </div>

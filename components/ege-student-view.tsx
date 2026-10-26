@@ -259,24 +259,24 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
       </div>
 
       {/* ПАНЕЛЬ ПЕРЕКЛЮЧЕНИЯ ГРУППИРОВКИ И ФИЛЬТРОВ */}
-      <div className="glass-panel p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Переключатель режима группировки */}
+      <div className="glass-panel p-3.5 sm:p-4 rounded-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        {/* СТРОГО СИММЕТРИЧНЫЙ СЕГМЕНТИРОВАННЫЙ ПЕРЕКЛЮЧАТЕЛЬ ГРУППИРОВКИ */}
         <div
-          className={`flex flex-wrap sm:flex-nowrap items-center gap-1 p-1 rounded-xl border ${
-            isLight ? "bg-slate-100 border-slate-200/80" : "bg-black/40 border-white/5"
+          className={`grid grid-cols-2 p-1 gap-1 rounded-xl border w-full lg:w-auto ${
+            isLight
+              ? "bg-slate-100 border-slate-200"
+              : "bg-slate-800/60 border-slate-700"
           }`}
         >
           <button
             type="button"
             onClick={() => setGroupingMode("by_work")}
-            className={`flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition flex-1 sm:flex-initial cursor-pointer ${
+            className={`w-full h-full py-2.5 px-3 flex items-center justify-center gap-1.5 text-center font-medium text-xs sm:text-sm transition-all rounded-lg cursor-pointer select-none ${
               groupingMode === "by_work"
-                ? isLight
-                  ? "bg-sky-600 text-white shadow-xs"
-                  : "bg-cyan-500/20 text-cyan-300 border border-cyan-400/30"
+                ? "bg-sky-600 text-white shadow-xs"
                 : isLight
-                ? "text-slate-600 hover:text-slate-900 hover:bg-white/70"
-                : "text-zinc-400 hover:text-zinc-200"
+                ? "bg-white text-slate-600 hover:text-slate-900"
+                : "bg-slate-700/60 text-slate-300 hover:text-white"
             }`}
           >
             <Layers className="h-3.5 w-3.5 shrink-0" />
@@ -285,14 +285,12 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
           <button
             type="button"
             onClick={() => setGroupingMode("by_task_number")}
-            className={`flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition flex-1 sm:flex-initial cursor-pointer ${
+            className={`w-full h-full py-2.5 px-3 flex items-center justify-center gap-1.5 text-center font-medium text-xs sm:text-sm transition-all rounded-lg cursor-pointer select-none ${
               groupingMode === "by_task_number"
-                ? isLight
-                  ? "bg-sky-600 text-white shadow-xs"
-                  : "bg-cyan-500/20 text-cyan-300 border border-cyan-400/30"
+                ? "bg-sky-600 text-white shadow-xs"
                 : isLight
-                ? "text-slate-600 hover:text-slate-900 hover:bg-white/70"
-                : "text-zinc-400 hover:text-zinc-200"
+                ? "bg-white text-slate-600 hover:text-slate-900"
+                : "bg-slate-700/60 text-slate-300 hover:text-white"
             }`}
           >
             <ListFilter className="h-3.5 w-3.5 shrink-0" />
@@ -313,14 +311,14 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
                 key={tab.id}
                 type="button"
                 onClick={() => setStatusFilter(tab.id as any)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition shrink-0 cursor-pointer ${
+                className={`px-3 py-2 text-xs font-bold rounded-xl border transition shrink-0 cursor-pointer ${
                   isActive
                     ? isLight
                       ? "bg-sky-600 text-white border-sky-600 shadow-xs"
-                      : "bg-white/10 text-white border-white/20"
+                      : "bg-sky-600 text-white border-sky-500 shadow-xs"
                     : isLight
                     ? "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/70 hover:text-slate-900"
-                    : "bg-black/20 text-zinc-400 border-white/5 hover:bg-white/5"
+                    : "bg-slate-800/60 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white"
                 }`}
               >
                 {tab.label}

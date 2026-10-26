@@ -1213,25 +1213,37 @@ export function HomeworkCheckingStudio({
         ) : null}
 
         {/* CENTER VIEWPORT: STUDENT'S HANDWRITTEN HOMEWORK PHOTO + DRAWING CANVAS */}
-        <main className={`flex-1 overflow-y-auto bg-[#2E3440] flex flex-col items-center justify-start relative transition-all duration-300 ${
-          isFocusMode ? "p-2 sm:p-4 pt-16 sm:pt-20" : "p-4 sm:p-6"
-        }`}>
+        <main
+          className={`flex-1 overflow-y-auto flex flex-col items-center justify-start relative transition-all duration-300 ${
+            isLight ? "bg-slate-100/90" : "bg-[#2E3440]"
+          } ${isFocusMode ? "p-2 sm:p-4 pt-16 sm:pt-20" : "p-4 sm:p-6"}`}
+        >
           {currentSubmission ? (
             <div className={`flex flex-col items-center w-full transition-all duration-300 ${
               isFocusMode ? "max-w-5xl lg:max-w-6xl space-y-4" : "max-w-4xl space-y-6"
             }`}>
               {/* Page Header (hidden in focus mode because HUD toolbar has it) */}
               {!isFocusMode && (
-                <div className="w-full flex items-center justify-between text-xs font-bold text-zinc-300 px-2">
+                <div
+                  className={`w-full flex items-center justify-between text-xs font-bold px-2 ${
+                    isLight ? "text-slate-700" : "text-zinc-300"
+                  }`}
+                >
                   <span className="truncate">
                     {currentSubmission.studentName}
                   </span>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-zinc-400">лист 1 из {currentSubmission.pagesCount || 1}</span>
+                    <span className={isLight ? "text-slate-500" : "text-zinc-400"}>
+                      лист 1 из {currentSubmission.pagesCount || 1}
+                    </span>
                     <button
                       type="button"
                       onClick={handleRotate}
-                      className="p-1 rounded hover:bg-white/10 text-zinc-300"
+                      className={`p-1 rounded transition ${
+                        isLight
+                          ? "hover:bg-slate-200 text-slate-700"
+                          : "hover:bg-white/10 text-zinc-300"
+                      }`}
                       title="Повернуть лист на 90°"
                     >
                       <RotateCw className="h-4 w-4" />
@@ -1239,10 +1251,14 @@ export function HomeworkCheckingStudio({
                     <button
                       type="button"
                       onClick={() => setIsFocusMode(true)}
-                      className="flex items-center gap-1.5 text-xs font-bold text-zinc-300 hover:text-white bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-xl border border-white/15 transition shadow-xs"
+                      className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-xl border transition shadow-2xs ${
+                        isLight
+                          ? "bg-white hover:bg-slate-50 text-slate-800 border-slate-200"
+                          : "text-zinc-300 hover:text-white bg-white/10 hover:bg-white/20 border-white/15"
+                      }`}
                       title="Свернуть всё, кроме фото [Клавиша F]"
                     >
-                      <Maximize2 className="h-3.5 w-3.5 text-blue-400" />
+                      <Maximize2 className={`h-3.5 w-3.5 ${isLight ? "text-sky-600" : "text-blue-400"}`} />
                       <span>Только фото</span>
                     </button>
                   </div>
@@ -1252,7 +1268,9 @@ export function HomeworkCheckingStudio({
               {/* Photo Card with Canvas Layer */}
               <div
                 ref={containerRef}
-                className="relative w-full overflow-hidden rounded-2xl shadow-2xl bg-white border border-zinc-700 transition-transform duration-300"
+                className={`relative w-full overflow-hidden rounded-2xl shadow-2xl bg-white border transition-transform duration-300 ${
+                  isLight ? "border-slate-200" : "border-zinc-700"
+                }`}
                 style={{
                   transform: `rotate(${currentRotation}deg)`,
                   transformOrigin: "center center",
@@ -1265,6 +1283,7 @@ export function HomeworkCheckingStudio({
                     <img
                       src={currentSubmission.pageImages[0]}
                       alt="Домашняя работа ученика"
+                      style={{ filter: "none" }}
                       className="w-full h-full object-contain pointer-events-none"
                     />
                   ) : (

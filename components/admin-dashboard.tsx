@@ -35,6 +35,7 @@ import { useAppTheme } from "./theme-context";
 import { HomeworkCheckingStudio, StudentSubmissionItem, AnnotationItem } from "./homework-checking-studio";
 import { HomeworkJournalView, HomeworkCardItem } from "./homework-journal-view";
 import { EgeTaskBankView, EgeTaskItem, EgeAssignmentRecord } from "./ege-task-bank-view";
+import { DatePicker } from "./date-picker";
 import {
   LogOut,
   UserPlus,
@@ -640,6 +641,16 @@ export function AdminDashboard({
                 >
                   {monthTitle}
                 </span>
+                <div className="w-40 sm:w-44">
+                  <DatePicker
+                    value={format(currentDate, "yyyy-MM-dd")}
+                    onChange={(iso) => {
+                      if (iso) {
+                        setCurrentDate(parseISO(iso));
+                      }
+                    }}
+                  />
+                </div>
                 <select
                   value={selectedClassId}
                   onChange={(e) => handleClassChange(e.target.value)}
@@ -1775,6 +1786,22 @@ export function AdminDashboard({
               className="mt-4 space-y-3 text-xs flex-1 min-h-0 overflow-y-auto pr-1"
             >
               <input type="hidden" name="dayOfWeek" value={lessonDayOfWeek} />
+              <div>
+                <label className="text-slate-500 dark:text-zinc-400 font-medium block mb-1">
+                  Дата занятия (день недели)
+                </label>
+                <DatePicker
+                  value={format(addDays(monday, Math.max(0, lessonDayOfWeek - 1)), "yyyy-MM-dd")}
+                  onChange={(iso) => {
+                    if (iso) {
+                      const d = parseISO(iso);
+                      const dow = getDay(d) === 0 ? 7 : getDay(d);
+                      setLessonDayOfWeek(dow);
+                      setCurrentDate(d);
+                    }
+                  }}
+                />
+              </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
                   <label className="text-slate-500 dark:text-zinc-400 font-medium">№ Урока</label>
@@ -1949,13 +1976,11 @@ export function AdminDashboard({
                   />
                 </div>
                 <div>
-                  <label className="font-medium text-slate-500 dark:text-zinc-400">Срок сдачи</label>
-                  <input
+                  <label className="font-medium text-slate-500 dark:text-zinc-400 block mb-1">Срок сдачи</label>
+                  <DatePicker
                     name="targetDate"
-                    type="date"
-                    defaultValue={hwPreset?.targetDate || ""}
+                    defaultValue={hwPreset?.targetDate || format(currentDate, "yyyy-MM-dd")}
                     required
-                    className={`mt-1 h-9 w-full ${selectClass}`}
                   />
                 </div>
               </div>
@@ -2080,13 +2105,11 @@ export function AdminDashboard({
                   />
                 </div>
                 <div>
-                  <label className="font-medium text-slate-500 dark:text-zinc-400">Срок сдачи</label>
-                  <input
+                  <label className="font-medium text-slate-500 dark:text-zinc-400 block mb-1">Срок сдачи</label>
+                  <DatePicker
                     name="targetDate"
-                    type="date"
                     defaultValue={editingHw.targetDate}
                     required
-                    className={`mt-1 h-9 w-full ${selectClass}`}
                   />
                 </div>
               </div>
