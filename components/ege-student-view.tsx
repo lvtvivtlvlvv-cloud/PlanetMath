@@ -19,7 +19,7 @@ import {
 import { submitEgeItemAnswerAction } from "@/app/student/actions";
 import { MathText } from "./math-text";
 import { PdfTaskCrop } from "./pdf-task-crop";
-import { hasPdfDrawing } from "@/lib/ege-math-cleaner";
+import { resolvePdfTaskMeta } from "@/lib/ege-math-cleaner";
 
 export interface StudentEgeAssignmentItem {
   id: string;
@@ -488,27 +488,31 @@ function TaskCard({
         <div className="flex-1 min-w-0">
           <MathText text={item.content} className="text-xs sm:text-sm text-zinc-200" />
         </div>
-        {hasPdfDrawing(item) && item.pdfPage && (
-          <div className="shrink-0 w-full sm:w-[280px] lg:w-[320px]">
-            <PdfTaskCrop
-              pdfPage={item.pdfPage}
-              taskCode={item.taskCode}
-              taskNumber={item.taskNumber}
-            />
-          </div>
-        )}
+        {(() => {
+          const pdfMeta = resolvePdfTaskMeta(item);
+          if (!pdfMeta.hasDrawing || !pdfMeta.pdfPage) return null;
+          return (
+            <div className="shrink-0 w-full sm:w-[280px] lg:w-[320px]">
+              <PdfTaskCrop
+                pdfPage={pdfMeta.pdfPage}
+                taskCode={pdfMeta.taskCode}
+                taskNumber={item.taskNumber}
+              />
+            </div>
+          );
+        })()}
       </div>
 
       {/* Поле ввода ответа и отправка */}
       <div className="space-y-2 pt-1">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-zinc-400">Ваш ответ:</label>
+            <label className="text-[11px] font-semibold text-zinc-400">Ответ:</label>
             <input
               type="text"
               value={draftAnswer}
               onChange={(e) => onAnswerChange(e.target.value)}
-              placeholder={isPart2 ? "Ответ или корни (например: 7; -1)" : "Число (например: 12 или 0.75)"}
+              placeholder="Ответ"
               className="w-full h-9 rounded-xl bg-black/40 border border-white/10 px-3 text-xs text-zinc-100 font-mono focus:outline-none focus:border-cyan-500"
             />
           </div>

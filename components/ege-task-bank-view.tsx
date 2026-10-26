@@ -40,7 +40,7 @@ import {
 import { EGE_TASK_TOPICS } from "@/lib/ege-constants";
 import { MathText } from "./math-text";
 import { PdfTaskCrop } from "./pdf-task-crop";
-import { hasPdfDrawing } from "@/lib/ege-math-cleaner";
+import { resolvePdfTaskMeta } from "@/lib/ege-math-cleaner";
 
 export interface EgeTaskItem {
   id: string;
@@ -1257,15 +1257,19 @@ export function EgeTaskBankView({
                         <div className="flex-1 min-w-0">
                           <MathText text={t.content} className="text-xs sm:text-sm text-zinc-200" />
                         </div>
-                        {hasPdfDrawing(t) && t.pdfPage && (
-                          <div className="shrink-0 w-full sm:w-[280px] lg:w-[320px]">
-                            <PdfTaskCrop
-                              pdfPage={t.pdfPage}
-                              taskCode={t.taskCode}
-                              taskNumber={t.taskNumber}
-                            />
-                          </div>
-                        )}
+                        {(() => {
+                          const pdfMeta = resolvePdfTaskMeta(t);
+                          if (!pdfMeta.hasDrawing || !pdfMeta.pdfPage) return null;
+                          return (
+                            <div className="shrink-0 w-full sm:w-[280px] lg:w-[320px]">
+                              <PdfTaskCrop
+                                pdfPage={pdfMeta.pdfPage}
+                                taskCode={pdfMeta.taskCode}
+                                taskNumber={t.taskNumber}
+                              />
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       {/* Блок с ответом */}

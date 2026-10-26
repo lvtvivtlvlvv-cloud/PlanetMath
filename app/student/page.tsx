@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { verifySessionToken } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { StudentDashboard } from "@/components/student-dashboard";
+import { ensureEgeTasksInitialized } from "@/lib/ege-init";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +74,8 @@ export default async function StudentPage() {
 
   const is11Grade = currentClassGroup?.grade === 11;
   const studentTrack = studentUser.examTrack || (is11Grade ? "База" : null);
+
+  await ensureEgeTasksInitialized();
 
   const [scheduleItems, homeworks, submissions, egeItems] = await Promise.all([
     db.scheduleItem.findMany({

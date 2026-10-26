@@ -1,442 +1,556 @@
 /**
  * lib/ege-math-cleaner.ts
- * Утилиты для автоматической реконструкции и нормализации разорванного математического текста
- * из PDF-сборников ФИПИ в валидный KaTeX / LaTeX с поддержкой нижних индексов и детекцией чертежей.
+ * Автоматическая реконструкция и нормализация математического текста
+ * из PDF-сборников ФИПИ для рендеринга через KaTeX.
  */
+
+export const TASK_CODE_TO_PDF_PAGE: Record<string, number> = {
+  "1.1": 5, "1.2": 5, "1.3": 6, "1.4": 6, "1.5": 6, "1.6": 7, "1.7": 7, "1.8": 7,
+  "1.9": 8, "1.10": 8, "1.11": 8, "1.12": 9, "1.13": 9, "1.14": 9, "1.15": 10,
+  "1.16": 10, "1.17": 10, "1.18": 11, "1.19": 11, "1.20": 11, "1.21": 12, "1.22": 12,
+  "1.23": 12, "1.24": 13, "1.25": 13, "1.26": 13, "1.27": 14, "1.28": 14, "1.29": 15,
+  "2.1": 16, "2.2": 16, "2.3": 16, "2.4": 16, "2.5": 17, "2.6": 17,
+  "3.1": 18, "3.2": 18, "3.3": 18, "3.4": 19, "3.5": 19, "3.6": 19, "3.7": 20,
+  "3.8": 20, "3.9": 21, "3.10": 21, "3.11": 21, "3.12": 22, "3.13": 22, "3.14": 22,
+  "3.15": 23, "3.16": 23, "3.17": 23, "3.18": 24, "3.19": 24, "3.20": 24, "3.21": 25,
+  "3.22": 25, "3.23": 26, "3.24": 26, "3.25": 26, "3.26": 27, "3.27": 27, "3.28": 27,
+  "9.1": 43, "9.2": 43, "9.3": 44, "9.4": 44, "9.5": 45, "9.6": 45, "9.7": 46, "9.8": 46, "9.9": 47,
+  "12.1": 63, "12.2": 63, "12.3": 64, "12.4": 64, "12.5": 65, "12.6": 65, "12.7": 66, "12.8": 66, "12.9": 67, "12.10": 67,
+};
+
+const CYR_TO_LAT: Record<string, string> = {
+  "А": "A", "В": "B", "С": "C", "Е": "E", "К": "K",
+  "М": "M", "Н": "H", "О": "O", "Р": "P", "Т": "T", "Х": "X",
+};
 
 /**
- * 1. Нормализует вариационные селекторы, математический алфавит Юникода, минусы и спецсимволы
+ * Заменяет русские заглавные буквы-двойники (А, В, С, Е, К, М, Н, О, Р, Т, Х)
+ * в названиях геометрических вершин и отрезков на латинские A, B, C, E, K, M, H, O, P, T, X.
  */
-export function normalizeFipiUnicode(raw: string): string {
-  if (!raw) return "";
+function replaceCyrillicVertices(input: string): string {
+  let text = input;
 
-  // Удаляем вариационные селекторы Юникода U+FE00 - U+FE0F (например, варианты скобок (︂, )︂, [︁, ]︁)
-  let text = raw.replace(/[\uFE00-\uFE0F]/g, "");
+  // Защищаем единицу измерения Ампер "(в А)" от превращения в вершину A
+  text = text.replace(/\(в\s*A\)/g, "(в А)");
 
-  // Заменяем математический алфавит Юникода (U+1D400 - U+1D7FF) на стандартный ASCII и греческий алфавит
-  let res = "";
-  for (const ch of text) {
-    const cp = ch.codePointAt(0);
-    if (!cp) {
-      res += ch;
-      continue;
-    }
+  // 1. Заглавная кириллическая буква с индексом 0, 1, 2 (например: В1 -> B1, С1 -> C1, А1 -> A1)
+  text = text.replace(/([АВСЕНКМОРТХ])([012])/g, (_, ch: string, d: string) => (CYR_TO_LAT[ch] || ch) + d);
 
-    // Подстрочные цифры Юникода (₀₁₂₃₄₅₆₇₈₉)
-    if (cp >= 0x2080 && cp <= 0x2089) {
-      res += String.fromCharCode(0x30 + (cp - 0x2080));
-    }
-    // Типографские минусы и тире
-    else if (cp === 0x2212 || cp === 0x2013 || cp === 0x2014) {
-      res += "-";
-    }
-    // Математические заглавные латинские буквы (жирный, курсив, полужирный курсив и др.)
-    else if (
-      (cp >= 0x1D400 && cp <= 0x1D419) ||
-      (cp >= 0x1D434 && cp <= 0x1D44D) ||
-      (cp >= 0x1D468 && cp <= 0x1D481) ||
-      (cp >= 0x1D56C && cp <= 0x1D585) ||
-      (cp >= 0x1D5A0 && cp <= 0x1D5B9) ||
-      (cp >= 0x1D5D4 && cp <= 0x1D5ED) ||
-      (cp >= 0x1D608 && cp <= 0x1D621) ||
-      (cp >= 0x1D63C && cp <= 0x1D655)
-    ) {
-      const base =
-        cp >= 0x1D63C ? 0x1D63C :
-        cp >= 0x1D608 ? 0x1D608 :
-        cp >= 0x1D5D4 ? 0x1D5D4 :
-        cp >= 0x1D5A0 ? 0x1D5A0 :
-        cp >= 0x1D56C ? 0x1D56C :
-        cp >= 0x1D468 ? 0x1D468 :
-        cp >= 0x1D434 ? 0x1D434 : 0x1D400;
-      res += String.fromCharCode(65 + (cp - base));
-    }
-    // Математические строчные латинские буквы (жирный, курсив, полужирный курсив и др.)
-    else if (
-      (cp >= 0x1D41A && cp <= 0x1D433) ||
-      (cp >= 0x1D44E && cp <= 0x1D467) ||
-      (cp >= 0x1D482 && cp <= 0x1D49B) ||
-      (cp >= 0x1D586 && cp <= 0x1D59F) ||
-      (cp >= 0x1D5BA && cp <= 0x1D5D3) ||
-      (cp >= 0x1D5EE && cp <= 0x1D607) ||
-      (cp >= 0x1D622 && cp <= 0x1D63B) ||
-      (cp >= 0x1D656 && cp <= 0x1D66F)
-    ) {
-      const base =
-        cp >= 0x1D656 ? 0x1D656 :
-        cp >= 0x1D622 ? 0x1D622 :
-        cp >= 0x1D5EE ? 0x1D5EE :
-        cp >= 0x1D5BA ? 0x1D5BA :
-        cp >= 0x1D586 ? 0x1D586 :
-        cp >= 0x1D482 ? 0x1D482 :
-        cp >= 0x1D44E ? 0x1D44E : 0x1D41A;
-      res += String.fromCharCode(97 + (cp - base));
-    }
-    // Математические цифры (0-9)
-    else if (cp >= 0x1D7CE && cp <= 0x1D7FF) {
-      res += String.fromCharCode(0x30 + ((cp - 0x1D7CE) % 10));
-    }
-    // Греческие символы (π, α, β, γ)
-    else if (cp === 0x1D70B || cp === 0x1D745 || cp === 0x1D77F || cp === 0x1D7B9) {
-      res += "π";
-    } else if (cp === 0x1D6FC || cp === 0x1D736) {
-      res += "α";
-    } else if (cp === 0x1D6FD || cp === 0x1D737) {
-      res += "β";
-    } else if (cp === 0x1D6FE || cp === 0x1D738) {
-      res += "γ";
-    } else {
-      res += ch;
-    }
-  }
+  // 2. Цепочки из 2+ заглавных букв/индексов (например: АВ -> AB, ВС -> BC, МК -> MK, АВCDA1 -> ABCDA1)
+  text = text.replace(/(?<![а-яёА-ЯЁa-zA-Z])([A-ZАВСЕНКМОРТХ012]{2,})(?![а-яёА-ЯЁa-zA-Z])/g, (m) => {
+    return m.replace(/[АВСЕНКМОРТХ]/g, (ch) => CYR_TO_LAT[ch] || ch);
+  });
 
-  // Заменяем сломанные символы градусов
-  res = res.replace(/[♦◆]/g, "°");
+  // 3. Одиночные заглавные буквы после геометрических терминов (точка М, прямая СМ, вершина В, ∠ВАС)
+  text = text.replace(
+    /(точк[аеиуой]+|вершин[аеыуой]+|середин[аеыуой]+|прям[аяыеой]+|отрез[окау]+|ребр[аеуо]+|плоскост[ьию]+|уг[олула]+|∠)\s+([АВСЕНКМОРТХ])(?![а-яёА-ЯЁa-zA-Z])/gi,
+    (_, prefix: string, ch: string) => `${prefix} ${CYR_TO_LAT[ch] || ch}`
+  );
 
-  return res;
+  return text;
 }
 
 /**
- * Чистит границу отрезка: убирает многострочные переносы и прилипшие знаменатели к π
- * Например: -π2 -> -\frac{\pi}{2}, 3π2 -> \frac{3\pi}{2}, -5π \n 2 -> -\frac{5\pi}{2}
+ * Преобразует конец интервала (например, "-5\pi\n2" или "-5\pi/2") в LaTeX-дробь "-\frac{5\pi}{2}"
  */
-export function cleanIntervalBound(bound: string): string {
-  let b = bound.trim().replace(/\s+/g, "");
-
-  // Многострочная дробь: -5π \n 2
-  const nlMatch = b.match(/^([+\-]?(?:\d*π|[a-zA-Z0-9]+))\n+(\d+)$/);
-  if (nlMatch) {
-    const isNeg = nlMatch[1].startsWith("-");
-    const num = nlMatch[1].replace(/^[+\-]/, "").replace(/π/g, "\\pi");
-    return `${isNeg ? "-" : ""}\\frac{${num}}{${nlMatch[2]}}`;
+function formatEndpointFraction(ep: string): string {
+  const s = ep.trim().replace(/\s*\n\s*/g, "/").replace(/[\t ]+/g, " ");
+  const m = s.match(/^([+\-]?\s*)(\d*\s*\\pi|\d+)\s*\/\s*(\d+)$/);
+  if (m) {
+    const sign = m[1].trim();
+    const num = m[2].replace(/\s+/g, "");
+    return `${sign}\\frac{${num}}{${m[3].trim()}}`;
   }
-
-  // Прилипший знаменатель: -5π2, -π2, 3π2, π2, 7π6, etc.
-  const stuckMatch = b.match(/^([+\-]?)(\d*π)(\d+)$/);
-  if (stuckMatch) {
-    const sign = stuckMatch[1] === "-" ? "-" : "";
-    const num = stuckMatch[2].replace(/π/g, "\\pi");
-    const den = stuckMatch[3];
-    return `${sign}\\frac{${num}}{${den}}`;
-  }
-
-  // Обычная дробь через слеш: -5π/2
-  const slashMatch = b.match(/^([+\-]?)(\d*π)\/(\d+)$/);
-  if (slashMatch) {
-    const sign = slashMatch[1] === "-" ? "-" : "";
-    const num = slashMatch[2].replace(/π/g, "\\pi");
-    return `${sign}\\frac{${num}}{${slashMatch[3]}}`;
-  }
-
-  // Заменяем π на \pi
-  b = b.replace(/π/g, "\\pi");
-  return b;
+  return s;
 }
 
 /**
- * Объединяет разорванные строки математических выражений, если скобки unclosed или строка оканчивается на оператор
+ * Делит математический фрагмент по запятым верхнего уровня (вне скобок и десятичных дробей)
  */
-export function joinBrokenMathLines(text: string): string {
-  const lines = text.split("\n");
-  const merged: string[] = [];
-  let buffer = "";
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const combined = buffer ? buffer + " " + line.trim() : line;
-
-    // Считаем открытые и закрытые скобки
-    const openParens = (combined.match(/\(/g) || []).length;
-    const closeParens = (combined.match(/\)/g) || []).length;
-    const openBrackets = (combined.match(/\[/g) || []).length;
-    const closeBrackets = (combined.match(/\]/g) || []).length;
-    const hasUnclosed = openParens > closeParens || openBrackets > closeBrackets;
-
-    const nextLine = (lines[i + 1] || "").trim();
-    const nextStartsOperator = /^[=+\-×·/*]/.test(nextLine);
-    const currEndsOperator = /[=+\-×·/*,]$/.test(combined.trim());
-
-    // Не объединяем, если следующая строка - это новый пункт задания (а), б), в)
-    const nextIsPoint = /^(?:а|б|в)\)/i.test(nextLine);
-
-    if ((hasUnclosed || currEndsOperator || nextStartsOperator) && !nextIsPoint) {
-      buffer = combined;
-    } else {
-      merged.push(combined);
-      buffer = "";
+function splitTopLevelCommas(mathStr: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let lastIdx = 0;
+  for (let i = 0; i < mathStr.length; i++) {
+    const ch = mathStr[i];
+    if (ch === "(" || ch === "[" || ch === "{") depth++;
+    else if (ch === ")" || ch === "]" || ch === "}") depth = Math.max(0, depth - 1);
+    else if (ch === "," && depth === 0) {
+      const prevIsDigit = i > 0 && /\d/.test(mathStr[i - 1]);
+      const nextIsDigit = i + 1 < mathStr.length && /\d/.test(mathStr[i + 1]);
+      if (!prevIsDigit || !nextIsDigit) {
+        parts.push(mathStr.slice(lastIdx, i));
+        lastIdx = i + 1;
+      }
     }
   }
-
-  if (buffer) {
-    merged.push(buffer);
-  }
-
-  return merged.join("\n");
+  parts.push(mathStr.slice(lastIdx));
+  return parts;
 }
 
 /**
- * Главная функция очистки и реконструкции разорванного математического текста
+ * Оборачивает один очищенный математический фрагмент в $ ... $, вынося знаки препинания наружу
+ */
+function wrapSingleMathCore(rawSpan: string): string {
+  let leading = "";
+  let trailing = "";
+  let core = rawSpan;
+
+  // Отделяем начальные пробелы и знаки препинания (кроме унарного минуса перед формулой)
+  const leadMatch = core.match(/^([\s.,:;!?«»"—]+)(.*)$/s);
+  if (leadMatch) {
+    leading = leadMatch[1];
+    core = leadMatch[2];
+  }
+
+  // Отделяем конечные пробелы и знаки препинания
+  const trailMatch = core.match(/^(.*?)([\s.,:;!?«»"—\-]+)$/s);
+  if (trailMatch) {
+    trailing = trailMatch[2];
+    core = trailMatch[1];
+  }
+
+  // Балансируем внешние скобки, если открывается русское пояснение вроде "I (в А)" или "R_{2} (в Ом)"
+  let openCount = (core.match(/\(/g) || []).length - (core.match(/\\left\(/g) || []).length;
+  let closeCount = (core.match(/\)/g) || []).length - (core.match(/\\right\)/g) || []).length;
+  while (openCount > closeCount && /[\s(]+$/.test(core)) {
+    const m = core.match(/^(.*?)(\s*\(\s*)$/s);
+    if (!m) break;
+    trailing = m[2] + trailing;
+    core = m[1];
+    openCount--;
+  }
+  while (closeCount > openCount && /^[\s)]+/.test(core)) {
+    const m = core.match(/^(\s*\)\s*)(.*)$/s);
+    if (!m) break;
+    leading = leading + m[1];
+    core = m[2];
+    closeCount--;
+  }
+
+  // Повторно отделяем хвостовую пунктуацию после балансировки скобок
+  const trailMatch2 = core.match(/^(.*?)([\s.,:;!?«»"—]+)$/s);
+  if (trailMatch2) {
+    trailing = trailMatch2[2] + trailing;
+    core = trailMatch2[1];
+  }
+
+  if (!core || !/[a-zA-Z\\_^=<>]/.test(core)) {
+    return rawSpan;
+  }
+
+  // Защита от дублирования \left\left и \right\right
+  core = core
+    .replace(/\\left\s*\\left/g, "\\left")
+    .replace(/\\right\s*\\right/g, "\\right")
+    .trim();
+
+  if (!core) return rawSpan;
+
+  return `${leading}$${core}$${trailing}`;
+}
+
+/**
+ * Однопроходная обертка математических выражений в строке в $ ... $
+ */
+function wrapMathInLine(line: string): string {
+  if (!line.trim()) return line;
+
+  return line.replace(/[^а-яёА-ЯЁ]+/g, (span) => {
+    if (!/[a-zA-Z\\_^=<>]/.test(span)) {
+      return span;
+    }
+    const subParts = splitTopLevelCommas(span);
+    return subParts.map((part) => wrapSingleMathCore(part)).join(",");
+  });
+}
+
+/**
+ * Главная функция очистки и реконструкции текста задачи из PDF в LaTeX-разметку.
+ * Полностью идемпотентна: повторный вызов дает идентичный результат без вложенных $.
  */
 export function cleanBrokenPdfMathText(rawText: string): string {
   if (!rawText) return "";
 
-  let text = rawText.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  let text = rawText;
 
-  // 1. Нормализация Юникода
-  text = normalizeFipiUnicode(text);
+  // 0. Очистка шапки задачи, старых знаков $ и дублей \left\left
+  text = text.replace(/^Задача\s*\d{1,2}\.\d+(?:\.\d+)?\.?\s*/i, "");
+  text = text.replace(/\$/g, "");
+  text = text.replace(/\\left\s*\\left/g, "\\left").replace(/\\right\s*\\right/g, "\\right");
+  text = text.replace(/^[\s.]*(?:(?:DEMO|NEW|SIM)|Аналоги|Ответ|[\s.])+/gi, "");
+  text = text.replace(/Ответ:[\s\S]*$/i, "");
+  text = text.replace(/Оглавление[\s\S]*$/i, "");
+  text = text.replace(/Библиотека MathStart[\s\S]*?ВКонтакте\s*/gi, "");
 
-  // 2. Склеиваем разорванные дефисом слова и склеенные слова из PDF
-  text = text.replace(/([а-яА-ЯёЁa-zA-Z]+)-\s*\n\s*([а-яА-ЯёЁa-zA-Z]+)/gi, "$1$2");
-  text = text.replace(/Найдитерасстояние/g, "Найдите расстояние");
-  text = text.replace(/предыдущегогода/g, "предыдущего года");
-  text = text.replace(/треугольнойпризмы/g, "треугольной призмы");
+  // Восстановление ошибочно сконвертированных степеней из старой БД (a_{2} -> a^{2}, x_{4} -> x^{4})
+  text = text.replace(/\b([abctyz])_\{([2-9])\}/g, "$1^{$2}");
+  text = text.replace(/\bx_\{([3-9])\}(?!\s*,\s*x_)/g, "x^{$1}");
+  text = text.replace(/\bx_\{2\}(?!\s*,\s*x_)(?<!x_\{1\}\s*,\s*x_\{2\})/g, "x^{2}");
+  text = text.replace(/8x\+1\s*-\s*\\frac\{40\}\{2\}\s*[·⋅*\\cdot]+\s*6\^\{?4x\}?\s*-\s*32/g, "\\frac{8^{x+1} - 40}{2 \\cdot 64^{x} - 32}");
 
-  // 3. Удаляем мусор колонтитулов и оглавления сборника ФИПИ в конце задач
-  text = text.replace(/Ответ:\s*Оглавление[\s\S]*$/gi, "");
-  text = text.replace(/Оглавление\s*<\s*<\s*<\s*<[\s\S]*$/gi, "");
-  text = text.replace(/№\d+\.\s*(?:Стереометрия|Планиметрия|Уравнения|Неравенства|Задачи)[\s\S]*$/gi, "");
-  text = text.replace(/(?:AB\s*C|A\s+B\s+C|y\s*=\s*f\s*\(x\)\s*0[\s\S]*)$/gi, "");
-  text = text.replace(/(?:ABCDMNA1 B1C1D1[\s\S]*)$/gi, "");
-
-  // 4. Приклеиваем точку после закрывающей скобки
-  text = text.replace(/([\]\)])\s*\n*\./g, "$1.");
-
-  // 5. Показательные уравнения: прилипшая степень вида 32x -> 3^{2x}, 22x -> 2^{2x}
-  text = text.replace(/\b([23456789])(\d[a-z])\b/g, "$1^{$2}");
-
-  // 6. Тригонометрические функции и степени
-  text = text.replace(/\b(sin|cos|tg|ctg)\s*2\b/gi, (_, f) => `\\${f.toLowerCase()}^2`);
-  text = text.replace(/\b(sin|cos|tg|ctg)\s*3\b/gi, (_, f) => `\\${f.toLowerCase()}^3`);
-  text = text.replace(/\b(sin|cos|tg|ctg)\b/gi, (_, f) => `\\${f.toLowerCase()}`);
-
-  // Логарифмы
-  text = text.replace(/\blog(\d+)\s*\(/gi, (_, base) => `\\log_{${base}}(`);
-  text = text.replace(/\blog(\d+)\b/gi, (_, base) => `\\log_{${base}}`);
-  text = text.replace(/\blog_(\d+)/gi, (_, base) => `\\log_{${base}}`);
-
-  // Корни
-  text = text.replace(/√\s*\(([^)]+)\)/g, "\\sqrt{$1}");
-  text = text.replace(/√\s*(\d+|[a-zA-Z]+)/g, "\\sqrt{$1}");
-
-  // Градусы
-  text = text.replace(/(\d+)\s*°/g, "$1^\\circ");
-
-  // Склеиваем разорванные аргументы тригонометрии: ( 3π \n 2 + x )
-  text = text.replace(
-    /\(\s*(\d*π|\d+)\s*\n\s*(\d+)\s*([+\-][^)]*)\)/g,
-    (_, num, den, tail) => `\\left(\\frac{${num.replace(/π/g, "\\pi")}}{${den}} ${tail.trim()}\\right)`
-  );
-  text = text.replace(
-    /\(\s*([^)]*?)\s*([+\-])\s*(\d*π|\d+)\s*\n\s*(\d+)\s*\)/g,
-    (_, head, op, num, den) => `\\left(${head.trim()} ${op} \\frac{${num.replace(/π/g, "\\pi")}}{${den}}\\right)`
-  );
-  text = text.replace(
-    /\(\s*(\d*π|\d+)\s*\n\s*(\d+)\s*\)/g,
-    (_, num, den) => `\\left(\\frac{${num.replace(/π/g, "\\pi")}}{${den}}\\right)`
-  );
-
-  // Склеиваем прилипшие дроби вида 23π12 -> \frac{23\pi}{12}, 7π8 -> \frac{7\pi}{8}
-  text = text.replace(/\b(\d*π)(\d{1,2})\b/g, (_, num, den) => `\\frac{${num.replace(/π/g, "\\pi")}}{${den}}`);
-
-  // 7. Склеиваем многострочные отрезки: [ -2π; -π2 ], [ -4π; -5π \n 2 ]
-  text = text.replace(/\[\s*([\s\S]*?);\s*([\s\S]*?)\]/g, (match, left, right) => {
-    if (left.length < 50 && right.length < 50 && !/[а-яА-ЯёЁ]{4,}/.test(left + right)) {
-      const cLeft = cleanIntervalBound(left);
-      const cRight = cleanIntervalBound(right);
-      return `$\\left[${cLeft}; ${cRight}\\right]$`;
+  // 1. Нормализация Unicode (Variation Selectors \uFE00-\uFE0F и Mathematical Italic)
+  text = text.replace(/[\uFE00-\uFE0F]/g, "");
+  let norm = "";
+  for (const ch of text) {
+    const cp = ch.codePointAt(0);
+    if (!cp) continue;
+    if (cp >= 0x1d400 && cp <= 0x1d7ff) {
+      if (cp >= 0x1d434 && cp <= 0x1d44d) { norm += String.fromCharCode(65 + (cp - 0x1d434)); continue; }
+      if (cp >= 0x1d44e && cp <= 0x1d467) { norm += String.fromCharCode(97 + (cp - 0x1d44e)); continue; }
+      if (cp >= 0x1d400 && cp <= 0x1d419) { norm += String.fromCharCode(65 + (cp - 0x1d400)); continue; }
+      if (cp >= 0x1d41a && cp <= 0x1d433) { norm += String.fromCharCode(97 + (cp - 0x1d41a)); continue; }
+      if (cp >= 0x1d468 && cp <= 0x1d481) { norm += String.fromCharCode(65 + (cp - 0x1d468)); continue; }
+      if (cp >= 0x1d482 && cp <= 0x1d49b) { norm += String.fromCharCode(97 + (cp - 0x1d482)); continue; }
+      if (cp === 0x1d6fc || cp === 0x1d736) { norm += "\\alpha "; continue; }
+      if (cp === 0x1d6fd || cp === 0x1d737) { norm += "\\beta "; continue; }
+      if (cp === 0x1d6fe || cp === 0x1d738) { norm += "\\gamma "; continue; }
+      if (cp === 0x1d6ff || cp === 0x1d739) { norm += "\\delta "; continue; }
+      if (cp === 0x1d70b || cp === 0x1d745) { norm += "\\pi "; continue; }
+      if (cp === 0x1d711 || cp === 0x1d719) { norm += "\\varphi "; continue; }
+      if (cp === 0x1d714) { norm += "\\omega "; continue; }
+      if (cp >= 0x1d7ce && cp <= 0x1d7d7) { norm += String.fromCharCode(48 + (cp - 0x1d7ce)); continue; }
     }
-    return match;
-  });
-
-  // 8. Склеиваем многострочные дроби на стыке строк (например, "3\n2" или "π\n2")
-  text = text.replace(/(\d*π|[a-zA-Z0-9]+)\s*\n\s*(\d+)\b/g, (match, top, bot) => {
-    if (/^\d+\.$/.test(top)) return match;
-    return `\\frac{${top.replace(/π/g, "\\pi")}}{${bot}}`;
-  });
-
-  // 9. Преобразование нижних индексов: ABCDA1B1C1D1 -> ABCDA_{1}B_{1}C_{1}D_{1}, B1N -> B_{1}N, AA1 -> AA_{1}, x1 -> x_{1}
-  text = text.replace(/([A-DF-Za-df-z])(\d+)/g, "$1_{$2}");
-
-  // Заменяем греческие символы на команды LaTeX
-  text = text.replace(/([αβγπ])/g, (ch) => {
-    if (ch === "π") return "\\pi";
-    if (ch === "α") return "\\alpha";
-    if (ch === "β") return "\\beta";
-    if (ch === "γ") return "\\gamma";
-    return ch;
-  });
-
-  // 10. Объединяем разорванные строки уравнений
-  text = joinBrokenMathLines(text);
-
-  // 11. Удаляем висящие буквы от чертежей в самом конце текста
-  let prevText = "";
-  while (prevText !== text) {
-    prevText = text;
-    text = text.replace(/\n\s*(?:[A-Z]\s*){1,6}$/g, "").trim();
+    if (cp === 0x210e) { norm += "h"; continue; }
+    norm += ch;
   }
 
-  // 12. Разметка математических токенов в $...$ для аккуратного рендера KaTeX
-  text = wrapMathTokensForKatex(text);
+  text = norm
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .replace(/−/g, "-")
+    .replace(/[♦∘]/g, "°")
+    .replace(/[α]/g, "\\alpha ")
+    .replace(/[β]/g, "\\beta ")
+    .replace(/[γ]/g, "\\gamma ")
+    .replace(/[π]/g, "\\pi ")
+    .replace(/\\(pi|alpha|beta|gamma|delta|varphi|omega)[\t ]+(?=[0-9a-zA-Z(])/g, "\\$1 ")
+    .replace(/\\(pi|alpha|beta|gamma|delta|varphi|omega)[\t ]+(?=[),.;:\]\-+*/=\n])/g, "\\$1");
 
-  return text.trim();
+  // Исправление битых маркеров списка в Задании №16 (U+0088, ˆ, Private Use Area \uE000-\uF8FF, \u2580-\u25FF)
+  text = text.replace(
+    /(^|\n)[\t ]*[\u0080-\u009F\u02C6\u02DC\u2022\u2580-\u25FF\uE000-\uF8FF\uF000-\uF0FF\uFFFD][\t ]*/g,
+    "$1— "
+  );
+
+  // Склейка переносов русских слов через дефис
+  text = text.replace(/([а-яёА-ЯЁ]{2,})-[\t ]*\n[\t ]*([а-яё]{2,})/g, "$1$2");
+
+  // Удаление прилипших заголовков разделов внизу страницы
+  text = text.replace(/\n(?:Уравнения|Неравенства|Планиметрия|Стереометрия|Производная|Финансовая)[^\n]*$/i, "");
+
+  // 2. Удаление вывалившихся подписей осей графиков (№8, №11) и вершин чертежей (№1, №2, №3) в конце текста
+  const lines = text.split("\n");
+  while (lines.length > 1) {
+    const last = lines[lines.length - 1].trim();
+    if (!last) {
+      lines.pop();
+      continue;
+    }
+    const precedingText = lines.slice(0, -1).join("\n");
+    const hasCompletedSentenceAbove = /[.?][\t ]*(?:\n|$)/.test(precedingText);
+    const isAxisOrVertexLabel =
+      hasCompletedSentenceAbove &&
+      last.length <= 40 &&
+      /^[A-Z0-9xy_{}\t ,.\-°?()=f\\\/]+$/i.test(last) &&
+      !/[а-яёА-ЯЁ]/i.test(last) &&
+      !/\\pi|\\left|\\right|\\sin|\\cos/.test(last) &&
+      !/[<>≤≥]/.test(last);
+    if (isAxisOrVertexLabel) {
+      lines.pop();
+    } else {
+      break;
+    }
+  }
+  text = lines.join("\n").trim();
+
+  // Дополнительная очистка хвостов x_1 x_2 ... x_8 в Задании №8
+  text = text.replace(/(?:\n[\t ]*x[_0-9{}\t x]+)+$/gi, "");
+
+  // 3. Замена кириллических букв-двойников в вершинах и склейка кернинга (M K -> MK, EF T -> EFT)
+  text = replaceCyrillicVertices(text);
+  for (let pass = 0; pass < 2; pass++) {
+    text = text.replace(/\b([A-Z][012]?)[\t ]+([A-Z][012]?)\b(?![\t ]*[а-яё])/g, "$1$2");
+  }
+
+  // Схлопывание всех подряд идущих переносов строк сразу после открывающих '(' / '[' и перед закрывающими ')' / ']'
+  text = text.replace(/([(\[])[\t \n]+/g, "$1");
+  text = text.replace(/[\t \n]+([)\]])/g, "$1");
+  text = text.replace(/\][\t \n]*\./g, "].");
+  // Одиночная фигурная скобка системы уравнений на отдельной строке
+  text = text.replace(/(^|\n)[\t ]*\{[\t ]*\n/g, "$1");
+
+  // 4. Функции, степени и нижние индексы
+  text = text.replace(/\blog2[\t ]*\n[\t ]*(\d+(?:,\d+)?)\b/g, "\\log_{$1}^{2}");
+  text = text.replace(/\blog_?(\d+(?:,\d+)?)\b/g, "\\log_{$1}");
+  text = text.replace(/(?<!\\)\b(sin|cos)([2-9])\b/g, "\\$1^{$2}");
+  text = text.replace(/(?<!\\)\b(tg|ctg)([2-9])\b/g, "\\text{$1}^{$2}");
+  text = text.replace(/(?<!\\)\b(sin|cos|ln|lg)\b/g, "\\$1");
+  text = text.replace(/(?<!\\|\\text\{)\b(tg|ctg)\b/g, "\\text{$1}");
+
+  // Нижний индекс (_) ТОЛЬКО у заглавных букв геометрических вершин и физических величин с цифрами 0, 1, 2
+  text = text.replace(/\b([A-Z012]+)\b/g, (m) => {
+    if (/^[012]+$/.test(m)) return m;
+    return m.replace(/([A-Z])([012])(?![0-9])/g, "$1_{$2}");
+  });
+
+  // Нижний индекс у маленьких x_0, x_1, ..., x_9 ТОЛЬКО при перечислении через запятую или после слов "точек"/"абсциссой"
+  text = text.replace(/\bx0\b/g, "x_{0}");
+  text = text.replace(/\bx([1-9])(?=[\t ]*,[\t ]*x[1-9])/g, "x_{$1}");
+  for (let pass = 0; pass < 10; pass++) {
+    text = text.replace(/(x_\{\d+\}[\t ]*,[\t ]*)x(\d+)\b/g, "$1x_{$2}");
+  }
+  text = text.replace(/(точ[еккаиуой]+|абсцисс[аеыуой]+)[\t ]+x([0-9])\b/gi, "$1 x_{$2}");
+
+  // Многострочные дроби внутри круглых скобок: ( 3\pi\n2 + x ) и ( x + 4\nx )
+  text = text.replace(
+    /\([\t ]*([+\-]?[\t ]*\d*\\pi)[\t ]*\n[\t ]*(\d+)[\t ]*([+\-][\t ]*[^()\n]+?)[\t ]*\)/g,
+    "\\left(\\frac{$1}{$2} $3\\right)"
+  );
+  text = text.replace(
+    /\([\t ]*([^\n()=,:;а-яёА-ЯЁ]+?)[\t ]*\n[\t ]*([^\n()=,:;а-яёА-ЯЁ]+?)[\t ]*\)/g,
+    (m, num: string, den: string) => {
+      const n = num.trim();
+      const d = den.trim();
+      if (!n || !d) return m;
+      return `\\left(\\frac{${n}}{${d}}\\right)`;
+    }
+  );
+
+  // Склейка строки, начинающейся с + или - сразу после закрывающей скобки
+  text = text.replace(/(\\right\)|\))[\t ]*\n[\t ]*([+\-])/g, "$1 $2");
+
+  // Верхний индекс (степень ^) после закрывающей скобки или закрывающего модуля: (x + 1)2 -> (x + 1)^{2}
+  text = text.replace(/(\\right\)|\)|(?<=[a-zA-Z0-9}])\|)[\t ]*\n?[\t ]*([2-9])\b(?![0-9x^])/g, "$1^{$2}");
+
+  // Показательные выражения вида 8x+ 2\n3, 8x+1, 2 · 64x
+  text = text.replace(/\b(\d+)x[\t ]*([+\-])[\t ]*(\d+)[\t ]*\n[\t ]*(\d+)\b/g, "$1^{x $2 \\frac{$3}{$4}}");
+  text = text.replace(/\b(\d+)x([+\-]\d+)\b/g, "$1^{x$2}");
+  text = text.replace(/·[\t ]*(\d+)x\b/g, "· $1^{x}");
+
+  // Верхний индекс (степень ^) после маленьких переменных a, b, c, k, m, n, p, q, t, x, y, z в уравнениях и неравенствах
+  text = text.replace(/(?<![\\a-zA-Z_{^])([0-9a-zA-Z]*?[abckmnpqtxyz])([2-9])\b/g, (full, base: string, pow: string) => {
+    if (/^(?:sin|cos|tg|ctg|log|ln|lg)$/i.test(base)) return full;
+    return `${base}^{${pow}}`;
+  });
+
+  // В показательных неравенствах и уравнениях (без x^2, без (...)^2, без модулей |...| и без \log) преобразуем 3x -> 3^{x}, 64x -> 64^{x}
+  if (
+    !/x\^\{[2-9]\}|\)\^\{[2-9]\}|\||\\log/.test(text) &&
+    /(?:неравенств|уравнен)/i.test(text) &&
+    !/\\sin|\\cos|\\text\{tg\}/.test(text)
+  ) {
+    text = text.replace(/\b(2|3|4|5|6|7|8|9|11|12|16|25|27|36|64|81|121)x\b/g, "$1^{x}");
+  }
+
+  // 5. Многострочные отрезки [ a ; b ]
+  text = text.replace(/\[[\t ]*([^\];]+?)[\t ]*;[\t ]*([^\]]+?)[\t ]*\]/g, (_, a: string, b: string) => {
+    return `\\left[${formatEndpointFraction(a)}; ${formatEndpointFraction(b)}\\right]`;
+  });
+
+  // Корни √
+  text = text.replace(/√\(([^)]+)\)/g, "\\sqrt{$1}");
+  text = text.replace(/√[\t ]*(\d*x\^\{\d+\}[^=\n,.;]*)/g, (_, rad: string) => `\\sqrt{${rad.trim()}}`);
+  text = text.replace(/√(\d+|[a-zA-Z]+)/g, "\\sqrt{$1}");
+
+  // Многострочные физические и алгебраические формулы вида "I = U\nR" или "R = R_{1}R_{2}\nR_{1} + R_{2}"
+  text = text.replace(
+    /(\b[A-Za-z_0-9\{\}]+[\t ]*=[\t ]*)([^\n=,.;:а-яёА-ЯЁ]+)\n[\t ]*([^\n=,.;:а-яёА-ЯЁ]+?)(?=[\t ]*(?:[,.;:]|\n|$))/g,
+    (_, lhs: string, num: string, den: string) => {
+      return `${lhs}\\frac{${num.trim()}}{${den.trim()}}`;
+    }
+  );
+
+  // Многострочные дроби в неравенствах и уравнениях (без тяжелого lookbehind)
+  text = text.replace(
+    /(^|\n|неравенство[\t ]+|[=≤≥<>][\t ]*)([0-9a-zA-Z\\_{}^+\-·*() ]+)\n[\t ]*([0-9a-zA-Z\\_{}^+\-·*() ]+?)(?=[\t ]*(?:[=≤≥<>]|\.[\t ]*(?:\n|$)|\n|$))/g,
+    (match, prefix: string, num: string, den: string) => {
+      const n = num.trim();
+      const d = den.trim();
+      if (!n || !d || n === "{" || n === "}") return match;
+      if (/^[+\-]/.test(d)) return `${prefix}${n} ${d}`;
+      if (/^\\(?:sin|cos|text\{tg\}|text\{ctg\})/.test(d)) return `${prefix}${n} ${d}`;
+      return `${prefix}\\frac{${n}}{${d}}`;
+    }
+  );
+
+  // Склейка разорванных формул после знаков =, +, -, ·, \sqrt{...}
+  text = text.replace(/([=+\-·])[\t ]*\n[\t ]*(?=[0-9a-zA-Z\\(\[])/g, "$1 ");
+  text = text.replace(/(\\sqrt\{[^}]+\})[\t ]*\n[\t ]*(?=[0-9a-zA-Z\\(\[])/g, "$1 ");
+
+  // Замена спецсимволов на LaTeX-команды
+  text = text.replace(/∠[\t ]*/g, "\\angle ");
+  text = text.replace(/(\d+)[\t ]*°/g, "$1^{\\circ}");
+  text = text.replace(/°/g, "^{\\circ}");
+  text = text.replace(/≤/g, " \\le ");
+  text = text.replace(/≥/g, " \\ge ");
+  text = text.replace(/·/g, " \\cdot ");
+  text = text.replace(/\b([fg])[\t ]+\(/g, "$1(");
+
+  // 6. Однопроходная обертка всех математических фрагментов в $ ... $
+  text = text
+    .split("\n")
+    .map((line) => wrapMathInLine(line))
+    .join("\n");
+
+  // 7. Финальная зачистка дублей \left\left и \right\right
+  text = text
+    .replace(/\\left\s*\\left/g, "\\left")
+    .replace(/\\right\s*\\right/g, "\\right");
+
+  return text;
 }
 
-/**
- * Оборачивает математические токены (вершины, равенства, греческие буквы, уравнения)
- * в $...$, не трогая уже существующие $...$ и $$...$$
- */
-export function wrapMathTokensForKatex(text: string): string {
-  // Разбиваем по уже размеченным формулам $...$ и $$...$$
-  const chunks = text.split(/(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)/g);
-
-  return chunks
-    .map((chunk, idx) => {
-      // Нечетные фрагменты — уже размеченные $...$ или $$...$$
-      if (idx % 2 === 1) return chunk;
-
-      let res = chunk;
-
-      // 1. Уравнения с \log, \sin, \cos или равенства: например, \log_{9}(...) = x
-      res = res.replace(/(\\log_\{[^\}]+\}\([^\)]+\)\s*=\s*[a-zA-Z0-9]+)/g, "$$$1$$");
-
-      // 2. Числовые равенства и пропорции: B_{1}N = 6, AA_{1} = 16, AB = 10, A_{1}E : EA = 5 : 3
-      res = res.replace(
-        /(?:\b[A-Za-z]+(?:_\{[0-9]+\}[A-Za-z0-9]*)*|\b[A-Z]{1,6})\s*=\s*[0-9]+(?:\.[0-9]+)?/g,
-        "$$$&$$"
-      );
-      res = res.replace(
-        /\b[A-Z]{1,2}_\{[0-9]+\}\s*:\s*[A-Z]{1,2}\s*=\s*[0-9]+\s*:\s*[0-9]+/g,
-        "$$$&$$"
-      );
-
-      // 3. Цепочки вершин и переменные с индексами: ABCDA_{1}B_{1}C_{1}D_{1}, B_{1}N, AA_{1}, A_{1}E, x_{1}, a_{1}
-      res = res.replace(/\b([A-Za-z]+(?:_\{[0-9]+\}[A-Za-z0-9]*)+)\b/g, "$$$1$$");
-
-      // 4. Отрезки и многогранники (2-6 заглавных букв): AB, AD, CM, SC, ABM, SBC, SABCD
-      res = res.replace(/\b([A-Z]{2,6})\b/g, "$$$1$$");
-
-      // 5. Одиночные вершины после контекстных слов: "точки M и N", "прямой CM", "точки C", "плоскости \alpha"
-      res = res.replace(
-        /(точки?|прямой|прямые|плоскост[ьи]|отрезк[ае]|ребр[ае])\s+([A-Z])\b/g,
-        "$1 $$$2$$"
-      );
-      res = res.replace(
-        /(\b[A-Z]\b)\s+(и|или)\s+(\b[A-Z]\b)/g,
-        "$$$1$$ $2 $$$3$$"
-      );
-
-      // 6. Греческие команды \alpha, \beta, \gamma, \pi
-      res = res.replace(/(\\(?:alpha|beta|gamma|pi))\b/g, "$$$1$$");
-
-      // 7. Выражения с командами LaTeX (\sqrt, \frac, ^\circ)
-      res = res.replace(
-        /((?:\d*\\(?:sqrt|frac|circ|sin|cos|tg|ctg)[a-zA-Z0-9_{}()\^+\\-]*\s*)+)/g,
-        (match) => {
-          const trimmed = match.trim();
-          if (trimmed.length > 0 && !trimmed.startsWith("$")) {
-            return `$$${trimmed}$$`;
-          }
-          return match;
-        }
-      );
-
-      // Убираем случайные дублирования знаков доллара
-      res = res.replace(/\$\$+/g, "$");
-      res = res.replace(/\$([^\$]+)\$/g, (_, c) => `$${c.trim()}$`);
-
-      return res;
-    })
-    .join("");
-}
-
-/**
- * Сегмент математического текста для рендеринга KaTeX
- */
 export interface MathSegment {
   type: "text" | "inline_math" | "block_math";
   content: string;
 }
 
 /**
- * Преобразует строку с $...$ и $$...$$ в массив сегментов
+ * Разбивает строку по символу переноса строки ТОЛЬКО вне математических блоков $ ... $
  */
-export function parseMathSegments(text: string): MathSegment[] {
-  const segments: MathSegment[] = [];
-  const mathRegex = /(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)/g;
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
+function splitLinesOutsideMath(text: string): string[] {
+  const result: string[] = [];
+  let inMath = false;
+  let lastIdx = 0;
 
-  while ((match = mathRegex.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      const textChunk = text.slice(lastIndex, match.index);
-      if (textChunk) {
-        segments.push({ type: "text", content: textChunk });
-      }
-    }
-
-    const rawMatch = match[0];
-    if (rawMatch.startsWith("$$") && rawMatch.endsWith("$$")) {
-      segments.push({
-        type: "block_math",
-        content: rawMatch.slice(2, -2).trim(),
-      });
-    } else if (rawMatch.startsWith("$") && rawMatch.endsWith("$")) {
-      segments.push({
-        type: "inline_math",
-        content: rawMatch.slice(1, -1).trim(),
-      });
-    }
-
-    lastIndex = match.index + rawMatch.length;
-  }
-
-  if (lastIndex < text.length) {
-    const tail = text.slice(lastIndex);
-    if (tail) {
-      segments.push({ type: "text", content: tail });
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "$") {
+      inMath = !inMath;
+    } else if (text[i] === "\n" && !inMath) {
+      result.push(text.slice(lastIdx, i));
+      lastIdx = i + 1;
     }
   }
-
-  return segments;
+  result.push(text.slice(lastIdx));
+  return result;
 }
 
 /**
- * Определяет, действительно ли задача содержит оригинальный чертеж в PDF-файле.
- * - В задачах Части 2 (№13–19) и текстовых задачах без рисунков чертежей НЕТ.
- * - В Части 1 чертежи присутствуют только у задач №1, 2, 3, 8, 11 при наличии реального чертежа в PDF.
+ * Разбивает текст задачи на абзацы и сегменты для рендера через KaTeX
+ */
+export function parseMathSegments(rawText: string): MathSegment[][] {
+  const cleaned = cleanBrokenPdfMathText(rawText);
+  if (!cleaned) return [];
+
+  const rawLines = splitLinesOutsideMath(cleaned);
+  const paragraphs: MathSegment[][] = [];
+
+  for (const rawLine of rawLines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    // Если строка целиком состоит из одной крупной формулы $...$ (с возможной точкой/запятой в конце)
+    const singleMathMatch = line.match(/^\$([^$]+)\$([.,;]?)$/);
+    if (singleMathMatch) {
+      const mathBody = singleMathMatch[1]
+        .replace(/\\left\s*\\left/g, "\\left")
+        .replace(/\\right\s*\\right/g, "\\right")
+        .trim();
+      const punct = singleMathMatch[2] || "";
+      const isDisplayFormula =
+        mathBody.length > 10 &&
+        (/[=<>]|\\le|\\ge|\\frac|\\left\[|\\sqrt/.test(mathBody));
+
+      if (isDisplayFormula) {
+        paragraphs.push([{ type: "block_math", content: mathBody + punct }]);
+        continue;
+      }
+    }
+
+    const segments: MathSegment[] = [];
+    const parts = line.split(/(\$[^$]+\$)/g);
+
+    for (const part of parts) {
+      if (!part) continue;
+      if (part.startsWith("$") && part.endsWith("$") && part.length >= 2) {
+        const mathContent = part
+          .slice(1, -1)
+          .replace(/\\left\s*\\left/g, "\\left")
+          .replace(/\\right\s*\\right/g, "\\right")
+          .trim();
+        if (mathContent) {
+          segments.push({ type: "inline_math", content: mathContent });
+        }
+      } else {
+        segments.push({ type: "text", content: part });
+      }
+    }
+
+    if (segments.length > 0) {
+      paragraphs.push(segments);
+    }
+  }
+
+  return paragraphs;
+}
+
+/**
+ * Разрешает страницу PDF и код прототипа для задач с реальным рисунком/графиком в PDF
+ */
+export function resolvePdfTaskMeta(task: {
+  taskNumber: number;
+  content: string;
+  pdfPage?: number | null;
+  taskCode?: string | null;
+  title?: string | null;
+}): { hasDrawing: boolean; pdfPage: number | null; taskCode: string | null } {
+  // В Части 2 (№13–19) и текстовых задачах (№4–7, 9, 10, 12) рисунков нет
+  const allowedNumbers = [1, 2, 3, 8, 11];
+  if (!allowedNumbers.includes(task.taskNumber)) {
+    return { hasDrawing: false, pdfPage: null, taskCode: null };
+  }
+
+  // Извлекаем код задачи (например, "9.1" или "12.1")
+  let code = task.taskCode ? task.taskCode.replace(/^Задача\s*/i, "").trim() : null;
+  if (!code && task.title) {
+    const m = task.title.match(/(\d{1,2}\.\d+(?:\.\d+)?)/);
+    if (m) code = m[1];
+  }
+
+  // Определяем страницу PDF
+  let page = task.pdfPage ?? (code ? TASK_CODE_TO_PDF_PAGE[code] ?? null : null);
+
+  // Для заданий №8 и №11 (графики функций и производной), где в тексте говорится про рисунок/график
+  if (task.taskNumber === 8 || task.taskNumber === 11) {
+    const hasGraphPhrase = /(?:на\s+рисунк|изображ[её]н|график|касательн|точек:\s*\$?x_)/i.test(task.content || "");
+    if (hasGraphPhrase) {
+      if (!page) {
+        page = task.taskNumber === 8 ? 43 : 63;
+      }
+      if (!code) {
+        code = task.taskNumber === 8 ? "9.1" : "12.1";
+      }
+      return { hasDrawing: true, pdfPage: page, taskCode: code };
+    }
+  }
+
+  // Для заданий №1, №2, №3 рисунок показывается только если он реально есть в PDF
+  if (!page) {
+    return { hasDrawing: false, pdfPage: null, taskCode: code };
+  }
+
+  const hasExplicitFigureRef =
+    /(?:на\s+рисунк|изображ[её]н|график|на\s+клетчатой\s+бумаге|координатной\s+плоскости)/i.test(
+      task.content || ""
+    );
+
+  return {
+    hasDrawing: hasExplicitFigureRef,
+    pdfPage: hasExplicitFigureRef ? page : null,
+    taskCode: code,
+  };
+}
+
+/**
+ * Проверяет, есть ли у задачи реальный рисунок/график в исходном PDF
  */
 export function hasPdfDrawing(task: {
   taskNumber: number;
   content: string;
   pdfPage?: number | null;
   taskCode?: string | null;
+  title?: string | null;
 }): boolean {
-  // 1. Часть 2 (№13–19) НИКОГДА не имеет чертежей в сборнике
-  if (task.taskNumber >= 13) return false;
-
-  // 2. Только задачи №1, 2, 3, 8, 11 Части 1 могут иметь чертежи
-  const drawingEligibleNumbers = [1, 2, 3, 8, 11];
-  if (!drawingEligibleNumbers.includes(task.taskNumber)) return false;
-
-  // 3. Необходима страница PDF для кропа
-  if (!task.pdfPage) return false;
-
-  // 4. Задачи №2 (векторы), №8 (производные и касательные) и №11 (графики) всегда содержат графики в сборнике
-  if (task.taskNumber === 2 || task.taskNumber === 8 || task.taskNumber === 11) {
-    return true;
-  }
-
-  // 5. Для задач №1 (планиметрия) и №3 (стереометрия) проверяем контекстные маркеры наличия чертежа
-  const lower = (task.content || "").toLowerCase();
-  const mentionsDrawing =
-    lower.includes("рисун") ||
-    lower.includes("график") ||
-    lower.includes("изображ") ||
-    lower.includes("показан") ||
-    lower.includes("клетчат") ||
-    lower.includes("на клетк") ||
-    /см\.\s*рис/i.test(lower);
-
-  return mentionsDrawing;
+  return resolvePdfTaskMeta(task).hasDrawing;
 }

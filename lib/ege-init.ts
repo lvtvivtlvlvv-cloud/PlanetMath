@@ -58,7 +58,7 @@ export async function ensureEgeTasksInitialized(): Promise<number> {
       return tasksToInsert.length;
     }
 
-    // Auto-clean and sync pdfPage/taskCode for existing tasks in SQLite once per server boot
+    // Auto-clean and sync content/pdfPage/taskCode for existing tasks in SQLite once per server boot
     if (!hasCleanedExistingTasks) {
       hasCleanedExistingTasks = true;
       const existingTasks = await prisma.egeTask.findMany({
@@ -66,13 +66,17 @@ export async function ensureEgeTasksInitialized(): Promise<number> {
       });
 
       const jsonPath = path.join(process.cwd(), "data", "ege-tasks.json");
-      const jsonLookup = new Map<string, { pdfPage?: number; taskCode?: string }>();
+      const jsonLookup = new Map<string, { content: string; pdfPage?: number; taskCode?: string }>();
       if (fs.existsSync(jsonPath)) {
         try {
           const parsed = JSON.parse(fs.readFileSync(jsonPath, "utf-8")) as ParsedEgeTask[];
           for (const item of parsed) {
             if (item.title) {
-              jsonLookup.set(item.title.trim(), { pdfPage: item.pdfPage, taskCode: item.taskCode });
+              jsonLookup.set(item.title.trim(), {
+                content: item.content,
+                pdfPage: item.pdfPage,
+                taskCode: item.taskCode,
+              });
             }
           }
         } catch {
@@ -82,8 +86,10 @@ export async function ensureEgeTasksInitialized(): Promise<number> {
 
       const updates = [];
       for (const t of existingTasks) {
-        const cleaned = cleanBrokenPdfMathText(t.content);
         const matchMeta = jsonLookup.get((t.title || "").trim());
+        const cleaned = matchMeta?.content
+          ? cleanBrokenPdfMathText(matchMeta.content)
+          : cleanBrokenPdfMathText(t.content);
         let nextTaskCode = t.taskCode ?? matchMeta?.taskCode ?? null;
         if (!nextTaskCode && t.title) {
           const m = t.title.match(/Задача\s*(\d{1,2}\.\d+(?:\.\d+)?)/i);

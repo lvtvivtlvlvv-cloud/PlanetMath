@@ -14,19 +14,61 @@ interface PdfTaskCropProps {
 // Global cached PDF document & rendered pages to prevent re-fetching and re-rendering
 let sharedPdfDocPromise: Promise<any> | null = null;
 
+function loadPdfJsFromPublic(): Promise<any> {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("SSR environment"));
+  }
+  const win = window as any;
+  if (win.pdfjsLib) {
+    win.pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+    return Promise.resolve(win.pdfjsLib);
+  }
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-pdfjs="true"]') as HTMLScriptElement | null;
+    if (existing) {
+      existing.addEventListener("load", () => {
+        if (win.pdfjsLib) {
+          win.pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+          resolve(win.pdfjsLib);
+        } else {
+          reject(new Error("pdfjsLib not found after script load"));
+        }
+      });
+      existing.addEventListener("error", () => reject(new Error("Failed to load /pdf.min.js")));
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "/pdf.min.js";
+    script.async = true;
+    script.setAttribute("data-pdfjs", "true");
+    script.onload = () => {
+      if (win.pdfjsLib) {
+        win.pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+        resolve(win.pdfjsLib);
+      } else {
+        reject(new Error("pdfjsLib not initialized"));
+      }
+    };
+    script.onerror = () => reject(new Error("Failed to load /pdf.min.js"));
+    document.head.appendChild(script);
+  });
+}
+
 function getSharedPdfDoc() {
   if (!sharedPdfDocPromise) {
     sharedPdfDocPromise = (async () => {
-      const pdfjs = await import("pdfjs-dist");
-      if (typeof window !== "undefined" && !pdfjs.GlobalWorkerOptions.workerSrc) {
-        pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+      try {
+        const pdfjs = await loadPdfJsFromPublic();
+        const loadingTask = pdfjs.getDocument({
+          url: "/api/ege/pdf-file",
+          cMapUrl: "https://unpkg.com/pdfjs-dist@3.11.174/cmaps/",
+          cMapPacked: true,
+        });
+        return await loadingTask.promise;
+      } catch (err) {
+        sharedPdfDocPromise = null;
+        throw err;
       }
-      const loadingTask = pdfjs.getDocument({
-        url: "/api/ege/pdf-file",
-        cMapUrl: "https://unpkg.com/pdfjs-dist@3.11.174/cmaps/",
-        cMapPacked: true,
-      });
-      return loadingTask.promise;
     })();
   }
   return sharedPdfDocPromise;
