@@ -47,6 +47,14 @@ import { Button, Input, Textarea, Select, Card, SegmentedControl, Modal } from "
 
 const SHORT_WEEKDAYS = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"];
 
+/** Дедлайн — конец локального дня даты "YYYY-MM-DD". */
+function isHomeworkOverdue(ymd: string): boolean {
+  const [year, month, day] = (ymd || "").split("-").map(Number);
+  if (!year || !month || !day) return false;
+  const deadline = new Date(year, month - 1, day, 23, 59, 59, 999);
+  return Date.now() > deadline.getTime();
+}
+
 interface StudentDashboardProps {
   serverDate?: string;
   user: {
@@ -832,6 +840,16 @@ export function StudentDashboard({
                                           <Clock className="h-3 w-3" />
                                           Сдано
                                         </span>
+                                        ) : isHomeworkOverdue(h.targetDate) ? (
+                                        <span
+                                          className={`rounded-md px-2 py-0.5 text-[11px] font-semibold border ${
+                                            isLight
+                                              ? "bg-rose-50 text-rose-700 border-rose-200"
+                                              : "bg-rose-500/15 text-rose-300 border-rose-500/30"
+                                          }`}
+                                        >
+                                          Просрочено
+                                        </span>
                                       ) : (
                                         <button
                                           type="button"
@@ -1155,6 +1173,7 @@ export function StudentDashboard({
                 const dayStr = dateParts[2] || "16";
                 const monthStr = dateParts[1] || "09";
                 const isCardCollapsed = !!collapsedHwIds[hw.id];
+                const isOverdue = !sub && isHomeworkOverdue(hw.targetDate);
 
                 return (
                   <div
@@ -1225,6 +1244,16 @@ export function StudentDashboard({
                             <Clock className="h-3.5 w-3.5" />
                             <span className="hidden sm:inline">На проверке</span>
                             <span className="sm:hidden">Сдано</span>
+                          </span>
+                        ) : isOverdue ? (
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 sm:px-3 py-1 text-xs font-black ${
+                              isLight
+                                ? "bg-rose-50 border-rose-200 text-rose-700"
+                                : "bg-rose-500/20 border-rose-500/40 text-rose-300"
+                            }`}
+                          >
+                            <span>Просрочено</span>
                           </span>
                         ) : (
                           <span
@@ -1345,19 +1374,25 @@ export function StudentDashboard({
                           ) : (
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-2">
                               <span className={`text-xs ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
-                                Срок сдачи: {hw.targetDate}
+                                {isOverdue ? "Срок сдачи истёк" : `Срок сдачи: ${hw.targetDate}`}
                               </span>
                               <button
                                 type="button"
+                                disabled={isOverdue}
                                 onClick={() => {
+                                  if (isOverdue) return;
                                   setActiveHwModal(hw);
                                   setSubmitText("");
                                   setSubmitFiles([]);
                                 }}
-                                className="flex items-center justify-center gap-2 rounded-xl bg-sky-600 hover:bg-sky-700 px-4 py-2 text-xs font-black text-white shadow-xs transition cursor-pointer"
+                                className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-black shadow-xs transition ${
+                                  isOverdue
+                                    ? "cursor-not-allowed bg-slate-300 text-slate-500 dark:bg-slate-800 dark:text-slate-500"
+                                    : "cursor-pointer bg-sky-600 hover:bg-sky-700 text-white"
+                                }`}
                               >
                                 <Send className="h-3.5 w-3.5" />
-                                <span>Сдать решение (прикрепить фото)</span>
+                                <span>{isOverdue ? "Отправка закрыта" : "Сдать решение (прикрепить фото)"}</span>
                               </button>
                             </div>
                           )}
@@ -1621,7 +1656,11 @@ export function StudentDashboard({
                         )}
 
                         {feedback.annotations && feedback.annotations.length > 0 && (
-                          <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
+                          <svg
+                            className="absolute inset-0 w-full h-full pointer-events-none z-10"
+                            viewBox="0 0 100 100"
+                            preserveAspectRatio="none"
+                          >
                             {feedback.annotations
                               .filter((item: any) => item.type === "stroke" && item.points?.length > 1)
                               .map((stroke: any) => {
@@ -1635,6 +1674,7 @@ export function StudentDashboard({
                                     fill="none"
                                     stroke={stroke.color || "#EF4444"}
                                     strokeWidth={stroke.width || 3}
+                                    vectorEffect="non-scaling-stroke"
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                   />

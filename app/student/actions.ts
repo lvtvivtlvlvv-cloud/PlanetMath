@@ -1,84 +1,104 @@
 "use server";
 
-import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
+import { requireStudent } from "@/lib/session";
+import { normalizeAttachments } from "@/lib/uploads";
+import { endOfDay } from "@/lib/dates";
 
 export async function logoutAction() {
   cookies().delete("session_token");
   redirect("/login");
 }
 
+/**
+ * Приводит ответ ученика к сравнимому виду:
+ * unicode-минус → дефис, все запятые → точки, убираем пробелы и хвостовую точку.
+ */
+function normalizeAnswer(raw: string): string {
+  return raw
+    .replace(/[\u2212\u2013\u2014]/g, "-")
+    .replace(/\u00a0/g, " ")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/,/g, ".")
+    .replace(/^\+/, "")
+    .replace(/\.$/, "");
+}
+
 export async function submitHomeworkAction(data: {
   homeworkId: string;
-  studentId: string;
+  studentId?: string;
   content: string;
   attachments?: { fileName: string; fileUrl: string; fileType: string; fileSize: number; expiresAt: string }[];
 }) {
-  const hw = await db.homework.findUnique({
+  // Кто сдаёт — берём из сессии, а не из тела запроса.
+  const me = await requireStudent();
+
+  const homework = await db.homework.findUnique({
     where: { id: data.homeworkId },
-    select: { targetDate: true },
+    select: { id: true, classId: true, targetDate: true, targetTrack: true },
   });
 
-  if (!hw) throw new Error("Задание не найдено.");
+  if (!homework) throw new Error("Задание не найдено.");
+  if (homework.classId !== me.classId) throw new Error("Это задание не из вашего класса.");
 
-  // Проверка срока сдачи (включая конец дня дедлайна)
-  const deadline = new Date(hw.targetDate);
-  deadline.setHours(23, 59, 59, 999);
-  if (new Date() > deadline) {
+  const myTrack = me.examTrack || (me.classGroup?.grade === 11 ? "База" : null);
+  if (
+    me.classGroup?.grade === 11 &&
+    myTrack &&
+    homework.targetTrack &&
+    homework.targetTrack !== "ALL" &&
+    homework.targetTrack !== myTrack
+  ) {
+    throw new Error("Задание выдано для другого экзаменационного трека.");
+  }
+
+  if (new Date() > endOfDay(homework.targetDate)) {
     throw new Error("Срок сдачи задания истек. Отправка и редактирование заблокированы.");
   }
 
+  const content = typeof data.content === "string" ? data.content.trim() : "";
+  if (!content) throw new Error("Напишите ответ или комментарий к работе.");
+  if (content.length > 20000) throw new Error("Слишком длинный текст решения.");
+
+  const attachments = normalizeAttachments(data.attachments);
+
   const existing = await db.homeworkSubmission.findUnique({
-    where: {
-      homeworkId_studentId: { homeworkId: data.homeworkId, studentId: data.studentId },
-    },
-    select: { id: true, grade: true, teacherComment: true },
+    where: { homeworkId_studentId: { homeworkId: data.homeworkId, studentId: me.id } },
+    select: { id: true, grade: true },
   });
 
   if (existing) {
-    // Редактирование: обновляем решение, не трогая оценку и комментарий учителя
-    if (data.attachments && data.attachments.length > 0) {
+    // Проверенную работу редактировать нельзя: иначе оценка относится к другому тексту.
+    if (existing.grade !== null) {
+      throw new Error("Работа уже проверена учителем — редактирование недоступно.");
+    }
+
+    if (attachments.length > 0) {
       await db.attachment.deleteMany({ where: { submissionId: existing.id } });
     }
 
     await db.homeworkSubmission.update({
       where: { id: existing.id },
       data: {
-        content: data.content,
+        content,
         submittedAt: new Date(),
-        // Если уже стояла оценка, статус не сбрасываем, иначе PENDING
-        status: existing.grade ? "GRADED" : "PENDING",
-        attachments: data.attachments?.length
-          ? {
-              create: data.attachments.map((a) => ({
-                fileName: a.fileName,
-                fileUrl: a.fileUrl,
-                fileType: a.fileType,
-                fileSize: a.fileSize,
-                expiresAt: new Date(a.expiresAt),
-              })),
-            }
-          : undefined,
+        status: "PENDING",
+        attachments: attachments.length > 0 ? { create: attachments } : undefined,
       },
     });
   } else {
     await db.homeworkSubmission.create({
       data: {
         homeworkId: data.homeworkId,
-        studentId: data.studentId,
-        content: data.content,
+        studentId: me.id,
+        content,
         status: "PENDING",
-        attachments: {
-          create: data.attachments?.map((a) => ({
-            fileName: a.fileName,
-            fileUrl: a.fileUrl,
-            fileType: a.fileType,
-            fileSize: a.fileSize,
-            expiresAt: new Date(a.expiresAt),
-          })),
-        },
+        attachments: attachments.length > 0 ? { create: attachments } : undefined,
       },
     });
   }
@@ -89,54 +109,53 @@ export async function submitHomeworkAction(data: {
 
 export async function submitEgeItemAnswerAction(data: {
   itemId: string;
-  studentId: string;
+  studentId?: string;
   studentAnswer: string;
   studentComment?: string;
 }) {
+  const me = await requireStudent();
+
   const item = await db.egeAssignmentItem.findUnique({
     where: { id: data.itemId },
     include: { task: true, assignment: true },
   });
 
   if (!item) throw new Error("Задание не найдено");
-  if (item.studentId !== data.studentId) throw new Error("Нет доступа к данному заданию");
+  if (item.studentId !== me.id) throw new Error("Нет доступа к данному заданию");
 
-  if (item.assignment.deadline) {
-    const dl = new Date(item.assignment.deadline);
-    dl.setHours(23, 59, 59, 999);
-    if (new Date() > dl) {
-      throw new Error("Срок сдачи работы истек.");
-    }
+  if (item.status === "GRADED") {
+    throw new Error("Задание уже проверено — повторная отправка ответа недоступна.");
   }
 
-  const cleanAns = data.studentAnswer.trim().toLowerCase().replace(",", ".");
+  if (item.assignment.deadline && new Date() > endOfDay(item.assignment.deadline)) {
+    throw new Error("Срок сдачи работы истек.");
+  }
+
+  const studentAnswer = typeof data.studentAnswer === "string" ? data.studentAnswer.trim() : "";
+  if (!studentAnswer) throw new Error("Введите ответ");
+
+  const comment = typeof data.studentComment === "string" ? data.studentComment.trim() : "";
+
   let isCorrect: boolean | null = null;
-  let score = item.score;
+  let score: number | null = null;
   let status = "SUBMITTED";
 
-  // Для заданий 1-12 с кратким числовым ответом проверяем автоматически
+  // Для заданий 1–12 с кратким ответом проверяем автоматически.
   if (item.task.taskNumber <= 12 && item.task.answer) {
-    const targetAns = item.task.answer.trim().toLowerCase().replace(",", ".");
-    if (cleanAns === targetAns) {
-      isCorrect = true;
-      score = 1;
-      status = "GRADED";
-    } else {
-      isCorrect = false;
-      score = 0;
-      status = "GRADED";
-    }
+    isCorrect = normalizeAnswer(studentAnswer) === normalizeAnswer(item.task.answer);
+    score = isCorrect ? 1 : 0;
+    status = "GRADED";
   }
 
   await db.egeAssignmentItem.update({
     where: { id: item.id },
     data: {
-      studentAnswer: data.studentAnswer.trim(),
-      studentComment: data.studentComment?.trim() || null,
+      studentAnswer,
+      studentComment: comment || null,
       status,
       score,
       submittedAt: new Date(),
-      gradedAt: status === "GRADED" ? new Date() : item.gradedAt,
+      gradedAt: status === "GRADED" ? new Date() : null,
     },
   });
 

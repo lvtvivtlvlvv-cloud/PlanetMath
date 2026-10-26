@@ -9,3 +9,5 @@ out
 public/uploads/*
 !public/uploads/.gitkeep
 gemini-code-*.bat
+*.log
+tsconfig.tsbuildinfo

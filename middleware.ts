@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "school-portal-super-secret-key-prod-2026"
-);
+import { getJwtSecret } from "./lib/env";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -27,7 +24,7 @@ export async function middleware(req: NextRequest) {
       return createRedirect("/login");
     }
     try {
-      const { payload } = await jwtVerify(token, JWT_SECRET);
+      const { payload } = await jwtVerify(token, getJwtSecret());
       const role = payload.role as string;
       if (role === "ADMIN") {
         return createRedirect("/admin");
@@ -57,7 +54,7 @@ export async function middleware(req: NextRequest) {
 
   // 4. Проверка прав для защищенных кабинетов
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     const role = payload.role as string;
 
     if (isAdminPage && role !== "ADMIN") {

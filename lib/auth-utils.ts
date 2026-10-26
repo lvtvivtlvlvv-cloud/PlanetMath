@@ -1,10 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "school-portal-super-secret-key-prod-2026"
-);
+import { getJwtSecret } from "./env";
 
 export interface TokenPayload {
   userId: string;
@@ -15,7 +12,7 @@ export interface TokenPayload {
 }
 
 export async function hashPassword(plain: string): Promise<string> {
-  return bcrypt.hash(plain, 10);
+  return bcrypt.hash(plain, 12);
 }
 
 export async function verifyPassword(plain: string, hash: string): Promise<boolean> {
@@ -27,12 +24,20 @@ export async function createSessionToken(payload: TokenPayload): Promise<string>
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 export async function verifySessionToken(token: string): Promise<TokenPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
+    if (
+      !payload ||
+      typeof payload.userId !== "string" ||
+      typeof payload.role !== "string" ||
+      (payload.role !== "ADMIN" && payload.role !== "STUDENT")
+    ) {
+      return null;
+    }
     return payload as unknown as TokenPayload;
   } catch {
     return null;

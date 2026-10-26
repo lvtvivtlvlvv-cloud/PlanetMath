@@ -15,7 +15,15 @@ function createPrismaClient(): PrismaClient {
       })
     );
   } catch (err) {
-    console.warn("[AI Studio] Database client initialization fallback active", err);
+    if (process.env.NODE_ENV === "production") {
+      // В продакшене «тихий» пустой клиент означает пустые страницы и
+      // невнятные ошибки входа — лучше упасть сразу и явно.
+      throw new Error(
+        `Не удалось инициализировать Prisma Client: ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
+
+    console.warn("[db] Prisma Client не инициализирован, включён демо-режим без БД", err);
     const noOp = {
       findMany: async () => [],
       findFirst: async () => null,

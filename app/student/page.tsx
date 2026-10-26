@@ -4,15 +4,16 @@ import { verifySessionToken } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { StudentDashboard } from "@/components/student-dashboard";
 import { ensureEgeTasksInitialized } from "@/lib/ege-init";
+import { formatYmd } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
 function safeIsoDate(val: any): string {
   if (!val) return "";
-  if (val instanceof Date) return val.toISOString().split("T")[0];
-  if (typeof val === "string") return val.split("T")[0];
+  if (val instanceof Date) return formatYmd(val);
+  if (typeof val === "string") return val.slice(0, 10);
   try {
-    return new Date(val).toISOString().split("T")[0];
+    return formatYmd(new Date(val));
   } catch {
     return String(val);
   }
@@ -44,7 +45,8 @@ export default async function StudentPage() {
     include: { classGroup: true },
   });
 
-  if (!studentUser) {
+  // Роль сверяем с БД, а не только с токеном.
+  if (!studentUser || studentUser.role !== "STUDENT") {
     redirect("/login");
   }
 

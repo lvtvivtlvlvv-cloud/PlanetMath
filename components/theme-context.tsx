@@ -40,7 +40,7 @@ export function ThemeProviderWrapper({ children }: { children: React.ReactNode }
   const applyToDom = (mode: ColorMode) => {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
-    root.setAttribute("data-theme", mode === "dark" ? "planet-dark" : "planet-light");
+    root.setAttribute("data-theme", "planet");
     root.setAttribute("data-mode", mode);
 
     if (mode === "dark") {
@@ -116,7 +116,7 @@ export function ThemeProviderWrapper({ children }: { children: React.ReactNode }
       }}
     >
       <div
-        className={`min-h-screen w-full transition-colors duration-300 planet-ambient-bg ${
+        className={`min-h-screen w-full transition-colors duration-300 ${
           colorMode === "light" ? "text-slate-900" : "text-zinc-100"
         }`}
       >

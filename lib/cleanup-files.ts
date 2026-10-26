@@ -1,6 +1,6 @@
 import fs from "fs/promises";
-import path from "path";
 import { db } from "./db";
+import { resolveUploadPath } from "./uploads";
 
 export async function cleanupExpiredFiles(): Promise<{ deletedCount: number; errors: string[] }> {
   const now = new Date();
@@ -14,12 +14,17 @@ export async function cleanupExpiredFiles(): Promise<{ deletedCount: number; err
     return { deletedCount: 0, errors: [] };
   }
 
-  const publicDir = path.join(process.cwd(), "public");
-
   for (const item of expiredRecords) {
+    // Ссылка из БД может быть подделана (исторические записи) — на диск попадаем
+    // только если путь действительно внутри public/uploads.
+    const absolutePath = resolveUploadPath(item.fileUrl);
+
+    if (!absolutePath) {
+      errors.push(`Небезопасный путь вложения пропущен: ${String(item.fileUrl).slice(0, 80)}`);
+      continue;
+    }
+
     try {
-      const sanitizedUrl = item.fileUrl.replace(/^\/+/, "");
-      const absolutePath = path.join(publicDir, sanitizedUrl);
       await fs.unlink(absolutePath).catch((err: NodeJS.ErrnoException) => {
         if (err.code !== "ENOENT") throw err;
       });
@@ -28,6 +33,7 @@ export async function cleanupExpiredFiles(): Promise<{ deletedCount: number; err
     }
   }
 
+  // Записи удаляем в любом случае: файла уже нет либо путь был невалиден.
   const deleteResult = await db.attachment.deleteMany({
     where: { id: { in: expiredRecords.map((r) => r.id) } },
   });

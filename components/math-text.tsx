@@ -37,7 +37,8 @@ export function MathText({ text, className = "", blockClassName = "" }: MathText
             displayMode: seg.type === "block_math",
             throwOnError: false,
             strict: false,
-            trust: true,
+            // trust: true разрешает \href с произвольными протоколами — это XSS.
+            trust: false,
           });
           return {
             id: `${pIdx}-${sIdx}`,

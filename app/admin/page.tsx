@@ -4,6 +4,7 @@ import { verifySessionToken } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { AdminDashboard, StudentItem, TeacherItem } from "@/components/admin-dashboard";
 import { ensureEgeTasksInitialized } from "@/lib/ege-init";
+import { formatYmd } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,8 @@ export default async function AdminPage() {
     where: { id: payload.userId },
   });
 
-  if (!adminUser) {
+  // Роль проверяем по БД: разжалованный учитель не должен сохранять доступ.
+  if (!adminUser || adminUser.role !== "ADMIN") {
     redirect("/login");
   }
 
@@ -103,7 +105,7 @@ export default async function AdminPage() {
     title: h.title,
     description: h.description,
     targetTrack: h.targetTrack || null,
-    targetDate: h.targetDate.toISOString().split("T")[0],
+    targetDate: formatYmd(h.targetDate),
     submissionsCount: h._count.submissions,
     attachments: (h.attachments || []).map((a) => ({
       id: a.id,
@@ -122,7 +124,7 @@ export default async function AdminPage() {
     studentName: s.student.fullName,
     subjectName: s.homework.subjectName,
     homeworkTitle: s.homework.title,
-    targetDate: s.homework.targetDate.toISOString().split("T")[0],
+    targetDate: formatYmd(s.homework.targetDate),
     content: s.content,
     submittedAt: s.submittedAt.toISOString(),
     status: s.status,
@@ -174,7 +176,7 @@ export default async function AdminPage() {
       targetClassId: a.targetClassId,
       studentId: a.studentId,
       targetTrack: a.targetTrack,
-      deadline: a.deadline ? a.deadline.toISOString().split("T")[0] : null,
+      deadline: a.deadline ? formatYmd(a.deadline) : null,
       createdAt: a.createdAt.toISOString(),
       studentName: a.student?.fullName,
       itemsCount,

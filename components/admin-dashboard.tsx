@@ -126,6 +126,8 @@ interface AdminDashboardProps {
   scheduleItems: Array<EditableScheduleRow & { id: string }>;
   submissions: Array<{
     id: string;
+    homeworkId: string;
+    studentId: string;
     studentName: string;
     subjectName: string;
     homeworkTitle: string;
@@ -358,6 +360,20 @@ export function AdminDashboard({
   const [updatingStudentId, setUpdatingStudentId] = useState<string | null>(null);
   const [studentSortOrder, setStudentSortOrder] = useState<"asc" | "desc">("asc");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const noticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showNotice = (text: string) => {
+    setNotice(text);
+    if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
+    noticeTimerRef.current = setTimeout(() => setNotice(null), 3500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
+    };
+  }, []);
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -447,66 +463,57 @@ export function AdminDashboard({
   }, [homeworks, selectedClassId]);
 
   const openCheckingStudio = (hw: any) => {
-    const realSubsForHw = submissions.filter(
-      (s) =>
-        s.homeworkTitle === hw.title ||
-        s.subjectName === hw.subjectName ||
-        (hw.targetDate && (s as any).targetDate === hw.targetDate)
-    );
+    // Сдачи строго этого задания: раньше сравнение шло по названию/предмету/дате
+    // и в проверку попадали работы по другим ДЗ.
+    const realSubsForHw = submissions.filter((s) => s.homeworkId === hw.id);
 
-    let studentSubs: StudentSubmissionItem[] = [];
-    if (realSubsForHw.length > 0) {
-      studentSubs = realSubsForHw.map((s, idx) => {
-        const parsed = parseTeacherComment(s.teacherComment);
-        return {
-          id: s.id,
-          studentId: (s as any).studentId || `st_${idx}`,
-          studentName: s.studentName,
-          avatarColor: getAvatarColor(s.studentName),
-          initials: s.studentName.split(" ").slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "УЧ",
-          submittedAt: typeof s.submittedAt === "string" ? s.submittedAt : format(new Date(s.submittedAt), "dd.MM.yyyy, HH:mm"),
-          pagesCount: s.attachments?.length || 1,
-          pageImages: (s.attachments || []).map((a) => a.fileUrl),
-          status: (s.status === "GRADED" ? "GRADED" : "PENDING") as "GRADED" | "PENDING",
-          grade: s.grade,
-          teacherComment: parsed.text,
-          annotations: parsed.annotations,
-          tasksCompleted: parsed.tasks,
-          content: s.content,
-          modifiedImageUrl: parsed.modifiedImageUrl,
-        };
-      });
-    } else {
-      let classStudents = students.filter((st) => !hw.classId || st.classId === hw.classId);
-      if (hw.targetTrack && hw.targetTrack !== "ALL") {
-        classStudents = classStudents.filter((st) => (st.examTrack || "База") === hw.targetTrack);
-      }
-      const targetList = classStudents.length > 0 ? classStudents : students;
-      studentSubs = targetList.map((st) => ({
-        id: `sub_${st.id}_${hw.id}`,
-        studentId: st.id,
-        studentName: st.fullName,
-        avatarColor: getAvatarColor(st.fullName),
-        initials: st.fullName.split(" ").slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "УЧ",
-        submittedAt: `${hw.targetDate || format(new Date(), "yyyy-MM-dd")}, 16:30`,
-        pagesCount: 1,
-        pageImages: [],
-        status: "PENDING",
-        grade: null,
-        teacherComment: "",
-        annotations: [],
-        tasksCompleted: {},
-        content: `Домашнее задание по предмету «${hw.subjectName}» (${hw.title}) выполнено в рабочей тетради.`,
-      }));
+    if (realSubsForHw.length === 0) {
+      showNotice("По этому заданию пока нет сданных работ.");
+      return;
     }
+
+    const studentSubs: StudentSubmissionItem[] = realSubsForHw.map((s) => {
+      const parsed = parseTeacherComment(s.teacherComment);
+      return {
+        id: s.id,
+        studentId: s.studentId,
+        studentName: s.studentName,
+        avatarColor: getAvatarColor(s.studentName),
+        initials:
+          s.studentName
+            .split(" ")
+            .slice(0, 2)
+            .map((p) => p[0])
+            .join("")
+            .toUpperCase() || "УЧ",
+        submittedAt:
+          typeof s.submittedAt === "string"
+            ? s.submittedAt
+            : format(new Date(s.submittedAt), "dd.MM.yyyy, HH:mm"),
+        pagesCount: s.attachments?.length || 1,
+        pageImages: (s.attachments || []).map((a) => a.fileUrl),
+        status: (s.status === "GRADED" ? "GRADED" : "PENDING") as "GRADED" | "PENDING",
+        grade: s.grade,
+        teacherComment: parsed.text,
+        annotations: parsed.annotations,
+        tasksCompleted: parsed.tasks,
+        content: s.content,
+        modifiedImageUrl: parsed.modifiedImageUrl,
+      };
+    });
+
+    const totalTasks = studentSubs.reduce(
+      (max, sub) => Math.max(max, Object.keys(sub.tasksCompleted || {}).length),
+      0
+    );
 
     setCheckingHomeworkData({
       id: hw.id,
       title: hw.title,
       subjectName: hw.subjectName,
       targetDate: hw.targetDate,
-      totalTasks: 14,
-      className: hw.className || "10А",
+      totalTasks,
+      className: hw.className || "—",
     });
     setStudioSubmissionsList(studentSubs);
     setIsCheckingStudioOpen(true);
@@ -532,7 +539,6 @@ export function AdminDashboard({
         modifiedImageUrl
       );
     }
-
     setStudioSubmissionsList((prev) =>
       prev.map((s) =>
         s.id === submissionId
@@ -768,12 +774,12 @@ export function AdminDashboard({
                           size="sm"
                           onClick={() => {
                             const targetDayStr = format(currentDate, "yyyy-MM-dd");
-                            const hwForDay =
-                              homeworks.find((h) => h.targetDate === targetDayStr) ||
-                              (homeworks.length > 0 ? homeworks[0] : null);
+                            const hwForDay = homeworks.find((h) => h.targetDate === targetDayStr);
                             if (hwForDay) {
                               openCheckingStudio(hwForDay);
                             } else {
+                              // Никаких «первых попавшихся» ДЗ: отправляем в журнал.
+                              showNotice("На этот день домашних заданий нет.");
                               setActiveTab("journal");
                             }
                           }}
@@ -922,7 +928,7 @@ export function AdminDashboard({
                                         title="Проверить работы учеников"
                                       >
                                         <PenTool className="h-3 w-3" />
-                                        <span>Проверить ({h.submissionsCount || 12})</span>
+                                        <span>Проверить ({h.submissionsCount})</span>
                                       </button>
                                     </div>
                                   ))}
@@ -2165,6 +2171,8 @@ export function AdminDashboard({
                 description: fd.get("description") as string,
                 subjectName: fd.get("subjectName") as string,
                 targetDate: fd.get("targetDate") as string,
+                // Сохраняем трек 11 класса: иначе ДЗ «для Профиля» станет общим.
+                targetTrack: editingHw.targetTrack ?? null,
               });
               setEditingHw(null);
             }}
@@ -2225,6 +2233,19 @@ export function AdminDashboard({
           onClose={() => setIsCheckingStudioOpen(false)}
           onSaveGrade={handleSaveStudioGrade}
         />
+      )}
+
+      {notice && (
+        <div
+          role="status"
+          className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-[10000] max-w-[92vw] rounded-2xl border px-4 py-2.5 text-xs font-semibold shadow-xl backdrop-blur-md ${
+            isLight
+              ? "bg-white/95 border-slate-200 text-slate-800"
+              : "bg-slate-900/95 border-slate-700 text-slate-100"
+          }`}
+        >
+          {notice}
+        </div>
       )}
     </div>
   );

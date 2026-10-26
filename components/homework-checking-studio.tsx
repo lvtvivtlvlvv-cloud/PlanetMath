@@ -269,6 +269,22 @@ export function HomeworkCheckingStudio({
   const isDrawingRef = useRef(false);
   const currentPointsRef = useRef<{ x: number; y: number }[]>([]);
 
+  /**
+   * Координаты пометок храним в процентах от размера листа (0..100).
+   * В пикселях их нельзя: при изменении окна/зума штрихи и подписи съезжают,
+   * а ученик видит лист другого размера.
+   */
+  const toPercentPoint = (clientX: number, clientY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return { x: 0, y: 0 };
+    return {
+      x: ((clientX - rect.left) / rect.width) * 100,
+      y: ((clientY - rect.top) / rect.height) * 100,
+    };
+  };
+
   // Text annotation creation state
   const [isAddingText, setIsAddingText] = useState(false);
   const [textPosition, setTextPosition] = useState<{ x: number; y: number } | null>(null);
@@ -299,11 +315,11 @@ export function HomeworkCheckingStudio({
         ctx.lineJoin = "round";
 
         const p0 = item.points[0];
-        ctx.moveTo(p0.x, p0.y);
+        ctx.moveTo((p0.x / 100) * canvas.width, (p0.y / 100) * canvas.height);
 
         for (let i = 1; i < item.points.length; i++) {
           const pt = item.points[i];
-          ctx.lineTo(pt.x, pt.y);
+          ctx.lineTo((pt.x / 100) * canvas.width, (pt.y / 100) * canvas.height);
         }
         ctx.stroke();
       }
@@ -387,12 +403,13 @@ export function HomeworkCheckingStudio({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    const point = toPercentPoint(e.clientX, e.clientY);
 
     if (activeTool === "pen") {
       isDrawingRef.current = true;
-      currentPointsRef.current = [{ x, y }];
+      currentPointsRef.current = [point];
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.beginPath();
@@ -400,23 +417,22 @@ export function HomeworkCheckingStudio({
         ctx.lineWidth = strokeWidth;
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
-        ctx.moveTo(x, y);
+        ctx.moveTo(px, py);
       }
     } else if (activeTool === "text") {
-      setTextPosition({ x, y });
+      setTextPosition(point);
       setIsAddingText(true);
       setNewTextInput("");
     } else if (activeTool === "eraser") {
-      // Find and delete stroke or text near (x, y)
+      // Ищем ближайшую пометку: проценты переводим обратно в пиксели листа.
       const hitRadius = 20;
       const filtered = currentAnnotations.filter((item) => {
         if (item.type === "stroke") {
-          return !item.points.some(
-            (p) => Math.hypot(p.x - x, p.y - y) < hitRadius
+          return !item.points.some((p) =>
+            Math.hypot((p.x / 100) * rect.width - px, (p.y / 100) * rect.height - py) < hitRadius
           );
         } else if (item.type === "text") {
-          // Eraser deleting text annotations
-          return Math.hypot(item.x - x, item.y - y) > 40;
+          return Math.hypot((item.x / 100) * rect.width - px, (item.y / 100) * rect.height - py) > 40;
         }
         return true;
       });
@@ -431,25 +447,25 @@ export function HomeworkCheckingStudio({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
 
     if (activeTool === "pen" && isDrawingRef.current) {
-      currentPointsRef.current.push({ x, y });
+      currentPointsRef.current.push(toPercentPoint(e.clientX, e.clientY));
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        ctx.lineTo(x, y);
+        ctx.lineTo(px, py);
         ctx.stroke();
       }
     } else if (activeTool === "eraser" && e.buttons === 1) {
       const hitRadius = 20;
       const filtered = currentAnnotations.filter((item) => {
         if (item.type === "stroke") {
-          return !item.points.some(
-            (p) => Math.hypot(p.x - x, p.y - y) < hitRadius
+          return !item.points.some((p) =>
+            Math.hypot((p.x / 100) * rect.width - px, (p.y / 100) * rect.height - py) < hitRadius
           );
         } else if (item.type === "text") {
-          return Math.hypot(item.x - x, item.y - y) > 40;
+          return Math.hypot((item.x / 100) * rect.width - px, (item.y / 100) * rect.height - py) > 40;
         }
         return true;
       });
@@ -675,7 +691,28 @@ export function HomeworkCheckingStudio({
     if (!currentSubmission) return;
     setIsSaving(true);
     try {
-      const modifiedImg = await generateCompositeImage();
+      // Картинку загружаем файлом и храним URL. Раньше base64 уходил аргументом
+      // server action и оседал в текстовом поле БД (лимит 1 МБ + раздувание).
+      let modifiedImageUrl = "";
+      const compositeDataUrl = await generateCompositeImage();
+
+      if (compositeDataUrl) {
+        const blob = await (await fetch(compositeDataUrl)).blob();
+        const uploadData = new FormData();
+        uploadData.append(
+          "files",
+          new File([blob], `checked-${currentSubmission.id}.jpg`, { type: "image/jpeg" })
+        );
+
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: uploadData });
+        const uploadJson = await uploadRes.json().catch(() => ({}));
+
+        if (!uploadRes.ok) {
+          throw new Error(uploadJson.error || "Не удалось сохранить проверенный лист");
+        }
+
+        modifiedImageUrl = uploadJson.files?.[0]?.fileUrl || "";
+      }
 
       await onSaveGrade(
         currentSubmission.id,
@@ -683,7 +720,7 @@ export function HomeworkCheckingStudio({
         currentComment,
         currentAnnotations,
         currentTasks,
-        modifiedImg
+        modifiedImageUrl
       );
 
       // Update local status
@@ -697,7 +734,7 @@ export function HomeworkCheckingStudio({
                 teacherComment: currentComment,
                 annotations: currentAnnotations,
                 tasksCompleted: currentTasks,
-                modifiedImageUrl: modifiedImg,
+                modifiedImageUrl,
               }
             : s
         )
@@ -1386,14 +1423,14 @@ export function HomeworkCheckingStudio({
                             handleDeleteText(item.id);
                           }
                         }}
-                        className={`group absolute pointer-events-auto flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1 text-xs font-black shadow-md border transition ${
+                        className={`group absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1 text-xs font-black shadow-md border transition ${
                           activeTool === "eraser"
                             ? "cursor-cell hover:border-red-500 hover:bg-red-50 hover:text-red-700"
                             : ""
                         }`}
                         style={{
-                          left: `${item.x}px`,
-                          top: `${item.y}px`,
+                          left: `${item.x}%`,
+                          top: `${item.y}%`,
                           borderColor: item.color,
                           color: item.color,
                         }}
@@ -1418,7 +1455,7 @@ export function HomeworkCheckingStudio({
                 {isAddingText && textPosition && (
                   <div
                     className="absolute z-30 flex items-center gap-1 rounded-xl bg-white p-1.5 shadow-xl border border-blue-500"
-                    style={{ left: `${textPosition.x}px`, top: `${textPosition.y}px` }}
+                    style={{ left: `${textPosition.x}%`, top: `${textPosition.y}%` }}
                   >
                     <input
                       type="text"

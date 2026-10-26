@@ -48,6 +48,7 @@ model ScheduleItem {
   teacherName  String
   classGroup   ClassGroup @relation(fields: [classId], references: [id], onDelete: Cascade)
 
+  @@unique([classId, dayOfWeek, lessonNumber])
   @@index([classId, dayOfWeek])
 }
 

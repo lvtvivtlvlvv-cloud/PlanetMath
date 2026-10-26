@@ -4,6 +4,59 @@ import path from "path";
 
 export const dynamic = "force-dynamic";
 
+interface ResolvedRange {
+  start: number;
+  end: number;
+}
+
+/**
+ * Разбор заголовка Range по RFC 7233.
+ * Поддерживает `bytes=0-100`, `bytes=100-` и суффиксный `bytes=-500`.
+ */
+function parseRange(header: string, fileSize: number): ResolvedRange | "invalid" | null {
+  const match = /^bytes=(\d*)-(\d*)$/.exec(header.trim());
+  if (!match) return null;
+
+  const [, rawStart, rawEnd] = match;
+
+  if (!rawStart && !rawEnd) return "invalid";
+
+  // Суффиксный диапазон: последние N байт.
+  if (!rawStart && rawEnd) {
+    const suffixLength = Number(rawEnd);
+    if (!Number.isFinite(suffixLength) || suffixLength <= 0) return "invalid";
+    const start = Math.max(0, fileSize - suffixLength);
+    return { start, end: fileSize - 1 };
+  }
+
+  const start = Number(rawStart);
+  const end = rawEnd ? Number(rawEnd) : fileSize - 1;
+
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return "invalid";
+  if (start < 0 || end < start || start >= fileSize) return "invalid";
+
+  return { start, end: Math.min(end, fileSize - 1) };
+}
+
+function nodeStreamToWeb(
+  fileStream: fs.ReadStream
+): { stream: ReadableStream<Uint8Array>; cancel: () => void } {
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      fileStream.on("data", (chunk: string | Buffer) =>
+        controller.enqueue(typeof chunk === "string" ? new TextEncoder().encode(chunk) : new Uint8Array(chunk))
+      );
+      fileStream.on("end", () => controller.close());
+      fileStream.on("error", (err) => controller.error(err));
+    },
+    cancel() {
+      fileStream.destroy();
+    },
+  });
+
+  return { stream, cancel: () => fileStream.destroy() };
+}
+
 export async function GET(req: NextRequest) {
   try {
     const candidatePaths = [
@@ -13,9 +66,9 @@ export async function GET(req: NextRequest) {
     ];
 
     let filePath: string | null = null;
-    for (const p of candidatePaths) {
-      if (fs.existsSync(p)) {
-        filePath = p;
+    for (const candidate of candidatePaths) {
+      if (fs.existsSync(candidate)) {
+        filePath = candidate;
         break;
       }
     }
@@ -29,61 +82,47 @@ export async function GET(req: NextRequest) {
     const rangeHeader = req.headers.get("range");
 
     if (rangeHeader) {
-      const parts = rangeHeader.replace(/bytes=/, "").split("-");
-      const start = parseInt(parts[0], 10);
-      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      const parsed = parseRange(rangeHeader, fileSize);
 
-      if (start >= fileSize || end >= fileSize) {
+      if (parsed === "invalid") {
         return new NextResponse(null, {
           status: 416,
-          headers: {
-            "Content-Range": `bytes */${fileSize}`,
-          },
+          headers: { "Content-Range": `bytes */${fileSize}` },
         });
       }
 
-      const chunksize = end - start + 1;
-      const fileStream = fs.createReadStream(filePath, { start, end });
-      // Convert node stream to web ReadableStream
-      const webStream = new ReadableStream({
-        start(controller) {
-          fileStream.on("data", (chunk) => controller.enqueue(chunk));
-          fileStream.on("end", () => controller.close());
-          fileStream.on("error", (err) => controller.error(err));
-        },
-      });
+      if (parsed) {
+        const { start, end } = parsed;
+        const fileStream = fs.createReadStream(filePath, { start, end });
+        const { stream } = nodeStreamToWeb(fileStream);
 
-      return new NextResponse(webStream, {
-        status: 206,
-        headers: {
-          "Content-Range": `bytes ${start}-${end}/${fileSize}`,
-          "Accept-Ranges": "bytes",
-          "Content-Length": String(chunksize),
-          "Content-Type": "application/pdf",
-          "Cache-Control": "public, max-age=31536000, immutable",
-        },
-      });
+        return new NextResponse(stream, {
+          status: 206,
+          headers: {
+            "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+            "Accept-Ranges": "bytes",
+            "Content-Length": String(end - start + 1),
+            "Content-Type": "application/pdf",
+            "Cache-Control": "public, max-age=3600",
+          },
+        });
+      }
+      // Неизвестный формат Range — отдаём файл целиком, как разрешает RFC.
     }
 
     const fileStream = fs.createReadStream(filePath);
-    const webStream = new ReadableStream({
-      start(controller) {
-        fileStream.on("data", (chunk) => controller.enqueue(chunk));
-        fileStream.on("end", () => controller.close());
-        fileStream.on("error", (err) => controller.error(err));
-      },
-    });
+    const { stream } = nodeStreamToWeb(fileStream);
 
-    return new NextResponse(webStream, {
+    return new NextResponse(stream, {
       status: 200,
       headers: {
         "Content-Length": String(fileSize),
         "Content-Type": "application/pdf",
         "Accept-Ranges": "bytes",
-        "Cache-Control": "public, max-age=31536000, immutable",
+        "Cache-Control": "public, max-age=3600",
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error serving EGE PDF:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
