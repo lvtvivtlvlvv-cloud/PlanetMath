@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Moon, Sun, Maximize2, X, ZoomIn, ZoomOut, RotateCcw, AlertCircle, Loader2 } from "lucide-react";
+import { MathText } from "./math-text";
 
 interface PdfTaskCropProps {
   pdfPage?: number | null;
@@ -124,7 +125,7 @@ export function PdfTaskCrop({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false);
   const [lightboxZoom, setLightboxZoom] = useState<number>(1);
   const [croppedDataUrl, setCroppedDataUrl] = useState<string | null>(null);
@@ -190,11 +191,35 @@ export function PdfTaskCrop({
           }
         }
 
-        // Padding around task:
-        // startY in PDF coords is baseline of "Задача X.Y.". Add +12 to include or give clean margin
-        const pdfTop = Math.min(840, startY + 12);
-        // endY in PDF coords: stop +8 pt above the next task header so it doesn't leak into view
-        const pdfBottom = Math.max(52, endY + 8);
+        // Trim top green header bar ("Задача X.Y. | Аналоги | Ответ"):
+        // startY in PDF coords is baseline of "Задача X.Y.". Cut 7pt below baseline so green bar is excluded.
+        const pdfTop = Math.min(840, startY - 7);
+
+        // Find "Ответ:" line and lowest content item within this task block to trim bottom "Ответ: [ ][ ]"
+        let answerY: number | null = null;
+        let minContentY = startY - 20;
+        for (let idx = 0; idx < items.length; idx++) {
+          const itemStr = (items[idx].str || "").trim();
+          if (!itemStr) continue;
+          const iy = items[idx].transform[5];
+          if (iy < startY - 8 && iy > endY + 8) {
+            if (/^Ответ:?$/i.test(itemStr)) {
+              answerY = iy;
+            } else if (!/^(?:Задача|Аналоги|>+|Ответы)$/i.test(itemStr)) {
+              if (iy < minContentY) {
+                minContentY = iy;
+              }
+            }
+          }
+        }
+
+        let pdfBottom = Math.max(52, endY + 12);
+        if (answerY !== null) {
+          const trimmedAboveAnswer = Math.min(answerY + 12, minContentY - 6);
+          if (pdfTop - trimmedAboveAnswer >= 28) {
+            pdfBottom = Math.max(52, trimmedAboveAnswer);
+          }
+        }
 
         // Convert coordinates to canvas pixels via PDF.js viewport
         const [cLeft, cTop] = viewport.convertToViewportPoint(50, pdfTop);
@@ -239,8 +264,11 @@ export function PdfTaskCrop({
     };
   }, [pdfPage, taskCode]);
 
-  // Return null if no PDF page is specified or if an error occurred
+  // Fallback to MathText if no PDF page is specified or if an error occurred
   if (!pdfPage || error) {
+    if (fallbackText) {
+      return <MathText text={fallbackText} className="text-xs sm:text-sm text-zinc-200" />;
+    }
     return null;
   }
 
@@ -251,8 +279,8 @@ export function PdfTaskCrop({
         className={`relative rounded-xl overflow-hidden border transition-all duration-300 ${
           isDarkMode
             ? "border-cyan-500/20 bg-slate-950/70 shadow-inner"
-            : "border-slate-300 bg-white shadow-md"
-        } p-3.5`}
+            : "border-slate-200/80 bg-white shadow-md"
+        } p-3 sm:p-4`}
       >
         {/* Loading Skeleton */}
         {loading && (

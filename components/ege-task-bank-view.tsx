@@ -1252,23 +1252,22 @@ export function EgeTaskBankView({
                         </div>
                       </div>
 
-                      {/* Условие задания с KaTeX рендером формул и оригинальным чертежом из PDF при наличии */}
-                      <div className="flex flex-col lg:flex-row gap-4 items-start justify-between py-1">
-                        <div className="flex-1 min-w-0">
-                          <MathText text={t.content} className="text-xs sm:text-sm text-zinc-200" />
-                        </div>
+                      {/* Картинка задания из PDF во всю ширину карточки (фоллбэк на MathText только для ручных задач) */}
+                      <div className="py-1 w-full">
                         {(() => {
                           const pdfMeta = resolvePdfTaskMeta(t);
-                          if (!pdfMeta.hasDrawing || !pdfMeta.pdfPage) return null;
-                          return (
-                            <div className="shrink-0 w-full sm:w-[280px] lg:w-[320px]">
+                          if (pdfMeta.pdfPage) {
+                            return (
                               <PdfTaskCrop
                                 pdfPage={pdfMeta.pdfPage}
                                 taskCode={pdfMeta.taskCode}
                                 taskNumber={t.taskNumber}
+                                fallbackText={t.content}
+                                className="w-full"
                               />
-                            </div>
-                          );
+                            );
+                          }
+                          return <MathText text={t.content} className="text-xs sm:text-sm text-zinc-200" />;
                         })()}
                       </div>
 
