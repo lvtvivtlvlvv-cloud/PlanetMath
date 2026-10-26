@@ -452,8 +452,25 @@ export interface SegmentedControlProps<T extends string = string> {
   onChange: (value: T) => void;
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
+  /** На мобильных — на всю ширину, с указанного брейкпоинта — по содержимому. */
+  fullWidthUntil?: 'sm' | 'md' | 'lg';
   className?: string;
 }
+
+const fullWidthUntilStyles = {
+  sm: {
+    container: 'w-full sm:w-auto',
+    item: 'flex-1 basis-0 min-w-0 sm:flex-none sm:basis-auto',
+  },
+  md: {
+    container: 'w-full md:w-auto',
+    item: 'flex-1 basis-0 min-w-0 md:flex-none md:basis-auto',
+  },
+  lg: {
+    container: 'w-full lg:w-auto',
+    item: 'flex-1 basis-0 min-w-0 lg:flex-none lg:basis-auto',
+  },
+} as const;
 
 export function SegmentedControl<T extends string = string>({
   options,
@@ -461,6 +478,7 @@ export function SegmentedControl<T extends string = string>({
   onChange,
   size = 'md',
   fullWidth = false,
+  fullWidthUntil,
   className = '',
 }: SegmentedControlProps<T>) {
   const { isLight } = useAppTheme();
@@ -481,12 +499,22 @@ export function SegmentedControl<T extends string = string>({
     lg: 'h-10 px-4 text-sm rounded-xl',
   };
 
+  const widthClasses = fullWidthUntil
+    ? fullWidthUntilStyles[fullWidthUntil].container
+    : fullWidth
+    ? 'w-full'
+    : 'w-auto';
+
+  const itemWidthClasses = fullWidthUntil
+    ? fullWidthUntilStyles[fullWidthUntil].item
+    : fullWidth
+    ? 'flex-1 basis-0 min-w-0'
+    : 'shrink-0';
+
   return (
     <div
       role="tablist"
-      className={`inline-flex items-center ${
-        fullWidth ? 'w-full flex' : 'w-auto'
-      } ${containerSurface} ${sizeMap[size]} ${className}`}
+      className={`inline-flex items-center ${widthClasses} ${containerSurface} ${sizeMap[size]} ${className}`}
     >
       {options.map((opt) => {
         const isActive = opt.value === value;
@@ -510,8 +538,8 @@ export function SegmentedControl<T extends string = string>({
             title={opt.title}
             onClick={() => onChange(opt.value)}
             className={`${
-              fullWidth ? 'flex-1 basis-0 min-w-0' : 'shrink-0'
-            } ${buttonSizeMap[size]} border font-semibold flex items-center justify-center gap-1.5 transition-colors duration-150 ease-out select-none cursor-pointer disabled:opacity-40 disabled:pointer-events-none ${activeClasses}`}
+              itemWidthClasses
+            } ${buttonSizeMap[size]} border font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors duration-150 ease-out select-none cursor-pointer disabled:opacity-40 disabled:pointer-events-none ${activeClasses}`}
           >
             {opt.icon && <span className="shrink-0 flex items-center">{opt.icon}</span>}
             <span className="truncate">{opt.label}</span>

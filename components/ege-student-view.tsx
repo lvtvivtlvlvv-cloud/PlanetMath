@@ -254,21 +254,34 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
       </Card>
 
       {/* ПАНЕЛЬ ПЕРЕКЛЮЧЕНИЯ ГРУППИРОВКИ И ФИЛЬТРОВ */}
-      <Card padding="sm" className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <Card padding="sm" className="flex flex-col lg:flex-row lg:flex-wrap lg:items-center justify-between gap-3">
         <SegmentedControl
           fullWidth
-          className="lg:w-auto"
+          fullWidthUntil="sm"
+          className="shrink-0"
           value={groupingMode}
           onChange={setGroupingMode}
           options={[
             {
               value: "by_work",
-              label: "По выданным работам",
+              label: (
+                <>
+                  <span className="sm:hidden">По работам</span>
+                  <span className="hidden sm:inline">По выданным работам</span>
+                </>
+              ),
+              title: "По выданным работам",
               icon: <Layers className="h-3.5 w-3.5" />,
             },
             {
               value: "by_task_number",
-              label: "По номерам ЕГЭ (1–19)",
+              label: (
+                <>
+                  <span className="sm:hidden">По номерам</span>
+                  <span className="hidden sm:inline">По номерам ЕГЭ (1–19)</span>
+                </>
+              ),
+              title: "По номерам ЕГЭ (1–19)",
               icon: <ListFilter className="h-3.5 w-3.5" />,
             },
           ]}
@@ -276,6 +289,7 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
 
         <SegmentedControl
           size="sm"
+          className="shrink-0"
           value={statusFilter}
           onChange={setStatusFilter}
           options={[

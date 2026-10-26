@@ -427,7 +427,7 @@ export function StudentDashboard({
         }`}
       >
         <div className="flex items-center justify-between gap-2 sm:gap-4">
-          <h1 className="text-base sm:text-2xl font-bold tracking-tight whitespace-nowrap">
+          <h1 className="text-base sm:text-2xl font-bold tracking-tight truncate min-w-0 flex-1">
             Электронный Дневник
           </h1>
 

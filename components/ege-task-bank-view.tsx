@@ -209,28 +209,54 @@ export function EgeTaskBankView({
   };
 
   const chipsScrollRef = useRef<HTMLDivElement | null>(null);
-  const [chipsScroll, setChipsScroll] = useState({ left: false, right: false });
+  const [chipsScroll, setChipsScroll] = useState({ left: false, right: false, canScroll: false });
 
   const updateChipsScroll = useCallback(() => {
     const el = chipsScrollRef.current;
     if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
     setChipsScroll({
       left: el.scrollLeft > 4,
-      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
+      right: el.scrollLeft < max - 4,
+      canScroll: max > 4,
     });
   }, []);
 
   useEffect(() => {
+    const el = chipsScrollRef.current;
     updateChipsScroll();
+
+    // Ширина полосы зависит от шрифтов/лейаута — пересчитываем после первого кадра
+    // и после загрузки шрифтов, иначе стрелки остаются «залипшими» в disabled.
+    const raf = requestAnimationFrame(updateChipsScroll);
+    const timer = setTimeout(updateChipsScroll, 300);
+
+    const observer =
+      el && typeof ResizeObserver !== "undefined" ? new ResizeObserver(updateChipsScroll) : null;
+    if (el && observer) observer.observe(el);
+
     window.addEventListener("resize", updateChipsScroll);
-    return () => window.removeEventListener("resize", updateChipsScroll);
-  }, [updateChipsScroll]);
+    if (typeof document !== "undefined" && document.fonts?.ready) {
+      document.fonts.ready.then(updateChipsScroll).catch(() => undefined);
+    }
+
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(timer);
+      observer?.disconnect();
+      window.removeEventListener("resize", updateChipsScroll);
+    };
+    // activeSubTab важен: полоса фильтров монтируется только на вкладке «Банк задач»,
+    // и при первом монтировании компонента её ещё нет в DOM.
+  }, [updateChipsScroll, activeSubTab]);
 
   const scrollChips = (direction: -1 | 1) => {
     const el = chipsScrollRef.current;
     if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    if (max <= 0) return;
     el.scrollBy({
-      left: direction * Math.max(200, el.clientWidth * 0.7),
+      left: direction * Math.max(220, el.clientWidth * 0.8),
       behavior: "smooth",
     });
   };
@@ -1119,14 +1145,56 @@ export function EgeTaskBankView({
           {/* СПИСОК И ФИЛЬТРАЦИЯ ЗАДАНИЙ В БАНКЕ */}
           <Card padding="md" className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h3
-                className={`text-sm font-black uppercase tracking-wider flex items-center gap-2 ${
-                  isLight ? "text-slate-800" : "text-slate-200"
-                }`}
-              >
-                <BookOpen className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-sky-400"}`} />
-                Все задания в банке ({filteredTasks.length} из {tasks.length})
-              </h3>
+              <div className="flex items-center gap-3 min-w-0">
+                <h3
+                  className={`text-sm font-black uppercase tracking-wider flex items-center gap-2 ${
+                    isLight ? "text-slate-800" : "text-slate-200"
+                  }`}
+                >
+                  <BookOpen className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-sky-400"}`} />
+                  Все задания в банке ({filteredTasks.length} из {tasks.length})
+                </h3>
+
+                {pageCount > 1 && (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => goToPage(safePage - 1)}
+                      disabled={safePage === 0}
+                      aria-label="Предыдущая страница заданий"
+                      title="Предыдущая страница"
+                      className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                        isLight
+                          ? "border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                          : "border-slate-700 bg-slate-800/70 text-slate-300 hover:bg-slate-700"
+                      }`}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span
+                      className={`min-w-[46px] text-center text-[11px] font-mono font-bold tabular-nums ${
+                        isLight ? "text-slate-500" : "text-slate-400"
+                      }`}
+                    >
+                      {safePage + 1}/{pageCount}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => goToPage(safePage + 1)}
+                      disabled={safePage >= pageCount - 1}
+                      aria-label="Следующая страница заданий"
+                      title="Следующая страница"
+                      className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                        isLight
+                          ? "border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                          : "border-slate-700 bg-slate-800/70 text-slate-300 hover:bg-slate-700"
+                      }`}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
 
               <div className="w-full sm:w-72">
                 <Input
@@ -1143,10 +1211,10 @@ export function EgeTaskBankView({
               <button
                 type="button"
                 onClick={() => scrollChips(-1)}
-                disabled={!chipsScroll.left}
+                disabled={!chipsScroll.canScroll || !chipsScroll.left}
                 aria-label="Прокрутить фильтры влево"
                 title="Прокрутить влево"
-                className={`hidden sm:flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                   isLight
                     ? "border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
                     : "border-slate-700 bg-slate-800/70 text-slate-300 hover:bg-slate-700"
@@ -1158,7 +1226,7 @@ export function EgeTaskBankView({
               <div
                 ref={chipsScrollRef}
                 onScroll={updateChipsScroll}
-                className="flex flex-1 items-center gap-1.5 overflow-x-auto no-scrollbar py-1 scroll-smooth"
+                className="flex flex-1 min-w-0 items-center gap-1.5 overflow-x-auto no-scrollbar py-1 scroll-smooth"
               >
                 <Button
                   variant={selectedTaskNumberFilter === "ALL" ? "primary" : "secondary"}
@@ -1187,10 +1255,10 @@ export function EgeTaskBankView({
               <button
                 type="button"
                 onClick={() => scrollChips(1)}
-                disabled={!chipsScroll.right}
+                disabled={!chipsScroll.canScroll || !chipsScroll.right}
                 aria-label="Прокрутить фильтры вправо"
                 title="Прокрутить вправо"
-                className={`hidden sm:flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                   isLight
                     ? "border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
                     : "border-slate-700 bg-slate-800/70 text-slate-300 hover:bg-slate-700"
