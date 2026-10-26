@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Moon, Sun, Maximize2, X, ZoomIn, ZoomOut, RotateCcw, AlertCircle, Loader2 } from "lucide-react";
 import { MathText } from "./math-text";
 
@@ -115,6 +116,71 @@ function getRenderedPage(pageNum: number, scale = 2.2): Promise<PageCacheItem> {
   return pageRenderCache.get(pageNum)!;
 }
 
+/**
+ * Автоматически обрезает пустые белые поля вокруг условия и чертежа задачи,
+ * чтобы при растяжении на всю ширину карточки (w-full) текст сразу легко читался при масштабе 100%.
+ */
+function findTightContentBounds(
+  sourceCanvas: HTMLCanvasElement,
+  rx: number,
+  ry: number,
+  rw: number,
+  rh: number
+): { x: number; y: number; w: number; h: number } {
+  const ctx = sourceCanvas.getContext("2d");
+  if (!ctx) return { x: rx, y: ry, w: rw, h: rh };
+
+  try {
+    const imgData = ctx.getImageData(rx, ry, rw, rh);
+    const data = imgData.data;
+
+    let minX = rw;
+    let maxX = 0;
+    let minY = rh;
+    let maxY = 0;
+    let foundInk = false;
+
+    for (let y = 0; y < rh; y++) {
+      const rowOffset = y * rw * 4;
+      for (let x = 0; x < rw; x++) {
+        const idx = rowOffset + x * 4;
+        const r = data[idx];
+        const g = data[idx + 1];
+        const b = data[idx + 2];
+        if (r < 244 || g < 244 || b < 244) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+          foundInk = true;
+        }
+      }
+    }
+
+    if (!foundInk || maxX <= minX || maxY <= minY) {
+      return { x: rx, y: ry, w: rw, h: rh };
+    }
+
+    const padX = 12;
+    const padY = 10;
+    const tightX = Math.max(0, rx + minX - padX);
+    const tightY = Math.max(0, ry + minY - padY);
+    const tightRight = Math.min(sourceCanvas.width, rx + maxX + padX);
+    const tightBottom = Math.min(sourceCanvas.height, ry + maxY + padY);
+
+    const tightW = tightRight - tightX;
+    const tightH = tightBottom - tightY;
+
+    if (tightW > 40 && tightH > 20) {
+      return { x: tightX, y: tightY, w: tightW, h: tightH };
+    }
+  } catch {
+    // Fallback to original bounds if getImageData fails
+  }
+
+  return { x: rx, y: ry, w: rw, h: rh };
+}
+
 export function PdfTaskCrop({
   pdfPage,
   taskCode,
@@ -129,6 +195,11 @@ export function PdfTaskCrop({
   const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false);
   const [lightboxZoom, setLightboxZoom] = useState<number>(1);
   const [croppedDataUrl, setCroppedDataUrl] = useState<string | null>(null);
+  const [mounted, setMounted] = useState<boolean>(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let isCancelled = false;
@@ -141,7 +212,7 @@ export function PdfTaskCrop({
     setLoading(true);
     setError(null);
 
-    getRenderedPage(pdfPage, 2.2)
+    getRenderedPage(pdfPage, 2.5)
       .then((pageData) => {
         if (isCancelled) return;
         const { offscreenCanvas, textContent, viewport } = pageData;
@@ -222,17 +293,25 @@ export function PdfTaskCrop({
         }
 
         // Convert coordinates to canvas pixels via PDF.js viewport
-        const [cLeft, cTop] = viewport.convertToViewportPoint(50, pdfTop);
-        const [cRight, cBottom] = viewport.convertToViewportPoint(545, pdfBottom);
+        const [cLeft, cTop] = viewport.convertToViewportPoint(56, pdfTop);
+        const [cRight, cBottom] = viewport.convertToViewportPoint(540, pdfBottom);
 
-        const cropX = Math.max(0, Math.round(Math.min(cLeft, cRight)));
-        const cropY = Math.max(0, Math.round(Math.min(cTop, cBottom)));
-        const cropW = Math.round(Math.abs(cRight - cLeft));
-        const cropH = Math.round(Math.abs(cBottom - cTop));
+        const rawX = Math.max(0, Math.round(Math.min(cLeft, cRight)));
+        const rawY = Math.max(0, Math.round(Math.min(cTop, cBottom)));
+        const rawW = Math.min(offscreenCanvas.width - rawX, Math.round(Math.abs(cRight - cLeft)));
+        const rawH = Math.min(offscreenCanvas.height - rawY, Math.round(Math.abs(cBottom - cTop)));
 
-        if (cropW <= 0 || cropH <= 0) {
+        if (rawW <= 0 || rawH <= 0) {
           throw new Error("Неверные координаты кропа страницы");
         }
+
+        const { x: cropX, y: cropY, w: cropW, h: cropH } = findTightContentBounds(
+          offscreenCanvas,
+          rawX,
+          rawY,
+          rawW,
+          rawH
+        );
 
         const canvas = canvasRef.current;
         if (canvas) {
@@ -240,6 +319,8 @@ export function PdfTaskCrop({
           canvas.height = cropH;
           const ctx = canvas.getContext("2d");
           if (ctx) {
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, cropW, cropH);
             ctx.drawImage(offscreenCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
             try {
               setCroppedDataUrl(canvas.toDataURL("image/png"));
@@ -273,30 +354,37 @@ export function PdfTaskCrop({
   }
 
   return (
-    <div className={`relative group ${className}`}>
-      {/* Task Image Container with Glass Design */}
+    <div className={`relative group w-full ${className}`}>
+      {/* Task Image Container — stretched full width (w-full) with minimal padding */}
       <div
-        className={`relative rounded-xl overflow-hidden border transition-all duration-300 ${
+        className={`relative w-full rounded-xl overflow-hidden border transition-all duration-200 ${
           isDarkMode
             ? "border-cyan-500/20 bg-slate-950/70 shadow-inner"
-            : "border-slate-200/80 bg-white shadow-md"
-        } p-3 sm:p-4`}
+            : "border-slate-200/90 bg-white shadow-sm"
+        } p-1 sm:p-2`}
       >
         {/* Loading Skeleton */}
         {loading && (
-          <div className="min-h-[140px] flex flex-col items-center justify-center gap-2.5 py-8 text-cyan-400">
-            <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
-            <span className="text-xs font-mono text-cyan-300/80 tracking-wider">
-              Загрузка фрагмента из PDF (стр. {pdfPage})...
+          <div className="min-h-[110px] flex flex-col items-center justify-center gap-2 py-6 text-cyan-500">
+            <Loader2 className="w-5 h-5 animate-spin text-cyan-500" />
+            <span className="text-xs font-mono text-slate-500 tracking-wider">
+              Загрузка задания (стр. {pdfPage})...
             </span>
           </div>
         )}
 
-        {/* The Cropped Canvas with Dark Mode Filter */}
-        <div className={`w-full overflow-x-auto ${loading ? "hidden" : "block"}`}>
+        {/* The Cropped Canvas stretched to 100% card width (w-full h-auto object-contain) */}
+        <div
+          onClick={() => {
+            setLightboxZoom(1);
+            setIsLightboxOpen(true);
+          }}
+          className={`w-full cursor-zoom-in ${loading ? "hidden" : "block"}`}
+          title="Нажмите для увеличения"
+        >
           <canvas
             ref={canvasRef}
-            className="w-full h-auto max-w-full block mx-auto rounded transition-all duration-200"
+            className="w-full h-auto object-contain block rounded"
             style={
               isDarkMode
                 ? {
@@ -311,144 +399,147 @@ export function PdfTaskCrop({
           />
         </div>
 
-        {/* Top-Right Glass Control Buttons */}
-        <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity z-10">
+        {/* Top-Right Compact Control Buttons */}
+        <div className="absolute top-1.5 right-1.5 flex items-center gap-1 opacity-85 group-hover:opacity-100 transition-opacity z-10">
           <button
             type="button"
-            onClick={() => setIsDarkMode((prev) => !prev)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsDarkMode((prev) => !prev);
+            }}
             title={isDarkMode ? "Переключить на оригинальный белый фон" : "Переключить на темный контрастный фон"}
-            className={`flex items-center gap-1 px-2 py-1 text-xs rounded-lg border backdrop-blur-md transition-all shadow-sm ${
+            className={`flex items-center gap-1 px-2 py-1 text-[11px] rounded-lg border backdrop-blur-md transition-all shadow-sm cursor-pointer ${
               isDarkMode
                 ? "bg-slate-900/90 border-cyan-500/40 text-cyan-300 hover:bg-slate-800"
-                : "bg-slate-800/90 border-slate-600 text-amber-300 hover:bg-slate-700"
+                : "bg-slate-900/80 border-slate-700 text-amber-300 hover:bg-slate-800"
             }`}
           >
-            {isDarkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-            <span className="text-[11px] font-medium hidden sm:inline">
-              {isDarkMode ? "Светлый фон" : "Темный фон"}
+            {isDarkMode ? <Sun className="w-3 h-3" /> : <Moon className="w-3 h-3" />}
+            <span className="font-medium hidden sm:inline">
+              {isDarkMode ? "Светлый" : "Темный"}
             </span>
           </button>
 
           <button
             type="button"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setLightboxZoom(1);
               setIsLightboxOpen(true);
             }}
-            title="Открыть в полном размере (Zoom / Lightbox)"
-            className="flex items-center gap-1 px-2 py-1 text-xs rounded-lg border border-cyan-500/40 bg-slate-900/90 backdrop-blur-md text-cyan-300 hover:bg-slate-800 hover:text-white transition-all shadow-sm"
+            title="Открыть в полном размере"
+            className="flex items-center gap-1 px-2 py-1 text-[11px] rounded-lg border border-cyan-500/40 bg-slate-900/85 backdrop-blur-md text-cyan-300 hover:bg-slate-800 hover:text-white transition-all shadow-sm cursor-pointer"
           >
-            <Maximize2 className="w-3.5 h-3.5" />
-            <span className="text-[11px] font-medium hidden sm:inline">Увеличить</span>
+            <Maximize2 className="w-3 h-3" />
+            <span className="font-medium hidden sm:inline">Увеличить</span>
           </button>
         </div>
       </div>
 
-      {/* Lightbox / Zoom Modal */}
-      {isLightboxOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-5xl max-h-[92vh] flex flex-col rounded-2xl border border-cyan-500/30 bg-slate-900/95 shadow-2xl overflow-hidden">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-cyan-500/20 bg-slate-950/60">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 text-xs font-mono font-bold rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-                  {taskNumber ? `Задание №${taskNumber}` : "ЕГЭ"}
-                </span>
-                <span className="text-sm font-semibold text-slate-100">
-                  {taskCode ? `Прототип ${taskCode}` : "Фрагмент сборника ФИПИ"}
-                </span>
-                <span className="text-xs text-slate-400 font-mono hidden sm:inline">
-                  (PDF стр. {pdfPage})
-                </span>
-              </div>
-
-              {/* Controls */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsDarkMode((prev) => !prev)}
-                  className="p-1.5 rounded-lg border border-cyan-500/30 bg-slate-800/80 text-cyan-300 hover:bg-slate-700 transition"
-                  title="Переключить тему фона"
-                >
-                  {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                </button>
-
-                <div className="flex items-center border border-cyan-500/30 rounded-lg bg-slate-800/80 overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setLightboxZoom((z) => Math.max(0.7, z - 0.2))}
-                    className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 transition"
-                    title="Уменьшить"
-                  >
-                    <ZoomOut className="w-4 h-4" />
-                  </button>
-                  <span className="px-2 text-xs font-mono text-cyan-300">
-                    {Math.round(lightboxZoom * 100)}%
+      {/* Lightbox / Zoom Modal — rendered via Portal to document.body so it strictly centers in the visible viewport */}
+      {mounted &&
+        isLightboxOpen &&
+        createPortal(
+          <div
+            onClick={() => setIsLightboxOpen(false)}
+            className="fixed inset-0 z-[9999] w-screen h-[100dvh] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-150"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-4xl h-fit max-h-[85dvh] flex flex-col rounded-2xl border border-cyan-500/30 bg-slate-900/95 shadow-2xl overflow-hidden"
+            >
+              {/* Compact Modal Header */}
+              <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-cyan-500/20 bg-slate-950/80 shrink-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="px-2 py-0.5 text-xs font-mono font-bold rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shrink-0">
+                    {taskNumber ? `Задание №${taskNumber}` : "ЕГЭ"}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => setLightboxZoom((z) => Math.min(2.5, z + 0.2))}
-                    className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 transition"
-                    title="Увеличить"
-                  >
-                    <ZoomIn className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLightboxZoom(1)}
-                    className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-slate-700 transition border-l border-cyan-500/20"
-                    title="Сбросить масштаб"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                  </button>
+                  <span className="text-xs sm:text-sm font-semibold text-slate-100 truncate">
+                    {taskCode ? `Прототип #${taskCode}` : "Фрагмент сборника ФИПИ"}
+                  </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsLightboxOpen(false)}
-                  className="p-1.5 rounded-lg border border-red-500/30 bg-red-950/40 text-red-300 hover:bg-red-900/60 hover:text-white transition"
-                  title="Закрыть"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                {/* Controls */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsDarkMode((prev) => !prev)}
+                    className="p-1.5 rounded-lg border border-cyan-500/30 bg-slate-800/80 text-cyan-300 hover:bg-slate-700 transition cursor-pointer"
+                    title="Переключить тему фона"
+                  >
+                    {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  </button>
+
+                  <div className="flex items-center border border-cyan-500/30 rounded-lg bg-slate-800/80 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setLightboxZoom((z) => Math.max(1, Number((z - 0.25).toFixed(2))))}
+                      className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 transition cursor-pointer"
+                      title="Уменьшить"
+                    >
+                      <ZoomOut className="w-4 h-4" />
+                    </button>
+                    <span className="px-1.5 text-xs font-mono text-cyan-300">
+                      {Math.round(lightboxZoom * 100)}%
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setLightboxZoom((z) => Math.min(2.5, Number((z + 0.25).toFixed(2))))}
+                      className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 transition cursor-pointer"
+                      title="Увеличить"
+                    >
+                      <ZoomIn className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLightboxZoom(1)}
+                      className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-slate-700 transition border-l border-cyan-500/20 cursor-pointer"
+                      title="Сбросить масштаб"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsLightboxOpen(false)}
+                    className="p-1.5 rounded-lg border border-red-500/30 bg-red-950/40 text-red-300 hover:bg-red-900/60 hover:text-white transition cursor-pointer"
+                    title="Закрыть"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Compact Modal Body — hugs image height (h-fit) without giant top/bottom blank space */}
+              <div
+                className={`w-full h-fit max-h-[calc(85dvh-48px)] overflow-auto p-1.5 sm:p-3 transition-colors ${
+                  isDarkMode ? "bg-slate-950" : "bg-white"
+                }`}
+              >
+                {croppedDataUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={croppedDataUrl}
+                    alt={taskCode || "Задание ЕГЭ"}
+                    style={{
+                      width: `${Math.round(lightboxZoom * 100)}%`,
+                      maxWidth: lightboxZoom > 1 ? "none" : "100%",
+                      filter: isDarkMode
+                        ? "invert(0.92) hue-rotate(180deg) contrast(1.15)"
+                        : "none",
+                      mixBlendMode: isDarkMode ? "screen" : "normal",
+                    }}
+                    className="w-full h-auto object-contain block mx-auto rounded"
+                  />
+                ) : (
+                  <div className="text-slate-400 text-sm py-6 text-center">Изображение недоступно</div>
+                )}
               </div>
             </div>
-
-            {/* Modal Body / Image Viewport */}
-            <div
-              className={`flex-1 overflow-auto p-4 flex items-center justify-center transition-colors ${
-                isDarkMode ? "bg-slate-950/90" : "bg-white"
-              }`}
-            >
-              {croppedDataUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={croppedDataUrl}
-                  alt={taskCode || "Задание ЕГЭ"}
-                  style={{
-                    transform: `scale(${lightboxZoom})`,
-                    transformOrigin: "center center",
-                    transition: "transform 0.15s ease-out",
-                    filter: isDarkMode
-                      ? "invert(0.92) hue-rotate(180deg) contrast(1.15)"
-                      : "none",
-                    mixBlendMode: isDarkMode ? "screen" : "normal",
-                  }}
-                  className="max-w-full max-h-full object-contain rounded shadow-lg"
-                />
-              ) : (
-                <div className="text-slate-400 text-sm">Изображение недоступно</div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="px-4 py-2 text-xs font-mono text-slate-400 border-t border-cyan-500/20 bg-slate-950/80 flex items-center justify-between">
-              <span>Оригинал из Открытого банка заданий ФИПИ</span>
-              <span>Масштаб: {Math.round(lightboxZoom * 100)}%</span>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

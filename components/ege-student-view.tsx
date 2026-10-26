@@ -435,10 +435,10 @@ function TaskCard({
   const isSubmitted = item.status === "SUBMITTED";
 
   return (
-    <div className="p-4 rounded-xl bg-black/30 border border-white/5 hover:border-white/10 transition space-y-3">
+    <div className="p-2.5 sm:p-4 rounded-xl bg-black/30 border border-white/5 hover:border-white/10 transition space-y-2.5">
       {/* Шапка карточки задания */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center flex-wrap gap-2.5">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center flex-wrap gap-2">
           <span
             className={`px-2.5 py-1 rounded-lg text-xs font-black shadow-sm ${
               isPart2
@@ -484,7 +484,7 @@ function TaskCard({
       </div>
 
       {/* Картинка задания из PDF во всю ширину карточки (фоллбэк на MathText только для ручных задач) */}
-      <div className="py-1 w-full">
+      <div className="w-full">
         {(() => {
           const pdfMeta = resolvePdfTaskMeta(item);
           if (pdfMeta.pdfPage) {

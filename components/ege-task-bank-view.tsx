@@ -1209,10 +1209,10 @@ export function EgeTaskBankView({
                   return (
                     <div
                       key={t.id}
-                      className="p-4 rounded-2xl bg-slate-900/70 border border-white/5 hover:border-cyan-500/30 transition-all space-y-2.5 shadow-sm"
+                      className="p-2.5 sm:p-4 rounded-2xl bg-slate-900/70 border border-white/5 hover:border-cyan-500/30 transition-all space-y-2 shadow-sm"
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center flex-wrap gap-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center flex-wrap gap-2">
                           <span
                             className={`px-2.5 py-1 rounded-lg text-xs font-black shadow-sm ${
                               isPart2
@@ -1253,7 +1253,7 @@ export function EgeTaskBankView({
                       </div>
 
                       {/* Картинка задания из PDF во всю ширину карточки (фоллбэк на MathText только для ручных задач) */}
-                      <div className="py-1 w-full">
+                      <div className="w-full">
                         {(() => {
                           const pdfMeta = resolvePdfTaskMeta(t);
                           if (pdfMeta.pdfPage) {
