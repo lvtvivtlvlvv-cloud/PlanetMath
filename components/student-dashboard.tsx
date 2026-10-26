@@ -409,70 +409,73 @@ export function StudentDashboard({
   }, [homeworks]);
 
   return (
-    <div className="min-h-screen w-full max-w-5xl mx-auto overflow-x-hidden space-y-4 sm:space-y-5 p-3 sm:p-6 lg:p-8 pr-[max(0.75rem,env(safe-area-inset-right))] pl-[max(0.75rem,env(safe-area-inset-left))] pb-24 sm:pb-8">
-      {/* КОМПАКТНАЯ ШАПКА БЕЗ СДВИГА ЗАГОЛОВКА */}
+    <div className="min-h-screen w-full max-w-5xl mx-auto overflow-x-hidden space-y-4 sm:space-y-5 p-3 sm:p-6 lg:p-8 pr-[max(0.75rem,env(safe-area-inset-right))] pl-[max(0.75rem,env(safe-area-inset-left))]">
+      {/* ШАПКА УЧЕНИКА С ПОЛНЫМ ОТОБРАЖЕНИЕМ ЗАГОЛОВКА И ФИО */}
       <header
-        className={`flex items-center justify-between gap-2 sm:gap-4 border-b pb-3.5 ${
+        className={`flex flex-col gap-1.5 border-b pb-3.5 ${
           isLight ? "border-slate-200/80" : "border-zinc-800/80"
         }`}
       >
-        <div className="min-w-0 flex-1">
-          <h1 className="text-lg sm:text-2xl font-bold tracking-tight truncate">Электронный Дневник</h1>
-          <p
-            className={`text-xs mt-0.5 flex items-center flex-wrap gap-1.5 ${
-              isLight ? "text-slate-500" : "text-zinc-400"
-            }`}
-          >
-            <span className="truncate">
-              {user.fullName} •{" "}
-              <span className={`font-semibold ${isLight ? "text-slate-800" : "text-zinc-100"}`}>
-                {user.className}
-              </span>
-            </span>
-            {user.examTrack && (
-              <span
-                className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-wider border ${
-                  user.examTrack === "Профиль"
-                    ? isLight
-                      ? "bg-purple-50 text-purple-700 border-purple-200"
-                      : "bg-purple-500/20 text-purple-300 border-purple-500/40"
-                    : isLight
-                    ? "bg-amber-50 text-amber-700 border-amber-200"
-                    : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
+          <h1 className="text-base sm:text-2xl font-bold tracking-tight whitespace-nowrap">
+            Электронный Дневник
+          </h1>
+
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <ThemeSwitcher />
+            <form action={logoutAction}>
+              <button
+                type="submit"
+                title="Выйти из аккаунта"
+                aria-label="Выйти из аккаунта"
+                className={`flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border transition cursor-pointer shrink-0 ${
+                  isLight
+                    ? "border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-100 shadow-2xs"
+                    : "border-white/10 bg-[#111726]/90 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
                 }`}
               >
-                {user.examTrack}
-              </span>
-            )}
-          </p>
+                <LogOut className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <ThemeSwitcher />
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              title="Выйти из аккаунта"
-              aria-label="Выйти из аккаунта"
-              className={`flex h-9 w-9 items-center justify-center rounded-xl border transition cursor-pointer shrink-0 ${
-                isLight
-                  ? "border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-100 shadow-2xs"
-                  : "border-zinc-800 bg-[#111726]/90 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
+        <p
+          className={`text-xs flex items-center flex-wrap gap-1.5 leading-snug ${
+            isLight ? "text-slate-500" : "text-zinc-400"
+          }`}
+        >
+          <span>
+            {user.fullName} •{" "}
+            <span className={`font-semibold ${isLight ? "text-slate-800" : "text-zinc-100"}`}>
+              {user.className}
+            </span>
+          </span>
+          {user.examTrack && (
+            <span
+              className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-wider border ${
+                user.examTrack === "Профиль"
+                  ? isLight
+                    ? "bg-purple-50 text-purple-700 border-purple-200"
+                    : "bg-purple-500/20 text-purple-300 border-purple-500/40"
+                  : isLight
+                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                  : "bg-amber-500/20 text-amber-300 border-amber-500/40"
               }`}
             >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </form>
-        </div>
+              {user.examTrack}
+            </span>
+          )}
+        </p>
       </header>
 
-      {/* ВЕРХНИЕ ВКЛАДКИ (СКРЫТЫ НА МОБИЛЬНЫХ, Т.К. НА МОБИЛЬНЫХ ЕСТЬ НИЖНЯЯ ПАНЕЛЬ) */}
+      {/* ВЕРХНИЕ ВКЛАДКИ В ОСНОВНОМ ПОТОКЕ НА ВСЕХ УСТРОЙСТВАХ (КАК У УЧИТЕЛЯ) */}
       <nav
-        className={`hidden sm:flex items-center justify-between gap-2 border-b pb-2.5 ${
+        className={`flex items-center justify-between gap-2 overflow-x-auto no-scrollbar whitespace-nowrap px-3 -mx-3 sm:mx-0 sm:px-0 border-b pb-2.5 pt-0.5 ${
           isLight ? "border-slate-200/80" : "border-zinc-800/80"
         }`}
       >
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar whitespace-nowrap py-0.5">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {[
             {
               id: "schedule",
@@ -503,7 +506,7 @@ export function StudentDashboard({
                 key={tab.id}
                 type="button"
                 onClick={() => handleTabClick(tab.id as any)}
-                className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-bold border whitespace-nowrap shrink-0 transition duration-200 select-none cursor-pointer ${
+                className={`flex items-center gap-1.5 sm:gap-2 rounded-xl px-3 sm:px-3.5 py-2 text-xs sm:text-sm font-bold border whitespace-nowrap shrink-0 transition duration-200 select-none cursor-pointer ${
                   isActive
                     ? isLight
                       ? "bg-sky-600 text-white border-sky-600 shadow-xs"
@@ -513,7 +516,7 @@ export function StudentDashboard({
                     : "border-transparent text-zinc-400 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <Icon className="h-4 w-4 shrink-0" />
+                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                 <span>{tab.label}</span>
                 {tab.totalCount !== undefined && (
                   <span className="text-[11px] opacity-75">({tab.totalCount})</span>
@@ -531,7 +534,7 @@ export function StudentDashboard({
         <button
           type="button"
           onClick={() => setIsTabContentCollapsed(!isTabContentCollapsed)}
-          className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition duration-200 shrink-0 cursor-pointer ${
+          className={`flex items-center gap-1.5 rounded-xl border px-2.5 sm:px-3 py-2 text-xs font-bold transition duration-200 shrink-0 cursor-pointer ${
             isTabContentCollapsed
               ? isLight
                 ? "bg-sky-50 text-sky-700 border-sky-200"
@@ -1847,106 +1850,6 @@ export function StudentDashboard({
           </div>
         </div>
       )}
-
-      {/* МОБИЛЬНАЯ НИЖНЯЯ ПАНЕЛЬ ДЛЯ ТЕЛЕФОНОВ */}
-      <div
-        className={`sm:hidden fixed bottom-0 left-0 right-0 z-40 backdrop-blur-xl border-t px-3 py-2 flex items-center justify-around ${
-          isLight
-            ? "bg-white/95 border-slate-200 shadow-[0_-4px_16px_rgba(15,23,42,0.06)]"
-            : "bg-[#0B0F19]/95 border-zinc-800/80 shadow-[0_-8px_24px_rgba(0,0,0,0.6)]"
-        }`}
-      >
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab("schedule");
-            setIsTabContentCollapsed(false);
-          }}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition text-xs font-bold ${
-            activeTab === "schedule" && !isTabContentCollapsed
-              ? isLight
-                ? "text-sky-600 bg-sky-50"
-                : "text-cyan-400 bg-cyan-500/15"
-              : isLight
-              ? "text-slate-500 hover:text-slate-900"
-              : "text-zinc-400 hover:text-white"
-          }`}
-        >
-          <Calendar className="h-4 w-4 mb-0.5" />
-          <span className="text-[10px]">Расписание</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab("homework");
-            setIsTabContentCollapsed(false);
-            setHwStatusFilter("NEED_SUBMIT");
-          }}
-          className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-xl transition text-xs font-bold ${
-            activeTab === "homework" && !isTabContentCollapsed
-              ? isLight
-                ? "text-sky-600 bg-sky-50"
-                : "text-cyan-400 bg-cyan-500/15"
-              : isLight
-              ? "text-slate-500 hover:text-slate-900"
-              : "text-zinc-400 hover:text-white"
-          }`}
-        >
-          <BookOpen className="h-4 w-4 mb-0.5" />
-          <span className="text-[10px]">Домашние</span>
-          {unsubmittedCount > 0 && (
-            <span className="absolute -top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-rose-500 text-[9px] font-black text-white flex items-center justify-center">
-              {unsubmittedCount}
-            </span>
-          )}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab("ege");
-            setIsTabContentCollapsed(false);
-          }}
-          className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-xl transition text-xs font-bold ${
-            activeTab === "ege" && !isTabContentCollapsed
-              ? isLight
-                ? "text-sky-600 bg-sky-50"
-                : "text-cyan-400 bg-cyan-500/15"
-              : isLight
-              ? "text-slate-500 hover:text-slate-900"
-              : "text-zinc-400 hover:text-white"
-          }`}
-        >
-          <GraduationCap className="h-4 w-4 mb-0.5" />
-          <span className="text-[10px]">ЕГЭ</span>
-          {pendingEgeCount > 0 && (
-            <span className="absolute -top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-sky-500 text-[9px] font-black text-white flex items-center justify-center">
-              {pendingEgeCount}
-            </span>
-          )}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setIsTabContentCollapsed(!isTabContentCollapsed)}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition text-xs font-bold ${
-            isLight ? "text-slate-500 hover:text-slate-900" : "text-zinc-400 hover:text-white"
-          }`}
-        >
-          {isTabContentCollapsed ? (
-            <>
-              <ChevronDown className="h-4 w-4 mb-0.5 text-sky-600" />
-              <span className="text-[10px] text-sky-600">Развернуть</span>
-            </>
-          ) : (
-            <>
-              <ChevronUp className="h-4 w-4 mb-0.5" />
-              <span className="text-[10px]">Свернуть</span>
-            </>
-          )}
-        </button>
-      </div>
     </div>
   );
 }

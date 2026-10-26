@@ -162,14 +162,16 @@ export function ClockDial({
     }
   }, [activeDate]);
 
-  const [containerWidth, setContainerWidth] = useState<number>(860);
+  const [containerWidth, setContainerWidth] = useState<number>(360);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const updateSize = () => {
       if (containerRef.current) {
         const newWidth = containerRef.current.clientWidth;
-        setContainerWidth((prev) => (Math.abs(prev - newWidth) > 4 ? newWidth : prev));
+        if (newWidth > 0) {
+          setContainerWidth((prev) => (Math.abs(prev - newWidth) > 2 ? newWidth : prev));
+        }
       }
     };
     updateSize();
@@ -529,15 +531,21 @@ export function ClockDial({
     return isSameDay(focusedDate, today);
   }, [focusedDate, serverToday]);
 
-  const earthSize = Math.max(580, Math.min(containerWidth * 1.1, 1040));
-  const R = earthSize * 0.52;
-  const ANGLE_STEP = 13.5;
-  const horizonTopY = 66;
+  // Геометрия дуги: гарантирует отступ сверху от линии горизонта и размещение всех 7 дат (-3..+3) строго внутри карточки
+  const ANGLE_STEP = 10.2;
+  const horizonTopY = 52;
+  const textInsetFromHorizon = 22;
+  const sin3 = Math.sin((3 * ANGLE_STEP * Math.PI) / 180);
+  const edgePadding = containerWidth < 500 ? 32 : 48;
+  const safeHalfWidth = Math.max(105, containerWidth / 2 - edgePadding);
+  const maxAllowedR = safeHalfWidth / sin3;
+  const R_text = Math.min(Math.max(245, containerWidth * 0.52), maxAllowedR, 440);
+  const earthSize = Math.round((R_text + textInsetFromHorizon) * 2);
 
   // Вращение глобуса синхронно с направлением движения расписания
   const earthRotationAngle = useMemo(() => {
     const epochDays = Math.floor(dragAnchorDateRef.current.getTime() / (24 * 60 * 60 * 1000));
-    return ((-epochDays - floatOffset) * 13.5) % 360;
+    return ((-epochDays - floatOffset) * ANGLE_STEP) % 360;
   }, [floatOffset]);
 
   // Непрерывная дуга дат: 9 элементов вокруг центрального дня
@@ -578,11 +586,11 @@ export function ClockDial({
       }`}
     >
       {/* ЧИСЛО И МЕСЯЦ В ЛЕВОМ ВЕРХНЕМ УГЛУ */}
-      <div className="absolute top-3.5 left-5 z-30 flex items-center gap-2 pointer-events-none">
+      <div className="absolute top-3 left-4 sm:left-5 z-30 flex items-center gap-2 pointer-events-none">
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
             <span
-              className={`font-mono text-base sm:text-lg font-extrabold tracking-wider ${
+              className={`font-mono text-sm sm:text-base font-extrabold tracking-wider ${
                 isLight ? "text-slate-800" : "text-cyan-400"
               }`}
             >
@@ -678,10 +686,10 @@ export function ClockDial({
       </div>
 
       {/* 3D СТРЕЛКА КОМПАСА */}
-      <div className="pointer-events-none absolute top-2.5 z-30 flex flex-col items-center">
+      <div className="pointer-events-none absolute top-2 z-30 flex flex-col items-center">
         <svg
-          width="24"
-          height="28"
+          width="22"
+          height="26"
           viewBox="0 0 28 32"
           fill="none"
           className={
@@ -724,20 +732,26 @@ export function ClockDial({
         </svg>
       </div>
 
-      {/* ЧИСЛА ДАТ */}
-      <div className="relative h-24 w-full mt-1 z-30 pointer-events-auto">
+      {/* ЧИСЛА ДАТ ВНУТРИ ДУГИ ГОРИЗОНТА */}
+      <div className="absolute inset-0 z-30 pointer-events-auto">
         {visibleDays.map((item) => {
           const relativeOffset = item.k - floatOffset;
-          const isCentered = Math.abs(relativeOffset) < 0.45;
+          const absOffset = Math.abs(relativeOffset);
+          const isCentered = absOffset < 0.45;
 
           const angleDeg = relativeOffset * ANGLE_STEP;
           const angleRad = (angleDeg * Math.PI) / 180;
 
-          const x = R * Math.sin(angleRad);
-          const y = horizonTopY + R - R * Math.cos(angleRad) - 42;
+          const x = R_text * Math.sin(angleRad);
+          const y = horizonTopY + textInsetFromHorizon + R_text * (1 - Math.cos(angleRad));
 
-          const scale = Math.max(0.76, 1.15 - Math.abs(relativeOffset) * 0.1);
-          const opacity = Math.max(0, 1.0 - Math.abs(relativeOffset) * 0.22);
+          const scale = Math.max(0.76, 1.06 - absOffset * 0.08);
+          const opacity =
+            absOffset > 3.1
+              ? Math.max(0, 1 - (absOffset - 3.1) * 2.5) * 0.4
+              : Math.max(0.38, 1.0 - absOffset * 0.18);
+
+          if (opacity <= 0.01) return null;
 
           return (
             <div
@@ -746,7 +760,7 @@ export function ClockDial({
                 e.stopPropagation();
                 handleDayTap(item.k);
               }}
-              className="absolute left-1/2 cursor-pointer p-1.5"
+              className="absolute left-1/2 cursor-pointer px-1 py-0.5"
               style={{
                 top: `${y}px`,
                 transform: `translate(calc(-50% + ${x}px), 0) rotate(${angleDeg}deg) scale(${scale})`,
@@ -757,13 +771,13 @@ export function ClockDial({
             >
               <div className="flex flex-col items-center justify-center">
                 <span
-                  className={`font-mono text-xl sm:text-2xl font-black leading-none ${
+                  className={`font-mono text-lg sm:text-2xl font-black leading-none ${
                     isLight
                       ? isCentered
                         ? "text-slate-900"
-                        : "text-slate-400 hover:text-slate-700"
+                        : "text-slate-500 hover:text-slate-800"
                       : isCentered
-                      ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
+                      ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.45)]"
                       : "text-zinc-400 hover:text-white"
                   }`}
                 >
@@ -771,7 +785,7 @@ export function ClockDial({
                 </span>
 
                 <span
-                  className={`text-[10px] font-extrabold uppercase tracking-wider mt-0.5 ${
+                  className={`text-[10px] font-extrabold uppercase tracking-wider mt-1 ${
                     isLight
                       ? isCentered
                         ? "text-sky-600"

@@ -219,7 +219,7 @@ html[data-mode="light"] .theme-room-text {
 /* ==========================================================================
    3. ЧИСТКА КОНТРАСТОВ И ПАЛИТРЫ ДЛЯ СВЕТЛОЙ ТЕМЫ (LIGHT MODE)
    ========================================================================== */
-html[data-mode="light"] .text-white:not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-blue-600 *):not(.bg-emerald-600 *):not(.bg-purple-600 *):not(.bg-amber-600 *):not(.bg-rose-500 *):not(.bg-slate-900 *):not(button.bg-sky-500):not(button.bg-sky-600):not(button.bg-blue-600):not(button.bg-emerald-600):not(button.bg-purple-600):not(button.bg-amber-600):not(button.bg-slate-900):not(.theme-btn) {
+html[data-mode="light"] .text-white:not(button):not(button *):not(a):not(.rounded-full):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-blue-600 *):not(.bg-emerald-600 *):not(.bg-purple-600 *):not(.bg-amber-600 *):not(.bg-rose-500 *):not(.bg-slate-900 *):not(.bg-zinc-900 *) {
   color: #0F172A;
 }
 
