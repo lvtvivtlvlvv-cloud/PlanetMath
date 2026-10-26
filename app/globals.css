@@ -292,12 +292,28 @@ html[data-mode="light"] .glass-panel h3 {
 }
 
 /* ==========================================================================
-   ПЛАВНЫЕ АНИМАЦИИ ВКЛАДОК И НЕДЕЛЬ
+   ЕДИНАЯ СИСТЕМА ПЛАВНЫХ АНИМАЦИЙ (ВКЛАДКИ, МОДАЛКИ, КАРТОЧКИ, НЕДЕЛИ)
    ========================================================================== */
 @keyframes tabFadeSlide {
   from {
     opacity: 0;
-    transform: translate3d(0, 8px, 0);
+    transform: translate3d(0, 6px, 0) scale(0.996);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-tab-enter {
+  animation: tabFadeSlide 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: opacity, transform;
+}
+
+@keyframes fadeInSmooth {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 4px, 0);
   }
   to {
     opacity: 1;
@@ -305,44 +321,74 @@ html[data-mode="light"] .glass-panel h3 {
   }
 }
 
-.animate-tab-enter {
-  animation: tabFadeSlide 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+.animate-fade-in {
+  animation: fadeInSmooth 0.2s ease-out both;
+}
+
+@keyframes modalBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalContentIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-modal-backdrop {
+  animation: modalBackdropIn 0.18s ease-out both;
+}
+
+.animate-modal-content {
+  animation: modalContentIn 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: opacity, transform;
 }
 
 @keyframes weekSlideInRight {
   from {
     opacity: 0;
-    transform: translateX(20px);
+    transform: translate3d(16px, 0, 0);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes weekSlideInLeft {
   from {
     opacity: 0;
-    transform: translateX(-20px);
+    transform: translate3d(-16px, 0, 0);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 .animate-week-right {
-  animation: weekSlideInRight 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: weekSlideInRight 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .animate-week-left {
-  animation: weekSlideInLeft 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: weekSlideInLeft 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 body {
   background-color: var(--bg-main);
   color: var(--text-primary);
   min-height: 100vh;
-  transition: background-color 0.25s ease, color 0.25s ease;
+  transition: background-color 0.2s ease-out, color 0.2s ease-out;
   -webkit-tap-highlight-color: transparent;
 }
+

@@ -20,6 +20,7 @@ import { submitEgeItemAnswerAction } from "@/app/student/actions";
 import { MathText } from "./math-text";
 import { PdfTaskCrop } from "./pdf-task-crop";
 import { resolvePdfTaskMeta } from "@/lib/ege-math-cleaner";
+import { Card, Button, Input, SegmentedControl } from "./ui-kit";
 
 export interface StudentEgeAssignmentItem {
   id: string;
@@ -50,8 +51,7 @@ interface EgeStudentViewProps {
 }
 
 export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
-  const { colorMode } = useAppTheme();
-  const isLight = colorMode === "light";
+  const { isLight } = useAppTheme();
 
   const [groupingMode, setGroupingMode] = useState<"by_work" | "by_task_number">("by_work");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "PENDING" | "COMPLETED">("ALL");
@@ -71,7 +71,6 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
 
   const [isPending, startTransition] = useTransition();
 
-  // Statistics
   const stats = useMemo(() => {
     const total = items.length;
     const completed = items.filter((i) => i.status === "GRADED" || i.status === "SUBMITTED").length;
@@ -82,7 +81,6 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
     return { total, completed, scored, totalScore, maxScore, percent };
   }, [items]);
 
-  // Filtered items
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       if (statusFilter === "PENDING" && item.status !== "ASSIGNED") return false;
@@ -92,7 +90,6 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
     });
   }, [items, statusFilter, selectedTaskNum]);
 
-  // Grouped by Work
   const groupedByWork = useMemo(() => {
     const map = new Map<
       string,
@@ -112,7 +109,6 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
     return Array.from(map.entries()).map(([id, data]) => ({ id, ...data }));
   }, [filteredItems]);
 
-  // Grouped by Task Number (1..19)
   const groupedByTaskNumber = useMemo(() => {
     const map = new Map<number, StudentEgeAssignmentItem[]>();
     filteredItems.forEach((i) => {
@@ -182,14 +178,14 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
   return (
     <div className="space-y-5">
       {/* СТАТИСТИЧЕСКИЙ БАННЕР УСПЕШНОСТИ */}
-      <div className="glass-panel p-4 sm:p-5 rounded-2xl">
+      <Card padding="md">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div
               className={`p-3 rounded-2xl border shrink-0 ${
                 isLight
                   ? "bg-sky-50 text-sky-600 border-sky-200"
-                  : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+                  : "bg-sky-500/15 text-sky-400 border-sky-500/30"
               }`}
             >
               <GraduationCap className="h-6 w-6" />
@@ -201,38 +197,37 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
                   className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                     isLight
                       ? "bg-sky-50 text-sky-700 border-sky-200"
-                      : "bg-cyan-500/20 text-cyan-300 border-cyan-400/30"
+                      : "bg-sky-500/20 text-sky-300 border-sky-400/30"
                   }`}
                 >
                   {stats.completed} из {stats.total} решено
                 </span>
               </h2>
-              <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+              <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-slate-400"}`}>
                 Индивидуальные тренировочные работы, подобранные преподавателем из открытого банка ФИПИ
               </p>
             </div>
           </div>
 
-          {/* ПОКАЗАТЕЛИ БАЛЛОВ */}
           <div className="grid grid-cols-3 gap-2 sm:gap-3 shrink-0">
             <div
               className={`p-2.5 rounded-xl border text-center ${
-                isLight ? "bg-slate-50 border-slate-200" : "bg-black/30 border-white/5"
+                isLight ? "bg-slate-50 border-slate-200" : "bg-slate-800/60 border-slate-700"
               }`}
             >
-              <p className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+              <p className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-500" : "text-slate-400"}`}>
                 Назначено
               </p>
-              <p className={`text-sm sm:text-base font-black ${isLight ? "text-sky-600" : "text-cyan-300"}`}>
+              <p className={`text-sm sm:text-base font-black ${isLight ? "text-sky-600" : "text-sky-400"}`}>
                 {stats.total} задач
               </p>
             </div>
             <div
               className={`p-2.5 rounded-xl border text-center ${
-                isLight ? "bg-slate-50 border-slate-200" : "bg-black/30 border-white/5"
+                isLight ? "bg-slate-50 border-slate-200" : "bg-slate-800/60 border-slate-700"
               }`}
             >
-              <p className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+              <p className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-500" : "text-slate-400"}`}>
                 Сдано
               </p>
               <p className={`text-sm sm:text-base font-black ${isLight ? "text-emerald-600" : "text-emerald-400"}`}>
@@ -241,104 +236,67 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
             </div>
             <div
               className={`p-2.5 rounded-xl border text-center ${
-                isLight ? "bg-slate-50 border-slate-200" : "bg-black/30 border-white/5"
+                isLight ? "bg-slate-50 border-slate-200" : "bg-slate-800/60 border-slate-700"
               }`}
             >
-              <p className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+              <p className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-500" : "text-slate-400"}`}>
                 Баллы
               </p>
               <p className={`text-sm sm:text-base font-black ${isLight ? "text-amber-600" : "text-amber-300"}`}>
                 {stats.totalScore}{" "}
-                <span className={`text-[11px] font-normal ${isLight ? "text-slate-400" : "text-zinc-500"}`}>
+                <span className={`text-[11px] font-normal ${isLight ? "text-slate-400" : "text-slate-500"}`}>
                   / {stats.maxScore}
                 </span>
               </p>
             </div>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* ПАНЕЛЬ ПЕРЕКЛЮЧЕНИЯ ГРУППИРОВКИ И ФИЛЬТРОВ */}
-      <div className="glass-panel p-3.5 sm:p-4 rounded-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        {/* СТРОГО СИММЕТРИЧНЫЙ СЕГМЕНТИРОВАННЫЙ ПЕРЕКЛЮЧАТЕЛЬ ГРУППИРОВКИ */}
-        <div
-          className={`grid grid-cols-2 p-1 gap-1 rounded-xl border w-full lg:w-auto ${
-            isLight
-              ? "bg-slate-100 border-slate-200"
-              : "bg-slate-800/60 border-slate-700"
-          }`}
-        >
-          <button
-            type="button"
-            onClick={() => setGroupingMode("by_work")}
-            className={`w-full h-full py-2.5 px-3 flex items-center justify-center gap-1.5 text-center font-medium text-xs sm:text-sm transition-all rounded-lg cursor-pointer select-none ${
-              groupingMode === "by_work"
-                ? "bg-sky-600 text-white shadow-xs"
-                : isLight
-                ? "bg-white text-slate-600 hover:text-slate-900"
-                : "bg-slate-700/60 text-slate-300 hover:text-white"
-            }`}
-          >
-            <Layers className="h-3.5 w-3.5 shrink-0" />
-            <span>По выданным работам</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setGroupingMode("by_task_number")}
-            className={`w-full h-full py-2.5 px-3 flex items-center justify-center gap-1.5 text-center font-medium text-xs sm:text-sm transition-all rounded-lg cursor-pointer select-none ${
-              groupingMode === "by_task_number"
-                ? "bg-sky-600 text-white shadow-xs"
-                : isLight
-                ? "bg-white text-slate-600 hover:text-slate-900"
-                : "bg-slate-700/60 text-slate-300 hover:text-white"
-            }`}
-          >
-            <ListFilter className="h-3.5 w-3.5 shrink-0" />
-            <span>По номерам ЕГЭ (1–19)</span>
-          </button>
-        </div>
+      <Card padding="sm" className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <SegmentedControl
+          fullWidth
+          className="lg:w-auto"
+          value={groupingMode}
+          onChange={setGroupingMode}
+          options={[
+            {
+              value: "by_work",
+              label: "По выданным работам",
+              icon: <Layers className="h-3.5 w-3.5" />,
+            },
+            {
+              value: "by_task_number",
+              label: "По номерам ЕГЭ (1–19)",
+              icon: <ListFilter className="h-3.5 w-3.5" />,
+            },
+          ]}
+        />
 
-        {/* Фильтр по статусу */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-          {[
-            { id: "ALL", label: "Все задания" },
-            { id: "PENDING", label: "Ожидают решения" },
-            { id: "COMPLETED", label: "Сдано / Решено" },
-          ].map((tab) => {
-            const isActive = statusFilter === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setStatusFilter(tab.id as any)}
-                className={`px-3 py-2 text-xs font-bold rounded-xl border transition shrink-0 cursor-pointer ${
-                  isActive
-                    ? isLight
-                      ? "bg-sky-600 text-white border-sky-600 shadow-xs"
-                      : "bg-sky-600 text-white border-sky-500 shadow-xs"
-                    : isLight
-                    ? "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/70 hover:text-slate-900"
-                    : "bg-slate-800/60 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white"
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        <SegmentedControl
+          size="sm"
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={[
+            { value: "ALL", label: "Все задания" },
+            { value: "PENDING", label: "Ожидают решения" },
+            { value: "COMPLETED", label: "Сдано / Решено" },
+          ]}
+        />
+      </Card>
 
       {/* ОСНОВНОЙ КОНТЕНТ ЗАДАНИЙ */}
       {filteredItems.length === 0 ? (
-        <div className="glass-panel p-8 sm:p-10 rounded-2xl text-center space-y-2">
+        <Card padding="lg" className="text-center space-y-2">
           <FileQuestion className="h-9 w-9 text-slate-400 mx-auto" />
-          <h3 className={`text-sm font-bold ${isLight ? "text-slate-800" : "text-zinc-300"}`}>
+          <h3 className={`text-sm font-bold ${isLight ? "text-slate-800" : "text-slate-300"}`}>
             Назначенных заданий пока нет
           </h3>
-          <p className={`text-xs ${isLight ? "text-slate-500" : "text-zinc-500"}`}>
+          <p className={`text-xs ${isLight ? "text-slate-500" : "text-slate-400"}`}>
             Когда преподаватель назначит вам тренировочный вариант из банка ЕГЭ, он появится здесь.
           </p>
-        </div>
+        </Card>
       ) : groupingMode === "by_work" ? (
         <div className="space-y-5">
           {groupedByWork.map((work) => {
@@ -346,7 +304,7 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
             const completedInWork = work.items.filter((i) => i.status !== "ASSIGNED").length;
 
             return (
-              <div key={work.id} className="glass-panel p-4 sm:p-5 rounded-2xl space-y-4">
+              <Card key={work.id} padding="md" className="space-y-4">
                 <div
                   onClick={() => toggleWorkExpand(work.id)}
                   className="flex items-start justify-between gap-3 cursor-pointer select-none"
@@ -358,14 +316,14 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
                         className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                           isLight
                             ? "bg-sky-50 text-sky-700 border-sky-200"
-                            : "bg-cyan-500/20 text-cyan-300 border-cyan-400/30"
+                            : "bg-sky-500/20 text-sky-300 border-sky-400/30"
                         }`}
                       >
                         {completedInWork} из {work.items.length} сдано
                       </span>
                     </div>
 
-                    <div className={`flex items-center flex-wrap gap-3 text-xs ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+                    <div className={`flex items-center flex-wrap gap-3 text-xs ${isLight ? "text-slate-500" : "text-slate-400"}`}>
                       {work.deadline && (
                         <span className={`flex items-center gap-1 font-semibold ${isLight ? "text-amber-600" : "text-amber-400"}`}>
                           <Clock className="h-3 w-3" />
@@ -376,13 +334,13 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
                     </div>
                   </div>
 
-                  <button type="button" className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200">
+                  <Button variant="ghost" size="icon">
                     {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                  </button>
+                  </Button>
                 </div>
 
                 {isExpanded && (
-                  <div className={`space-y-4 pt-3 border-t ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                  <div className={`space-y-4 pt-3 border-t ${isLight ? "border-slate-100" : "border-slate-800"}`}>
                     {work.items.map((item, idx) => (
                       <TaskCard
                         key={item.id}
@@ -400,35 +358,35 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
                     ))}
                   </div>
                 )}
-              </div>
+              </Card>
             );
           })}
         </div>
       ) : (
         <div className="space-y-5">
           {groupedByTaskNumber.map((group) => (
-            <div key={group.taskNumber} className="glass-panel p-4 sm:p-5 rounded-2xl space-y-4">
+            <Card key={group.taskNumber} padding="md" className="space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <span
                     className={`w-8 h-8 rounded-xl border flex items-center justify-center text-xs font-black ${
                       isLight
                         ? "bg-sky-50 text-sky-700 border-sky-200"
-                        : "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
+                        : "bg-sky-500/20 text-sky-300 border-sky-500/30"
                     }`}
                   >
                     №{group.taskNumber}
                   </span>
                   <div>
                     <h3 className="text-sm font-black">{group.topic}</h3>
-                    <p className={`text-[11px] ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+                    <p className={`text-[11px] ${isLight ? "text-slate-500" : "text-slate-400"}`}>
                       Заданий в этом блоке: {group.items.length}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className={`space-y-4 pt-3 border-t ${isLight ? "border-slate-100" : "border-white/5"}`}>
+              <div className={`space-y-4 pt-3 border-t ${isLight ? "border-slate-100" : "border-slate-800"}`}>
                 {group.items.map((item, idx) => (
                   <TaskCard
                     key={item.id}
@@ -445,7 +403,7 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
                   />
                 ))}
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}
@@ -459,20 +417,16 @@ export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
               ? "bg-slate-900/95 border-emerald-500/40 text-emerald-300"
               : toast.type === "error"
               ? "bg-slate-900/95 border-rose-500/40 text-rose-300"
-              : "bg-slate-900/95 border-cyan-500/40 text-cyan-300"
+              : "bg-slate-900/95 border-sky-500/40 text-sky-300"
           }`}
         >
           {toast.type === "success" && <Check className="w-4 h-4 shrink-0 text-emerald-500" />}
           {toast.type === "error" && <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />}
           {toast.type === "info" && <Clock className="w-4 h-4 shrink-0 text-sky-500" />}
           <span className="text-xs font-semibold">{toast.text}</span>
-          <button
-            type="button"
-            onClick={() => setToast(null)}
-            className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-400 transition"
-          >
+          <Button variant="ghost" size="icon" onClick={() => setToast(null)} className="h-6 w-6">
             <X className="w-3.5 h-3.5" />
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -507,10 +461,10 @@ function TaskCard({
 
   return (
     <div
-      className={`p-3 sm:p-4 rounded-xl border transition space-y-2.5 ${
+      className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 space-y-3 ${
         isLight
           ? "bg-slate-50/70 border-slate-200/90 hover:border-slate-300"
-          : "bg-black/30 border-white/5 hover:border-white/10"
+          : "bg-slate-800/40 border-slate-700/80 hover:border-slate-600"
       }`}
     >
       <div className="flex items-start justify-between gap-2">
@@ -523,18 +477,18 @@ function TaskCard({
                   : "bg-amber-500/20 text-amber-300 border-amber-500/40"
                 : isLight
                 ? "bg-sky-50 text-sky-700 border-sky-200"
-                : "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                : "bg-sky-500/20 text-sky-300 border-sky-500/40"
             }`}
           >
             Задание №{item.taskNumber}
           </span>
-          <span className={`text-xs font-bold ${isLight ? "text-slate-800" : "text-zinc-100"}`}>{item.topic}</span>
+          <span className={`text-xs font-bold ${isLight ? "text-slate-800" : "text-slate-100"}`}>{item.topic}</span>
           {item.taskCode && (
             <span
               className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold border ${
                 isLight
                   ? "bg-white text-slate-600 border-slate-200"
-                  : "bg-cyan-500/10 text-cyan-300 border-cyan-500/30"
+                  : "bg-sky-500/10 text-sky-300 border-sky-500/30"
               }`}
             >
               Прототип #{item.taskCode}
@@ -572,7 +526,7 @@ function TaskCard({
               className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[11px] font-bold ${
                 isLight
                   ? "bg-sky-50 text-sky-700 border-sky-200"
-                  : "bg-blue-500/20 text-blue-300 border-blue-500/30"
+                  : "bg-sky-500/20 text-sky-300 border-sky-500/30"
               }`}
             >
               <Clock className="h-3 w-3" />
@@ -606,43 +560,34 @@ function TaskCard({
               />
             );
           }
-          return <MathText text={item.content} className={`text-xs sm:text-sm ${isLight ? "text-slate-800" : "text-zinc-200"}`} />;
+          return <MathText text={item.content} className={`text-xs sm:text-sm ${isLight ? "text-slate-800" : "text-slate-200"}`} />;
         })()}
       </div>
 
-      <div className="space-y-2 pt-1">
+      <div className="space-y-2.5 pt-1">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="space-y-1">
-            <label className={`text-[11px] font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+            <label className={`block text-[11px] font-semibold ${isLight ? "text-slate-600" : "text-slate-400"}`}>
               Ответ:
             </label>
-            <input
+            <Input
               type="text"
               value={draftAnswer}
               onChange={(e) => onAnswerChange(e.target.value)}
               placeholder="Ответ"
-              className={`w-full h-9 rounded-xl border px-3 text-xs font-mono focus:outline-none ${
-                isLight
-                  ? "bg-white border-slate-200 text-slate-800 focus:border-sky-500"
-                  : "bg-black/40 border-white/10 text-zinc-100 focus:border-cyan-500"
-              }`}
+              className="font-mono"
             />
           </div>
 
           <div className="sm:col-span-2 space-y-1">
-            <label className={`text-[11px] font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+            <label className={`block text-[11px] font-semibold ${isLight ? "text-slate-600" : "text-slate-400"}`}>
               Пояснение / решение (по желанию):
             </label>
-            <input
+            <Input
               type="text"
               value={draftComment}
               onChange={(e) => onCommentChange(e.target.value)}
               placeholder="Краткие шаги решения или ссылки на формулы..."
-              className={`w-full h-9 rounded-xl border px-3 text-xs focus:outline-none ${
-                isLight
-                  ? "bg-white border-slate-200 text-slate-800 focus:border-sky-500"
-                  : "bg-black/40 border-white/10 text-zinc-100 focus:border-cyan-500"
-              }`}
             />
           </div>
         </div>
@@ -666,28 +611,25 @@ function TaskCard({
           )}
 
           <div className="ml-auto">
-            <button
+            <Button
               type="button"
+              variant="primary"
+              size="md"
               onClick={onSubmit}
               disabled={isSubmitting}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-xs transition cursor-pointer disabled:opacity-50 ${
-                isLight
-                  ? "bg-sky-600 text-white hover:bg-sky-700 shadow-xs"
-                  : "bg-cyan-500 text-zinc-950 hover:bg-cyan-400"
-              }`}
             >
               <Send className="h-3.5 w-3.5" />
               <span>{isSubmitting ? "Отправка..." : isSubmitted || isGraded ? "Обновить ответ" : "Сдать решение"}</span>
-            </button>
+            </Button>
           </div>
         </div>
 
         {item.teacherFeedback && (
           <div
-            className={`p-2.5 rounded-lg border text-xs ${
+            className={`p-3 rounded-xl border text-xs ${
               isLight
                 ? "bg-sky-50 border-sky-200 text-sky-900"
-                : "bg-blue-950/20 border-blue-500/20 text-blue-300"
+                : "bg-sky-950/30 border-sky-500/20 text-sky-300"
             }`}
           >
             <b>Комментарий учителя:</b> {item.teacherFeedback}

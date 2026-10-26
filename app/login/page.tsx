@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { useAppTheme } from "@/components/theme-context";
+import { Card, Input, Button } from "@/components/ui-kit";
 import { LogIn, KeyRound, User as UserIcon } from "lucide-react";
 
 export default function LoginPage() {
@@ -56,19 +57,13 @@ export default function LoginPage() {
         <ThemeSwitcher modeOnly />
       </div>
 
-      <div
-        className={`glass-panel w-full max-w-md rounded-2xl p-6 sm:p-8 transition-colors ${
-          isLight
-            ? "bg-white border-slate-200 shadow-lg"
-            : "bg-[#0F172A]/85 border-cyan-500/20 shadow-2xl backdrop-blur-xl"
-        }`}
-      >
+      <Card padding="lg" className="w-full max-w-md shadow-xl">
         <div className="text-center">
           <div
             className={`mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border ${
               isLight
                 ? "bg-sky-50 border-sky-200 text-sky-600"
-                : "bg-sky-500/15 border-sky-400/30 text-sky-300"
+                : "bg-sky-500/15 border-sky-500/30 text-sky-400"
             }`}
           >
             <LogIn className="h-6 w-6" />
@@ -82,7 +77,7 @@ export default function LoginPage() {
           </h1>
           <p
             className={`mt-1 text-xs ${
-              isLight ? "text-slate-500" : "text-zinc-400"
+              isLight ? "text-slate-500" : "text-slate-400"
             }`}
           >
             Вход для учеников и преподавателей
@@ -94,7 +89,7 @@ export default function LoginPage() {
             className={`mt-4 rounded-xl border p-3 text-center text-xs font-medium ${
               isLight
                 ? "border-rose-200 bg-rose-50 text-rose-700"
-                : "border-red-500/20 bg-red-500/10 text-red-400"
+                : "border-rose-500/30 bg-rose-500/10 text-rose-300"
             }`}
           >
             {error}
@@ -102,78 +97,47 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div>
+          <div className="space-y-1.5">
             <label
-              className={`text-xs font-semibold ${
-                isLight ? "text-slate-700" : "text-zinc-300"
+              className={`block text-xs font-semibold ${
+                isLight ? "text-slate-700" : "text-slate-300"
               }`}
             >
               Логин
             </label>
-            <div className="relative mt-1">
-              <UserIcon
-                className={`absolute left-3 top-2.5 h-4 w-4 ${
-                  isLight ? "text-slate-400" : "text-zinc-400"
-                }`}
-              />
-              <input
-                type="text"
-                required
-                value={login}
-                onChange={(e) => setLogin(e.target.value)}
-                placeholder="Логин"
-                className={`h-10 w-full rounded-xl border pl-9 pr-3 text-sm focus:outline-none transition-colors ${
-                  isLight
-                    ? "border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:border-sky-500"
-                    : "border-zinc-700 bg-slate-900/70 text-white placeholder-zinc-500 focus:border-sky-400"
-                }`}
-              />
-            </div>
+            <Input
+              type="text"
+              required
+              value={login}
+              onChange={(e) => setLogin(e.target.value)}
+              placeholder="Логин"
+              icon={<UserIcon className="h-4 w-4" />}
+            />
           </div>
 
-          <div>
+          <div className="space-y-1.5">
             <label
-              className={`text-xs font-semibold ${
-                isLight ? "text-slate-700" : "text-zinc-300"
+              className={`block text-xs font-semibold ${
+                isLight ? "text-slate-700" : "text-slate-300"
               }`}
             >
               Пароль
             </label>
-            <div className="relative mt-1">
-              <KeyRound
-                className={`absolute left-3 top-2.5 h-4 w-4 ${
-                  isLight ? "text-slate-400" : "text-zinc-400"
-                }`}
-              />
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className={`h-10 w-full rounded-xl border pl-9 pr-3 text-sm focus:outline-none transition-colors ${
-                  isLight
-                    ? "border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:border-sky-500"
-                    : "border-zinc-700 bg-slate-900/70 text-white placeholder-zinc-500 focus:border-sky-400"
-                }`}
-              />
-            </div>
+            <Input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              icon={<KeyRound className="h-4 w-4" />}
+            />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{ color: "#FFFFFF" }}
-            className={`w-full rounded-xl py-2.5 text-sm font-semibold text-white transition cursor-pointer disabled:opacity-50 ${
-              isLight
-                ? "bg-sky-600 hover:bg-sky-700 shadow-sm"
-                : "bg-sky-600 hover:bg-sky-500 shadow-[0_0_20px_rgba(14,165,233,0.3)]"
-            }`}
-          >
+          <Button type="submit" variant="primary" size="full" disabled={loading}>
             {loading ? "Авторизация..." : "Войти в систему"}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

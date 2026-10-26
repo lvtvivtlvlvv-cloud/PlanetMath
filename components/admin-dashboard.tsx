@@ -55,6 +55,7 @@ import {
   GraduationCap,
   PenTool,
 } from "lucide-react";
+import { Button, Input, Textarea, Select, Card, SegmentedControl, Modal } from "./ui-kit";
 
 export function formatTeacherName(fullName: string): string {
   if (!fullName) return "";
@@ -571,18 +572,15 @@ export function AdminDashboard({
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <ThemeSwitcher />
           <form action={logoutAction}>
-            <button
+            <Button
               type="submit"
+              variant="secondary"
+              size="icon"
               title="Выйти из аккаунта"
               aria-label="Выйти из аккаунта"
-              className={`flex h-9 w-9 items-center justify-center rounded-xl border transition cursor-pointer shrink-0 ${
-                isLight
-                  ? "border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-100 shadow-2xs"
-                  : "border-zinc-800 bg-[#111726]/90 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
-              }`}
             >
               <LogOut className="h-4 w-4" />
-            </button>
+            </Button>
           </form>
         </div>
       </header>
@@ -629,20 +627,21 @@ export function AdminDashboard({
       <div key={activeTab} className="animate-tab-enter">
         {activeTab === "schedule" && (
           <section className="space-y-3.5">
-            <div className="glass-panel flex flex-col gap-3 rounded-2xl p-3.5 sm:p-4 sm:flex-row sm:items-center sm:justify-between">
+            <Card padding="sm" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-2.5">
                 <span className="text-sm sm:text-base font-bold">Расписание занятий:</span>
                 <span
                   className={`rounded-lg px-2.5 py-1 text-xs font-semibold border ${
                     isLight
                       ? "bg-slate-100 text-slate-700 border-slate-200/80"
-                      : "bg-white/10 text-zinc-200 border-white/10"
+                      : "bg-slate-800 text-slate-200 border-slate-700"
                   }`}
                 >
                   {monthTitle}
                 </span>
                 <div className="w-40 sm:w-44">
                   <DatePicker
+                    compact
                     value={format(currentDate, "yyyy-MM-dd")}
                     onChange={(iso) => {
                       if (iso) {
@@ -651,53 +650,46 @@ export function AdminDashboard({
                     }}
                   />
                 </div>
-                <select
-                  value={selectedClassId}
-                  onChange={(e) => handleClassChange(e.target.value)}
-                  className={`h-9 ${selectClass}`}
-                >
-                  {classes.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      Класс: {c.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="w-36 sm:w-44">
+                  <Select
+                    compact
+                    value={selectedClassId}
+                    onValueChange={handleClassChange}
+                    options={classes.map((c) => ({
+                      value: c.id,
+                      label: `Класс: ${c.name}`,
+                    }))}
+                  />
+                </div>
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
-                <div
-                  className={`flex items-center rounded-xl border ${
-                    isLight ? "border-slate-200 bg-slate-100" : "border-zinc-700 bg-white/5"
-                  }`}
-                >
-                  <button
+                <div className="flex items-center gap-1">
+                  <Button
                     type="button"
+                    variant="secondary"
+                    size="icon"
                     onClick={() => handlePrevWeek(1)}
-                    className={`p-1.5 rounded-l-xl transition cursor-pointer ${
-                      isLight ? "hover:bg-slate-200/70 text-slate-700" : "hover:bg-white/10"
-                    }`}
+                    title="Предыдущая неделя"
                   >
                     <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="secondary"
+                    size="icon"
                     onClick={() => handleNextWeek(1)}
-                    className={`p-1.5 rounded-r-xl transition cursor-pointer ${
-                      isLight ? "hover:bg-slate-200/70 text-slate-700" : "hover:bg-white/10"
-                    }`}
+                    title="Следующая неделя"
                   >
                     <ChevronRight className="h-4 w-4" />
-                  </button>
+                  </Button>
                 </div>
 
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setScheduleMode(scheduleMode === "calendar" ? "excel" : "calendar")}
-                  className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
-                    isLight
-                      ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200/70"
-                      : "border-zinc-700 hover:bg-white/5 text-zinc-200"
-                  }`}
                 >
                   {scheduleMode === "calendar" ? (
                     <TableIcon className="h-3.5 w-3.5" />
@@ -705,34 +697,22 @@ export function AdminDashboard({
                     <CalendarIcon className="h-3.5 w-3.5" />
                   )}
                   <span>{scheduleMode === "calendar" ? "Табличный режим" : "Вид календаря"}</span>
-                </button>
+                </Button>
 
                 {scheduleMode === "excel" && (
                   <>
-                    <button
-                      type="button"
-                      onClick={addTableRow}
-                      className={`flex items-center gap-1 rounded-xl border px-3 py-1.5 text-xs font-bold cursor-pointer ${
-                        isLight
-                          ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
-                          : "bg-white/10 border-white/10 hover:bg-white/20"
-                      }`}
-                    >
+                    <Button type="button" variant="secondary" size="sm" onClick={addTableRow}>
                       <Plus className="h-3.5 w-3.5" />
                       <span>Строка</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSaveScheduleBatch}
-                      className="theme-btn flex items-center gap-1 px-3 py-1.5 text-xs font-bold cursor-pointer"
-                    >
+                    </Button>
+                    <Button type="button" variant="primary" size="sm" onClick={handleSaveScheduleBatch}>
                       <Save className="h-3.5 w-3.5" />
                       <span>Сохранить</span>
-                    </button>
+                    </Button>
                   </>
                 )}
               </div>
-            </div>
+            </Card>
 
             {scheduleSavedMsg && (
               <p className={`text-xs font-semibold ${isLight ? "text-sky-600" : "text-cyan-400"}`}>
@@ -782,8 +762,10 @@ export function AdminDashboard({
 
                     {selectedDayOfWeek !== 7 && (
                       <div className="flex items-center gap-2 flex-wrap justify-end">
-                        <button
+                        <Button
                           type="button"
+                          variant="secondary"
+                          size="sm"
                           onClick={() => {
                             const targetDayStr = format(currentDate, "yyyy-MM-dd");
                             const hwForDay =
@@ -795,24 +777,24 @@ export function AdminDashboard({
                               setActiveTab("journal");
                             }
                           }}
-                          className="flex items-center gap-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer"
                           title="Проверить домашнее задание"
                         >
                           <PenTool className="h-3.5 w-3.5" />
                           <span>Проверить ДЗ</span>
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button
                           type="button"
+                          variant="primary"
+                          size="sm"
                           onClick={() => {
                             setLessonDayOfWeek(selectedDayOfWeek);
                             setIsAddLessonOpen(true);
                           }}
-                          className="theme-btn flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold cursor-pointer"
                         >
                           <Plus className="h-3.5 w-3.5" />
                           <span>Добавить занятие</span>
-                        </button>
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -1104,28 +1086,166 @@ export function AdminDashboard({
         )}
 
         {activeTab === "homeworks" && (
-          <section className="space-y-4">
-            <div className="glass-panel flex items-center justify-between rounded-2xl p-4">
-              <div>
-                <h2 className="text-base font-bold">Выданные домашние задания</h2>
-                <p className={`text-xs ${isLight ? "text-slate-500" : "text-zinc-500"}`}>
+          <section className="space-y-3.5 sm:space-y-4">
+            <Card padding="sm" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-sm sm:text-base font-bold">Выданные домашние задания</h2>
+                <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-slate-400"}`}>
                   Редактирование доступно до момента первой сдачи учениками
                 </p>
               </div>
-              <button
+              <Button
                 type="button"
+                variant="primary"
+                size="md"
                 onClick={() => {
                   setHwPreset(null);
                   setIsHwModalOpen(true);
                 }}
-                className="theme-btn flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold cursor-pointer"
+                className="w-full sm:w-auto"
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className="h-4 w-4" />
                 <span>Создать задание</span>
-              </button>
+              </Button>
+            </Card>
+
+            {/* Мобильный список карточек для «Выданные ДЗ» (< md) */}
+            <div className="md:hidden space-y-3">
+              {sortedHomeworks.length === 0 ? (
+                <div
+                  className={`glass-panel rounded-2xl p-6 text-center text-xs ${
+                    isLight ? "text-slate-400" : "text-zinc-400"
+                  }`}
+                >
+                  Нет выданных заданий
+                </div>
+              ) : (
+                sortedHomeworks.map((hw) => (
+                  <div
+                    key={hw.id}
+                    className="glass-panel rounded-2xl p-3.5 sm:p-4 space-y-2.5 transition duration-200"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center flex-wrap gap-1.5 min-w-0">
+                        <span
+                          className={`rounded-lg px-2 py-0.5 text-xs font-black border ${
+                            isLight
+                              ? "bg-sky-50 text-sky-700 border-sky-200"
+                              : "bg-cyan-500/15 text-cyan-300 border-cyan-500/30"
+                          }`}
+                        >
+                          {hw.className}
+                        </span>
+                        {hw.targetTrack && (
+                          <span
+                            className={`rounded-md px-1.5 py-0.5 text-[10px] font-black uppercase border ${
+                              hw.targetTrack === "Профиль"
+                                ? isLight
+                                  ? "bg-purple-50 text-purple-700 border-purple-200"
+                                  : "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                                : isLight
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                            }`}
+                          >
+                            {hw.targetTrack}
+                          </span>
+                        )}
+                        <span className={`text-xs font-bold truncate ${isLight ? "text-slate-700" : "text-zinc-200"}`}>
+                          {hw.subjectName}
+                        </span>
+                      </div>
+
+                      <span
+                        className={`font-mono text-[11px] font-semibold shrink-0 ${
+                          isLight ? "text-slate-500" : "text-zinc-400"
+                        }`}
+                      >
+                        до {hw.targetDate}
+                      </span>
+                    </div>
+
+                    <div className="min-w-0">
+                      <h3 className={`text-sm font-extrabold break-words ${isLight ? "text-slate-900" : "text-white"}`}>
+                        {hw.title}
+                      </h3>
+                      {hw.description && (
+                        <p
+                          className={`text-xs mt-0.5 line-clamp-2 break-words ${
+                            isLight ? "text-slate-500" : "text-zinc-400"
+                          }`}
+                        >
+                          {hw.description}
+                        </p>
+                      )}
+                    </div>
+
+                    <div
+                      className={`flex items-center justify-between gap-2 pt-2.5 border-t ${
+                        isLight ? "border-slate-100" : "border-zinc-800/80"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold border ${
+                            hw.submissionsCount > 0
+                              ? isLight
+                                ? "bg-sky-50 text-sky-700 border-sky-200"
+                                : "bg-blue-950 text-blue-300 border-blue-800"
+                              : isLight
+                              ? "bg-slate-100 text-slate-500 border-slate-200"
+                              : "bg-white/10 text-zinc-400 border-transparent"
+                          }`}
+                        >
+                          <span>Сдано: {hw.submissionsCount}</span>
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => openCheckingStudio(hw)}
+                          className="inline-flex items-center gap-1 rounded-lg bg-sky-600 hover:bg-sky-700 px-2.5 py-1 text-[11px] font-bold text-white shadow-2xs transition duration-200 cursor-pointer"
+                        >
+                          <PenTool className="h-3 w-3" />
+                          <span>Проверить</span>
+                        </button>
+                      </div>
+
+                      {hw.submissionsCount === 0 ? (
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setEditingHw(hw)}
+                            className={`rounded-lg p-1.5 transition cursor-pointer ${
+                              isLight
+                                ? "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                                : "text-zinc-400 hover:bg-white/10 hover:text-white"
+                            }`}
+                            title="Редактировать"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (confirm("Удалить это ДЗ?")) await deleteHomeworkAction(hw.id);
+                            }}
+                            className="rounded-lg p-1.5 text-red-500 hover:bg-red-500/10 transition cursor-pointer"
+                            title="Удалить"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] font-medium text-slate-400">Заблокировано</span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
-            <div className="glass-panel overflow-x-auto rounded-2xl">
+            {/* Десктопная таблица для «Выданные ДЗ» (md+) */}
+            <div className="hidden md:block glass-panel overflow-x-auto rounded-2xl">
               <table className="w-full min-w-[700px] text-left text-xs">
                 <thead
                   className={`border-b uppercase ${
@@ -1176,7 +1296,7 @@ export function AdminDashboard({
                             {hw.description}
                           </span>
                         </td>
-                        <td className="p-3">{hw.targetDate}</td>
+                        <td className="p-3 font-mono">{hw.targetDate}</td>
                         <td className="p-3">
                           <span
                             className={`inline-block rounded-md px-2 py-0.5 font-semibold border ${
@@ -1193,28 +1313,40 @@ export function AdminDashboard({
                           </span>
                         </td>
                         <td className="p-3 text-right">
-                          {hw.submissionsCount === 0 ? (
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                type="button"
-                                onClick={() => setEditingHw(hw)}
-                                className="rounded p-1 text-slate-400 hover:text-slate-800 dark:hover:text-white"
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  if (confirm("Удалить это ДЗ?")) await deleteHomeworkAction(hw.id);
-                                }}
-                                className="rounded p-1 text-red-500 hover:bg-red-500/10"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-[10px] text-slate-400">Заблокировано</span>
-                          )}
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openCheckingStudio(hw)}
+                              className="inline-flex items-center gap-1 rounded-lg bg-sky-600 hover:bg-sky-700 px-2.5 py-1 text-[11px] font-bold text-white shadow-2xs transition duration-200 cursor-pointer"
+                            >
+                              <PenTool className="h-3 w-3" />
+                              <span>Проверить</span>
+                            </button>
+                            {hw.submissionsCount === 0 ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingHw(hw)}
+                                  className="rounded p-1 text-slate-400 hover:text-slate-800 dark:hover:text-white cursor-pointer"
+                                  title="Редактировать"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (confirm("Удалить это ДЗ?")) await deleteHomeworkAction(hw.id);
+                                  }}
+                                  className="rounded p-1 text-red-500 hover:bg-red-500/10 cursor-pointer"
+                                  title="Удалить"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </>
+                            ) : (
+                              <span className="text-[10px] text-slate-400">Заблокировано</span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -1351,9 +1483,9 @@ export function AdminDashboard({
 
         {activeTab === "students" && (
           <section className="space-y-5">
-            <div className="glass-panel rounded-2xl p-4 sm:p-5">
+            <Card padding="md">
               <div className="flex items-center gap-2 font-bold text-sm">
-                <UserPlus className="h-4 w-4 text-sky-600 dark:text-cyan-400" />
+                <UserPlus className="h-4 w-4 text-sky-600 dark:text-sky-400" />
                 <h2>Регистрация нового ученика</h2>
               </div>
               <form
@@ -1362,51 +1494,48 @@ export function AdminDashboard({
                   (document.getElementById("create-student-form") as HTMLFormElement)?.reset();
                 }}
                 id="create-student-form"
-                className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-5"
+                className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-5 items-center"
               >
                 <div className="sm:col-span-2">
-                  <input
+                  <Input
                     name="fullName"
                     required
                     placeholder="ФИО ученика (например: Артищев Иван Петрович)"
-                    className={`h-9 w-full ${selectClass}`}
                   />
                 </div>
                 <div>
-                  <input
+                  <Input
                     name="grade"
                     type="number"
                     min="1"
                     max="11"
                     required
                     placeholder="Класс (1-11)"
-                    className={`h-9 w-full ${selectClass}`}
                   />
                 </div>
                 <div className="flex gap-2">
-                  <input
+                  <Input
                     name="letter"
                     required
                     maxLength={1}
                     placeholder="Буква"
-                    className={`h-9 w-16 uppercase ${selectClass}`}
+                    className="w-16 uppercase text-center"
                   />
-                  <select
+                  <Select
                     name="examTrack"
-                    className={`h-9 flex-1 ${selectClass}`}
                     title="Для 11 класса: выберите уровень экзамена (Профиль / База)"
                   >
                     <option value="База">11 кл: База</option>
                     <option value="Профиль">11 кл: Профиль</option>
-                  </select>
+                  </Select>
                 </div>
                 <div>
-                  <button type="submit" className="theme-btn w-full h-9 px-3 text-xs font-bold cursor-pointer">
+                  <Button type="submit" variant="primary" size="full">
                     Создать
-                  </button>
+                  </Button>
                 </div>
               </form>
-            </div>
+            </Card>
 
             <div className="glass-panel rounded-2xl p-4 space-y-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between flex-wrap">
@@ -1646,9 +1775,9 @@ export function AdminDashboard({
 
         {activeTab === "teachers" && (
           <section className="space-y-5">
-            <div className="glass-panel rounded-2xl p-4 sm:p-5">
+            <Card padding="md">
               <div className="flex items-center gap-2 font-bold text-sm">
-                <GraduationCap className="h-4 w-4 text-sky-600 dark:text-cyan-400" />
+                <GraduationCap className="h-4 w-4 text-sky-600 dark:text-sky-400" />
                 <h2>Добавить нового учителя</h2>
               </div>
               <form
@@ -1657,19 +1786,20 @@ export function AdminDashboard({
                   (document.getElementById("create-teacher-form") as HTMLFormElement)?.reset();
                 }}
                 id="create-teacher-form"
-                className="mt-3 flex flex-col gap-3 sm:flex-row"
+                className="mt-3 flex flex-col gap-3 sm:flex-row items-stretch sm:items-center"
               >
-                <input
-                  name="fullName"
-                  required
-                  placeholder="ФИО Учителя (например: Смирнова Анна Павловна)"
-                  className={`h-9 flex-1 ${selectClass}`}
-                />
-                <button type="submit" className="theme-btn px-4 py-1.5 text-xs font-bold cursor-pointer">
+                <div className="flex-1">
+                  <Input
+                    name="fullName"
+                    required
+                    placeholder="ФИО Учителя (например: Смирнова Анна Павловна)"
+                  />
+                </div>
+                <Button type="submit" variant="primary" size="md" className="h-11">
                   Зарегистрировать учителя
-                </button>
+                </Button>
               </form>
-            </div>
+            </Card>
 
             <div className="glass-panel rounded-2xl p-4 space-y-3">
               <h3 className="font-bold text-sm">Список учителей и администраторов</h3>
@@ -1751,404 +1881,332 @@ export function AdminDashboard({
         )}
       </div>
 
-      {isAddLessonOpen && (
-        <div className="fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex items-center justify-center bg-black/60 p-3 sm:p-4 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] backdrop-blur-sm">
-          <div className="glass-panel w-full max-w-[min(95vw,calc(100vw-1.5rem))] sm:max-w-sm max-h-[90dvh] flex flex-col overflow-hidden rounded-3xl p-5 shadow-2xl">
-            <div
-              className={`flex items-center justify-between gap-2 border-b pb-3 shrink-0 ${
-                isLight ? "border-slate-200" : "border-zinc-800"
-              }`}
-            >
-              <h3 className="font-bold text-sm min-w-0 flex-1 truncate">Добавить занятие</h3>
-              <button
-                onClick={() => setIsAddLessonOpen(false)}
-                className="shrink-0 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const fd = new FormData(e.currentTarget);
-                await addSingleLessonAction({
-                  classId: selectedClassId,
-                  dayOfWeek: Number(fd.get("dayOfWeek")),
-                  lessonNumber: Number(fd.get("lessonNumber")),
-                  startTime: fd.get("startTime") as string,
-                  endTime: fd.get("endTime") as string,
-                  subjectName: fd.get("subjectName") as string,
-                  room: fd.get("room") as string,
-                  teacherName: fd.get("teacherName") as string,
-                });
-                setIsAddLessonOpen(false);
-              }}
-              className="mt-4 space-y-3 text-xs flex-1 min-h-0 overflow-y-auto pr-1"
-            >
-              <input type="hidden" name="dayOfWeek" value={lessonDayOfWeek} />
-              <div>
-                <label className="text-slate-500 dark:text-zinc-400 font-medium block mb-1">
-                  Дата занятия (день недели)
-                </label>
-                <DatePicker
-                  value={format(addDays(monday, Math.max(0, lessonDayOfWeek - 1)), "yyyy-MM-dd")}
-                  onChange={(iso) => {
-                    if (iso) {
-                      const d = parseISO(iso);
-                      const dow = getDay(d) === 0 ? 7 : getDay(d);
-                      setLessonDayOfWeek(dow);
-                      setCurrentDate(d);
-                    }
-                  }}
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="text-slate-500 dark:text-zinc-400 font-medium">№ Урока</label>
-                  <input
-                    name="lessonNumber"
-                    type="number"
-                    min={1}
-                    max={8}
-                    defaultValue={1}
-                    required
-                    className={`mt-1 h-9 w-full ${selectClass}`}
-                  />
-                </div>
-                <div>
-                  <label className="text-slate-500 dark:text-zinc-400 font-medium">Начало</label>
-                  <input
-                    name="startTime"
-                    defaultValue="08:30"
-                    required
-                    className={`mt-1 h-9 w-full ${selectClass}`}
-                  />
-                </div>
-                <div>
-                  <label className="text-slate-500 dark:text-zinc-400 font-medium">Конец</label>
-                  <input
-                    name="endTime"
-                    defaultValue="09:15"
-                    required
-                    className={`mt-1 h-9 w-full ${selectClass}`}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-slate-500 dark:text-zinc-400 font-medium">Предмет</label>
-                <input
-                  name="subjectName"
-                  required
-                  placeholder="Алгебра"
-                  className={`mt-1 h-9 w-full ${selectClass}`}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-slate-500 dark:text-zinc-400 font-medium">Кабинет</label>
-                  <input name="room" defaultValue="101" required className={`mt-1 h-9 w-full ${selectClass}`} />
-                </div>
-                <div>
-                  <label className="text-slate-500 dark:text-zinc-400 font-medium">Преподаватель</label>
-                  <select name="teacherName" required className={`mt-1 h-9 w-full ${selectClass}`}>
-                    {teachers.map((t) => {
-                      const formatted = formatTeacherName(t.fullName);
-                      return (
-                        <option key={t.id} value={formatted}>
-                          {formatted}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-              </div>
-              <button type="submit" className="theme-btn w-full py-2 font-bold mt-2 cursor-pointer">
-                Сохранить
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {isHwModalOpen && (
-        <div className="fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex items-center justify-center bg-black/60 p-3 sm:p-4 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] backdrop-blur-sm">
-          <div className="glass-panel w-full max-w-[min(95vw,calc(100vw-1.5rem))] sm:max-w-lg max-h-[90dvh] flex flex-col overflow-hidden rounded-3xl p-5 shadow-2xl">
-            <div
-              className={`flex items-center justify-between gap-2 border-b pb-3 shrink-0 ${
-                isLight ? "border-slate-200" : "border-zinc-800"
-              }`}
-            >
-              <h3 className="font-bold min-w-0 flex-1 truncate">Выдать домашнее задание</h3>
-              <button
-                onClick={() => {
-                  setIsHwModalOpen(false);
-                  setHwPreset(null);
-                  setHwFiles([]);
-                }}
-                className="shrink-0 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                setHwLoading(true);
-                try {
-                  const fd = new FormData(e.currentTarget);
-                  let attachments: any[] = [];
-                  if (hwFiles.length > 0) {
-                    const uploadFd = new FormData();
-                    hwFiles.forEach((f) => uploadFd.append("files", f));
-                    const res = await fetch("/api/upload", { method: "POST", body: uploadFd });
-                    const data = await res.json();
-                    if (data.files) attachments = data.files;
-                  }
-
-                  await createHomeworkAction({
-                    classId: selectedClassId,
-                    subjectName: fd.get("subjectName") as string,
-                    targetDate: fd.get("targetDate") as string,
-                    title: fd.get("title") as string,
-                    description: fd.get("description") as string,
-                    targetTrack: Boolean(
-                      classes.find((c) => c.id === selectedClassId)?.grade === 11 ||
-                        classes.find((c) => c.id === selectedClassId)?.name.startsWith("11")
-                    )
-                      ? modalTargetTrack === "ALL"
-                        ? null
-                        : modalTargetTrack
-                      : null,
-                    attachments,
-                  });
-
-                  setIsHwModalOpen(false);
-                  setHwFiles([]);
-                  setHwPreset(null);
-                  setModalTargetTrack("ALL");
-                } finally {
-                  setHwLoading(false);
+      {/* Модальное окно «Добавить занятие» через единый <Modal /> дизайн-системы */}
+      <Modal
+        isOpen={isAddLessonOpen}
+        onClose={() => setIsAddLessonOpen(false)}
+        title="Добавить занятие"
+        icon={<CalendarIcon className="w-4 h-4" />}
+        maxWidth="md"
+      >
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            await addSingleLessonAction({
+              classId: selectedClassId,
+              dayOfWeek: Number(fd.get("dayOfWeek")),
+              lessonNumber: Number(fd.get("lessonNumber")),
+              startTime: fd.get("startTime") as string,
+              endTime: fd.get("endTime") as string,
+              subjectName: fd.get("subjectName") as string,
+              room: fd.get("room") as string,
+              teacherName: fd.get("teacherName") as string,
+            });
+            setIsAddLessonOpen(false);
+          }}
+          className="space-y-3.5 text-xs sm:text-sm"
+        >
+          <input type="hidden" name="dayOfWeek" value={lessonDayOfWeek} />
+          <div>
+            <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+              Дата занятия (день недели)
+            </label>
+            <DatePicker
+              value={format(addDays(monday, Math.max(0, lessonDayOfWeek - 1)), "yyyy-MM-dd")}
+              onChange={(iso) => {
+                if (iso) {
+                  const d = parseISO(iso);
+                  const dow = getDay(d) === 0 ? 7 : getDay(d);
+                  setLessonDayOfWeek(dow);
+                  setCurrentDate(d);
                 }
               }}
-              className="mt-4 space-y-3 text-xs flex-1 min-h-0 overflow-y-auto pr-1"
-            >
-              {Boolean(
-                classes.find((c) => c.id === selectedClassId)?.grade === 11 ||
-                  classes.find((c) => c.id === selectedClassId)?.name.startsWith("11")
-              ) && (
-                <div>
-                  <label className="font-medium text-slate-500 dark:text-zinc-400 block mb-1">
-                    Кому выдать ДЗ (11 класс)
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(["ALL", "База", "Профиль"] as const).map((tr) => (
-                      <button
-                        key={tr}
-                        type="button"
-                        onClick={() => setModalTargetTrack(tr)}
-                        className={`h-8 rounded-lg border text-xs font-bold transition flex items-center justify-center cursor-pointer ${
-                          modalTargetTrack === tr
-                            ? tr === "Профиль"
-                              ? "bg-purple-600 text-white border-purple-600 shadow-xs"
-                              : tr === "База"
-                              ? "bg-amber-600 text-white border-amber-600 shadow-xs"
-                              : "bg-sky-600 text-white border-sky-600 shadow-xs"
-                            : isLight
-                            ? "border-slate-200 bg-slate-100 text-slate-600 hover:text-slate-900"
-                            : "border-zinc-700 text-zinc-400 hover:text-white"
-                        }`}
-                      >
-                        {tr === "ALL" ? "Весь класс" : tr}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-2.5">
+            <div>
+              <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+                № Урока
+              </label>
+              <Input name="lessonNumber" type="number" min={1} max={8} defaultValue={1} required />
+            </div>
+            <div>
+              <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+                Начало
+              </label>
+              <Input name="startTime" defaultValue="08:30" required />
+            </div>
+            <div>
+              <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+                Конец
+              </label>
+              <Input name="endTime" defaultValue="09:15" required />
+            </div>
+          </div>
+          <div>
+            <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+              Предмет
+            </label>
+            <Input name="subjectName" required placeholder="Алгебра" />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+                Кабинет
+              </label>
+              <Input name="room" defaultValue="101" required />
+            </div>
+            <div>
+              <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+                Преподаватель
+              </label>
+              <Select name="teacherName" required>
+                {teachers.map((t) => {
+                  const formatted = formatTeacherName(t.fullName);
+                  return (
+                    <option key={t.id} value={formatted}>
+                      {formatted}
+                    </option>
+                  );
+                })}
+              </Select>
+            </div>
+          </div>
+          <div className="pt-2">
+            <Button type="submit" variant="primary" size="full">
+              Сохранить
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="font-medium text-slate-500 dark:text-zinc-400">Предмет</label>
-                  <input
-                    name="subjectName"
-                    defaultValue={hwPreset?.subjectName || ""}
-                    required
-                    className={`mt-1 h-9 w-full ${selectClass}`}
-                  />
-                </div>
-                <div>
-                  <label className="font-medium text-slate-500 dark:text-zinc-400 block mb-1">Срок сдачи</label>
-                  <DatePicker
-                    name="targetDate"
-                    defaultValue={hwPreset?.targetDate || format(currentDate, "yyyy-MM-dd")}
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="font-medium text-slate-500 dark:text-zinc-400">Тема задания</label>
+      {/* Модальное окно «Выдать ДЗ» через единый <Modal /> дизайн-системы */}
+      <Modal
+        isOpen={isHwModalOpen}
+        onClose={() => {
+          setIsHwModalOpen(false);
+          setHwPreset(null);
+          setHwFiles([]);
+        }}
+        title="Выдать домашнее задание"
+        icon={<BookOpen className="w-4 h-4" />}
+        maxWidth="lg"
+      >
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setHwLoading(true);
+            try {
+              const fd = new FormData(e.currentTarget);
+              let attachments: any[] = [];
+              if (hwFiles.length > 0) {
+                const uploadFd = new FormData();
+                hwFiles.forEach((f) => uploadFd.append("files", f));
+                const res = await fetch("/api/upload", { method: "POST", body: uploadFd });
+                const data = await res.json();
+                if (data.files) attachments = data.files;
+              }
+
+              await createHomeworkAction({
+                classId: selectedClassId,
+                subjectName: fd.get("subjectName") as string,
+                targetDate: fd.get("targetDate") as string,
+                title: fd.get("title") as string,
+                description: fd.get("description") as string,
+                targetTrack: Boolean(
+                  classes.find((c) => c.id === selectedClassId)?.grade === 11 ||
+                    classes.find((c) => c.id === selectedClassId)?.name.startsWith("11")
+                )
+                  ? modalTargetTrack === "ALL"
+                    ? null
+                    : modalTargetTrack
+                  : null,
+                attachments,
+              });
+
+              setIsHwModalOpen(false);
+              setHwFiles([]);
+              setHwPreset(null);
+              setModalTargetTrack("ALL");
+            } finally {
+              setHwLoading(false);
+            }
+          }}
+          className="space-y-3.5 text-xs sm:text-sm"
+        >
+          {Boolean(
+            classes.find((c) => c.id === selectedClassId)?.grade === 11 ||
+              classes.find((c) => c.id === selectedClassId)?.name.startsWith("11")
+          ) && (
+            <div>
+              <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+                Кому выдать ДЗ (11 класс)
+              </label>
+              <SegmentedControl
+                fullWidth
+                size="sm"
+                value={modalTargetTrack}
+                onChange={setModalTargetTrack}
+                options={[
+                  { value: "ALL", label: "Весь класс" },
+                  { value: "База", label: "База" },
+                  { value: "Профиль", label: "Профиль" },
+                ]}
+              />
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+                Предмет
+              </label>
+              <Input name="subjectName" defaultValue={hwPreset?.subjectName || ""} required />
+            </div>
+            <div>
+              <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+                Срок сдачи
+              </label>
+              <DatePicker
+                name="targetDate"
+                defaultValue={hwPreset?.targetDate || format(currentDate, "yyyy-MM-dd")}
+                required
+              />
+            </div>
+          </div>
+          <div>
+            <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+              Тема задания
+            </label>
+            <Input name="title" required placeholder="Параграф 5, упр. 12" />
+          </div>
+          <div>
+            <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+              Описание задания
+            </label>
+            <Textarea name="description" rows={3} placeholder="Инструкции..." />
+          </div>
+
+          <div>
+            <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+              Файлы
+            </label>
+            <div className="flex items-center gap-2">
+              <label
+                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl border h-10 px-3.5 text-xs font-medium transition-colors duration-200 ${
+                  isLight
+                    ? "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    : "border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700"
+                }`}
+              >
+                <Paperclip className="h-3.5 w-3.5" />
+                <span>Выбрать файлы</span>
                 <input
-                  name="title"
-                  required
-                  placeholder="Параграф 5, упр. 12"
-                  className={`mt-1 h-9 w-full ${selectClass}`}
+                  type="file"
+                  multiple
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      setHwFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+                    }
+                  }}
+                  className="hidden"
                 />
-              </div>
-              <div>
-                <label className="font-medium text-slate-500 dark:text-zinc-400">Описание задания</label>
-                <textarea
-                  name="description"
-                  rows={3}
-                  placeholder="Инструкции..."
-                  className={`mt-1 w-full p-2.5 ${selectClass}`}
-                />
-              </div>
+              </label>
+            </div>
 
-              <div>
-                <label className="font-medium text-slate-500 dark:text-zinc-400">Файлы</label>
-                <div className="mt-1 flex items-center gap-2">
-                  <label
-                    className={`flex cursor-pointer items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs ${
-                      isLight
-                        ? "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
-                        : "border-zinc-700 hover:bg-white/5"
+            {hwFiles.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {hwFiles.map((file, idx) => (
+                  <span
+                    key={idx}
+                    className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-medium ${
+                      isLight ? "bg-slate-100 text-slate-700" : "bg-slate-800 text-slate-200"
                     }`}
                   >
-                    <Paperclip className="h-3.5 w-3.5" />
-                    <span>Выбрать файлы</span>
-                    <input
-                      type="file"
-                      multiple
-                      onChange={(e) => {
-                        if (e.target.files) {
-                          setHwFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
-                        }
-                      }}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-
-                {hwFiles.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {hwFiles.map((file, idx) => (
-                      <span
-                        key={idx}
-                        className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-medium ${
-                          isLight ? "bg-slate-100 text-slate-700" : "bg-white/10"
-                        }`}
-                      >
-                        <span className="max-w-[150px] truncate">{file.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => setHwFiles((prev) => prev.filter((_, i) => i !== idx))}
-                          className="rounded p-0.5 text-slate-400 hover:text-red-500"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
+                    <span className="max-w-[150px] truncate">{file.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setHwFiles((prev) => prev.filter((_, i) => i !== idx))}
+                      className="rounded p-0.5 text-slate-400 hover:text-rose-500"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                ))}
               </div>
-
-              <button
-                type="submit"
-                disabled={hwLoading}
-                className="theme-btn w-full py-2 font-bold disabled:opacity-50 mt-2 cursor-pointer"
-              >
-                {hwLoading ? "Сохранение..." : "Опубликовать"}
-              </button>
-            </form>
+            )}
           </div>
-        </div>
-      )}
 
-      {editingHw && (
-        <div className="fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex items-center justify-center bg-black/60 p-3 sm:p-4 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] backdrop-blur-sm">
-          <div className="glass-panel w-full max-w-[min(95vw,calc(100vw-1.5rem))] sm:max-w-lg max-h-[90dvh] flex flex-col overflow-hidden rounded-3xl p-5 shadow-2xl">
-            <div
-              className={`flex items-center justify-between gap-2 border-b pb-3 shrink-0 ${
-                isLight ? "border-slate-200" : "border-zinc-800"
-              }`}
-            >
-              <h3 className="font-bold min-w-0 flex-1 truncate">Редактирование ДЗ</h3>
-              <button
-                onClick={() => setEditingHw(null)}
-                className="shrink-0 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10"
-              >
-                <X className="h-4 w-4" />
-              </button>
+          <div className="pt-2">
+            <Button type="submit" variant="primary" size="full" disabled={hwLoading}>
+              {hwLoading ? "Сохранение..." : "Опубликовать"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Модальное окно «Редактирование ДЗ» через единый <Modal /> дизайн-системы */}
+      <Modal
+        isOpen={Boolean(editingHw)}
+        onClose={() => setEditingHw(null)}
+        title="Редактирование ДЗ"
+        icon={<Edit2 className="w-4 h-4" />}
+        maxWidth="lg"
+      >
+        {editingHw && (
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              await updateHomeworkAction({
+                homeworkId: editingHw.id,
+                title: fd.get("title") as string,
+                description: fd.get("description") as string,
+                subjectName: fd.get("subjectName") as string,
+                targetDate: fd.get("targetDate") as string,
+              });
+              setEditingHw(null);
+            }}
+            className="space-y-3.5 text-xs sm:text-sm"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+                  Предмет
+                </label>
+                <Input name="subjectName" defaultValue={editingHw.subjectName} required />
+              </div>
+              <div>
+                <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+                  Срок сдачи
+                </label>
+                <DatePicker name="targetDate" defaultValue={editingHw.targetDate} required />
+              </div>
             </div>
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const fd = new FormData(e.currentTarget);
-                await updateHomeworkAction({
-                  homeworkId: editingHw.id,
-                  title: fd.get("title") as string,
-                  description: fd.get("description") as string,
-                  subjectName: fd.get("subjectName") as string,
-                  targetDate: fd.get("targetDate") as string,
-                });
-                setEditingHw(null);
-              }}
-              className="mt-4 space-y-3 text-xs flex-1 min-h-0 overflow-y-auto pr-1"
-            >
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="font-medium text-slate-500 dark:text-zinc-400">Предмет</label>
-                  <input
-                    name="subjectName"
-                    defaultValue={editingHw.subjectName}
-                    required
-                    className={`mt-1 h-9 w-full ${selectClass}`}
-                  />
-                </div>
-                <div>
-                  <label className="font-medium text-slate-500 dark:text-zinc-400 block mb-1">Срок сдачи</label>
-                  <DatePicker
-                    name="targetDate"
-                    defaultValue={editingHw.targetDate}
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="font-medium text-slate-500 dark:text-zinc-400">Тема</label>
-                <input
-                  name="title"
-                  defaultValue={editingHw.title}
-                  required
-                  className={`mt-1 h-9 w-full ${selectClass}`}
-                />
-              </div>
-              <div>
-                <label className="font-medium text-slate-500 dark:text-zinc-400">Инструкция</label>
-                <textarea
-                  name="description"
-                  defaultValue={editingHw.description}
-                  rows={3}
-                  className={`mt-1 w-full p-2.5 ${selectClass}`}
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingHw(null)}
-                  className={`rounded-xl px-3.5 py-1.5 font-medium ${
-                    isLight ? "hover:bg-slate-100 text-slate-600" : "hover:bg-white/10"
-                  }`}
-                >
-                  Отмена
-                </button>
-                <button type="submit" className="theme-btn px-4 py-1.5 font-bold cursor-pointer">
-                  Сохранить
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div>
+              <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+                Тема
+              </label>
+              <Input name="title" defaultValue={editingHw.title} required />
+            </div>
+            <div>
+              <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+                Инструкция
+              </label>
+              <Textarea name="description" defaultValue={editingHw.description} rows={3} />
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button type="button" variant="ghost" onClick={() => setEditingHw(null)}>
+                Отмена
+              </Button>
+              <Button type="submit" variant="primary">
+                Сохранить
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
 
       <GradingModal
         isOpen={Boolean(activeModalData)}

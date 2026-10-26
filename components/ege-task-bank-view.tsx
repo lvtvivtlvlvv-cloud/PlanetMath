@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useTransition, useRef, useEffect } from "react";
+import React, { useState, useMemo, useTransition, useEffect } from "react";
 import { useAppTheme } from "./theme-context";
 import {
   BookOpen,
@@ -21,9 +21,7 @@ import {
   RotateCcw,
   Eye,
   EyeOff,
-  ChevronDown,
   Send,
-  Check,
   X,
   RefreshCw,
 } from "lucide-react";
@@ -40,6 +38,7 @@ import { MathText } from "./math-text";
 import { PdfTaskCrop } from "./pdf-task-crop";
 import { DatePicker } from "./date-picker";
 import { resolvePdfTaskMeta } from "@/lib/ege-math-cleaner";
+import { Card, Button, Input, Textarea, Select, SegmentedControl, Modal } from "./ui-kit";
 
 export interface EgeTaskItem {
   id: string;
@@ -92,149 +91,13 @@ interface EgeTaskBankViewProps {
   classes: ClassOption[];
 }
 
-/**
- * Custom adaptive select dropdown (Light & Dark modes)
- */
-function CustomSelect<T extends string | number>({
-  value,
-  onChange,
-  options,
-  placeholder = "Выберите...",
-  className = "",
-  icon,
-}: {
-  value: T;
-  onChange: (val: T) => void;
-  options: { value: T; label: string; badge?: string; sublabel?: string }[];
-  placeholder?: string;
-  className?: string;
-  icon?: React.ReactNode;
-}) {
-  const { colorMode } = useAppTheme();
-  const isLight = colorMode === "light";
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsOpen(false);
-    };
-    document.addEventListener("mousedown", handleOutside);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleOutside);
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, []);
-
-  const selectedOpt = options.find((o) => o.value === value);
-
-  return (
-    <div ref={containerRef} className={`relative select-none ${className}`}>
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        className={`w-full h-10 px-3.5 rounded-xl border text-xs flex items-center justify-between gap-2 transition-all cursor-pointer group outline-none ${
-          isLight
-            ? "bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 focus:border-sky-500 text-slate-800 shadow-2xs"
-            : "bg-slate-900/80 hover:bg-slate-900 border-cyan-500/30 hover:border-cyan-400/60 focus:border-cyan-400 text-zinc-100 shadow-sm backdrop-blur-xl"
-        }`}
-      >
-        <div className="flex items-center gap-2 truncate">
-          {icon && <span className={isLight ? "text-sky-600 shrink-0" : "text-cyan-400 shrink-0"}>{icon}</span>}
-          <span className="truncate font-semibold">{selectedOpt ? selectedOpt.label : placeholder}</span>
-          {selectedOpt?.badge && (
-            <span
-              className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md border ${
-                isLight
-                  ? "bg-sky-50 text-sky-700 border-sky-200"
-                  : "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
-              }`}
-            >
-              {selectedOpt.badge}
-            </span>
-          )}
-        </div>
-        <ChevronDown
-          className={`h-4 w-4 transition-transform duration-200 shrink-0 ${
-            isLight ? "text-slate-400" : "text-cyan-400/80"
-          } ${isOpen ? "rotate-180" : ""}`}
-        />
-      </button>
-
-      {isOpen && (
-        <div
-          className={`absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border p-1.5 max-h-60 overflow-y-auto scrollbar-thin animate-in fade-in zoom-in-95 duration-150 ${
-            isLight
-              ? "bg-white border-slate-200 shadow-xl"
-              : "bg-slate-950/95 backdrop-blur-2xl border-cyan-500/30 shadow-[0_10px_40px_rgba(0,0,0,0.8)]"
-          }`}
-        >
-          {options.map((opt) => {
-            const isSelected = opt.value === value;
-            return (
-              <div
-                key={String(opt.value)}
-                onClick={() => {
-                  onChange(opt.value);
-                  setIsOpen(false);
-                }}
-                className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
-                  isSelected
-                    ? isLight
-                      ? "bg-sky-50 text-sky-700 font-bold border border-sky-200"
-                      : "bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30"
-                    : isLight
-                    ? "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                    : "text-zinc-300 hover:bg-cyan-500/10 hover:text-cyan-200"
-                }`}
-              >
-                <div className="flex items-center gap-2 truncate">
-                  <span className="truncate">{opt.label}</span>
-                  {opt.sublabel && (
-                    <span className={`text-[10px] ${isLight ? "text-slate-400" : "text-zinc-500"}`}>
-                      ({opt.sublabel})
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {opt.badge && (
-                    <span
-                      className={`px-1.5 py-0.5 text-[9px] font-bold rounded border ${
-                        isLight
-                          ? "bg-slate-100 text-slate-600 border-slate-200"
-                          : "bg-white/5 text-zinc-400 border-white/10"
-                      }`}
-                    >
-                      {opt.badge}
-                    </span>
-                  )}
-                  {isSelected && (
-                    <Check className={`h-3.5 w-3.5 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function EgeTaskBankView({
   tasks = [],
   assignments = [],
   students = [],
   classes = [],
 }: EgeTaskBankViewProps) {
-  const { colorMode } = useAppTheme();
-  const isLight = colorMode === "light";
+  const { isLight } = useAppTheme();
 
   const [activeSubTab, setActiveSubTab] = useState<"constructor" | "bank" | "history">("constructor");
   const [isPending, startTransition] = useTransition();
@@ -285,7 +148,6 @@ export function EgeTaskBankView({
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [syncingLocalPdf, setSyncingLocalPdf] = useState(false);
 
-  // Auto-hide toast after 4s
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(null), 4000);
@@ -297,7 +159,6 @@ export function EgeTaskBankView({
     setToast({ type, message });
   };
 
-  // Count available tasks in bank by number
   const tasksCountByNumber = useMemo(() => {
     const map: Record<number, number> = {};
     for (let i = 1; i <= 19; i++) map[i] = 0;
@@ -307,7 +168,6 @@ export function EgeTaskBankView({
     return map;
   }, [tasks]);
 
-  // Filtered tasks for bank list
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
       if (selectedTaskNumberFilter !== "ALL" && t.taskNumber !== selectedTaskNumberFilter) {
@@ -324,12 +184,10 @@ export function EgeTaskBankView({
     });
   }, [tasks, selectedTaskNumberFilter, searchQuery]);
 
-  // Total selected tasks in constructor
   const totalTasksSelected = useMemo(() => {
     return Object.values(taskCounts).reduce((acc, c) => acc + (c || 0), 0);
   }, [taskCounts]);
 
-  // Target recipients preview in constructor
   const recipientSummary = useMemo(() => {
     if (targetType === "student") {
       const st = students.find((s) => s.id === selectedStudentId);
@@ -343,7 +201,6 @@ export function EgeTaskBankView({
     return `Класс ${cls.name} (${studentsInClass.length} учеников${selectedTrackFilter !== "ALL" ? `, профиль: ${selectedTrackFilter}` : ""})`;
   }, [targetType, selectedStudentId, selectedClassId, selectedTrackFilter, students, classes]);
 
-  // Preset handlers for constructor
   const applyPreset = (preset: "part1" | "geometry" | "algebra" | "part2" | "clear") => {
     const next: Record<number, number> = {};
     for (let i = 1; i <= 19; i++) next[i] = 0;
@@ -387,7 +244,6 @@ export function EgeTaskBankView({
     });
   };
 
-  // Submit constructor assignment
   const handleCreateAssignment = () => {
     if (totalTasksSelected === 0) {
       showToast("error", "Выберите хотя бы одно задание для включения в работу!");
@@ -420,7 +276,6 @@ export function EgeTaskBankView({
     });
   };
 
-  // Handle manual task creation
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -452,7 +307,6 @@ export function EgeTaskBankView({
     });
   };
 
-  // Synchronize from local PDF
   const handleSyncFromLocalPdf = () => {
     setSyncingLocalPdf(true);
     startTransition(async () => {
@@ -468,7 +322,6 @@ export function EgeTaskBankView({
     });
   };
 
-  // Handle PDF file upload
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -507,7 +360,6 @@ export function EgeTaskBankView({
     }
   };
 
-  // Reseed default bank
   const handleReseed = () => {
     setConfirmModal({
       isOpen: true,
@@ -528,7 +380,6 @@ export function EgeTaskBankView({
     });
   };
 
-  // Delete task
   const handleDeleteTask = (id: string) => {
     setConfirmModal({
       isOpen: true,
@@ -548,7 +399,6 @@ export function EgeTaskBankView({
     });
   };
 
-  // Delete assignment
   const handleDeleteAssignment = (id: string) => {
     setConfirmModal({
       isOpen: true,
@@ -572,10 +422,6 @@ export function EgeTaskBankView({
     setVisibleAnswers((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const inputClass = isLight
-    ? "w-full h-10 rounded-xl bg-white border border-slate-200 px-3.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 transition shadow-2xs"
-    : "w-full h-10 rounded-xl bg-slate-900/80 border border-cyan-500/30 px-3.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-cyan-400 transition";
-
   return (
     <div className="space-y-6 relative">
       {/* СТИЛИЗОВАННОЕ ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ (TOAST) */}
@@ -593,7 +439,7 @@ export function EgeTaskBankView({
                 ? "bg-slate-950/90 border-emerald-500/40 text-emerald-300"
                 : toast.type === "error"
                 ? "bg-slate-950/90 border-rose-500/40 text-rose-300"
-                : "bg-slate-950/90 border-cyan-500/40 text-cyan-300"
+                : "bg-slate-950/90 border-sky-500/40 text-sky-300"
             }`}
           >
             {toast.type === "success" ? (
@@ -604,64 +450,44 @@ export function EgeTaskBankView({
               <Sparkles className="h-5 w-5 text-sky-500 shrink-0 mt-0.5" />
             )}
             <div className="flex-1 text-xs font-semibold leading-relaxed">{toast.message}</div>
-            <button
-              type="button"
-              onClick={() => setToast(null)}
-              className="p-1 rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-400 hover:text-slate-700 dark:hover:text-white transition"
-            >
+            <Button variant="ghost" size="icon" onClick={() => setToast(null)} className="h-6 w-6">
               <X className="h-3.5 w-3.5" />
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
-      {/* КАСТОМНОЕ МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ (CONFIRM) */}
-      {confirmModal && confirmModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div
-            className={`glass-panel w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4 ${
-              isLight ? "bg-white border-slate-200" : "bg-[#0C121D]/95 border-cyan-500/30"
-            }`}
-          >
-            <div className={`flex items-center gap-2.5 font-black text-sm ${isLight ? "text-slate-900" : "text-cyan-300"}`}>
-              <AlertCircle className={`h-5 w-5 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
-              <span>{confirmModal.title}</span>
-            </div>
-            <p className={`text-xs leading-relaxed ${isLight ? "text-slate-600" : "text-zinc-300"}`}>
-              {confirmModal.message}
-            </p>
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => setConfirmModal(null)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold border transition ${
-                  isLight
-                    ? "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
-                    : "bg-white/5 hover:bg-white/10 text-zinc-300 border-white/10"
-                }`}
-              >
-                Отмена
-              </button>
-              <button
-                type="button"
-                onClick={confirmModal.onConfirm}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm transition cursor-pointer"
-              >
-                Подтвердить
-              </button>
-            </div>
+      {/* ЕДИНОЕ МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ (CONFIRM) */}
+      <Modal
+        isOpen={Boolean(confirmModal?.isOpen)}
+        onClose={() => setConfirmModal(null)}
+        title={confirmModal?.title || "Подтверждение"}
+        icon={<AlertCircle className="w-4 h-4" />}
+        maxWidth="md"
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setConfirmModal(null)}>
+              Отмена
+            </Button>
+            <Button variant="primary" size="sm" onClick={() => confirmModal?.onConfirm()}>
+              Подтвердить
+            </Button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <p className={`text-xs sm:text-sm leading-relaxed ${isLight ? "text-slate-600" : "text-slate-300"}`}>
+          {confirmModal?.message}
+        </p>
+      </Modal>
 
       {/* ВЕРХНЯЯ ШАПКА РАЗДЕЛА */}
-      <div className="glass-panel p-4 sm:p-5 rounded-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <Card padding="md" className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <div
             className={`p-2.5 rounded-xl border shrink-0 ${
               isLight
                 ? "bg-sky-50 text-sky-600 border-sky-200/80"
-                : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+                : "bg-sky-500/15 text-sky-400 border-sky-500/30"
             }`}
           >
             <GraduationCap className="h-6 w-6" />
@@ -673,128 +499,78 @@ export function EgeTaskBankView({
                 className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                   isLight
                     ? "bg-sky-50 text-sky-700 border-sky-200"
-                    : "bg-cyan-500/20 text-cyan-300 border-cyan-400/40"
+                    : "bg-sky-500/20 text-sky-300 border-sky-400/40"
                 }`}
               >
                 {tasks.length} заданий в базе
               </span>
             </h2>
-            <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+            <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-slate-400"}`}>
               Конструктор выдачи вариантов, открытый банк ФИПИ и управление базой задач
             </p>
           </div>
         </div>
 
         {/* АДАПТИВНЫЙ СЕГМЕНТИРОВАННЫЙ ПЕРЕКЛЮЧАТЕЛЬ ПОДВКЛАДОК */}
-        <div
-          className={`grid grid-cols-1 sm:grid-cols-3 p-1 gap-1 rounded-xl border w-full lg:w-auto ${
-            isLight
-              ? "bg-slate-100 border-slate-200"
-              : "bg-slate-800/60 border-slate-700"
-          }`}
-        >
-          {[
-            { id: "constructor", label: "Конструктор выдачи", icon: Sparkles },
-            { id: "bank", label: "Банк задач", icon: BookOpen },
-            { id: "history", label: `Выданные работы (${assignments.length})`, icon: Clock },
-          ].map((tab) => {
-            const isActive = activeSubTab === tab.id;
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveSubTab(tab.id as any)}
-                className={`w-full h-full py-2 px-3 flex items-center justify-center gap-1.5 text-center font-medium text-xs sm:text-sm transition-all rounded-lg whitespace-nowrap cursor-pointer ${
-                  isActive
-                    ? isLight
-                      ? "bg-sky-600 text-white shadow-xs"
-                      : "bg-slate-700/90 text-cyan-300 shadow-xs"
-                    : isLight
-                    ? "bg-transparent text-slate-600 hover:text-slate-900"
-                    : "bg-transparent text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5 shrink-0" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        <SegmentedControl
+          fullWidth
+          className="lg:w-auto flex-wrap sm:flex-nowrap"
+          value={activeSubTab}
+          onChange={setActiveSubTab}
+          options={[
+            { value: "constructor", label: "Конструктор выдачи", icon: <Sparkles className="h-3.5 w-3.5" /> },
+            { value: "bank", label: "Банк задач", icon: <BookOpen className="h-3.5 w-3.5" /> },
+            {
+              value: "history",
+              label: "Выданные работы",
+              badge: assignments.length,
+              icon: <Clock className="h-3.5 w-3.5" />,
+            },
+          ]}
+        />
+      </Card>
 
       {/* ===================== ВКЛАДКА 1: КОНСТРУКТОР ВЫДАЧИ ЗАДАНИЙ ===================== */}
       {activeSubTab === "constructor" && (
         <div className="space-y-6">
           {/* СЕКЦИЯ 1: ПАРАМЕТРЫ РАБОТЫ И ВЫБОР ПОЛУЧАТЕЛЕЙ */}
-          <div className="glass-panel p-4 sm:p-5 rounded-2xl space-y-4">
+          <Card padding="md" className="space-y-4">
             <h3
               className={`text-sm font-black uppercase tracking-wider flex items-center gap-2 ${
-                isLight ? "text-slate-800" : "text-zinc-300"
+                isLight ? "text-slate-800" : "text-slate-200"
               }`}
             >
-              <Users className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
+              <Users className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-sky-400"}`} />
               1. Кому и как выдать работу
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Формат выдачи */}
               <div className="space-y-1.5">
-                <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                <label className={`block text-xs font-semibold ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                   Формат выдачи:
                 </label>
-                <div
-                  className={`grid grid-cols-2 p-1 gap-1 rounded-xl border ${
-                    isLight
-                      ? "bg-slate-100 border-slate-200"
-                      : "bg-slate-800/60 border-slate-700"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setTargetType("class")}
-                    className={`w-full h-full py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      targetType === "class"
-                        ? isLight
-                          ? "bg-sky-600 text-white shadow-xs"
-                          : "bg-slate-700/90 text-cyan-300 shadow-xs"
-                        : isLight
-                        ? "bg-transparent text-slate-600 hover:text-slate-900"
-                        : "bg-transparent text-slate-400 hover:text-slate-200"
-                    }`}
-                  >
-                    <Users className="h-3.5 w-3.5 shrink-0" />
-                    <span>Целому классу</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTargetType("student")}
-                    className={`w-full h-full py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      targetType === "student"
-                        ? isLight
-                          ? "bg-sky-600 text-white shadow-xs"
-                          : "bg-slate-700/90 text-cyan-300 shadow-xs"
-                        : isLight
-                        ? "bg-transparent text-slate-600 hover:text-slate-900"
-                        : "bg-transparent text-slate-400 hover:text-slate-200"
-                    }`}
-                  >
-                    <User className="h-3.5 w-3.5 shrink-0" />
-                    <span>Ученику</span>
-                  </button>
-                </div>
+                <SegmentedControl
+                  fullWidth
+                  value={targetType}
+                  onChange={setTargetType}
+                  className="h-11"
+                  options={[
+                    { value: "class", label: "Целому классу", icon: <Users className="h-3.5 w-3.5" /> },
+                    { value: "student", label: "Ученику", icon: <User className="h-3.5 w-3.5" /> },
+                  ]}
+                />
               </div>
 
-              {/* КАСТОМНЫЕ ВЫПАДАЮЩИЕ СПИСКИ */}
               {targetType === "class" ? (
                 <>
                   <div className="space-y-1.5">
-                    <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                    <label className={`block text-xs font-semibold ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                       Выберите класс:
                     </label>
-                    <CustomSelect
+                    <Select
                       value={selectedClassId}
-                      onChange={(val) => setSelectedClassId(String(val))}
+                      onValueChange={(val) => setSelectedClassId(String(val))}
                       options={classes.map((c) => ({
                         value: c.id,
                         label: `${c.name} (${c.grade} класс)`,
@@ -805,12 +581,12 @@ export function EgeTaskBankView({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                    <label className={`block text-xs font-semibold ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                       По профилю ЕГЭ (11 класс):
                     </label>
-                    <CustomSelect
+                    <Select
                       value={selectedTrackFilter}
-                      onChange={(val) => setSelectedTrackFilter(val as any)}
+                      onValueChange={(val) => setSelectedTrackFilter(val as any)}
                       options={[
                         { value: "ALL", label: "Все ученики класса" },
                         { value: "Профиль", label: "Только «Профиль»", badge: "Профиль" },
@@ -821,12 +597,12 @@ export function EgeTaskBankView({
                 </>
               ) : (
                 <div className="md:col-span-2 space-y-1.5">
-                  <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                  <label className={`block text-xs font-semibold ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                     Выберите конкретного ученика:
                   </label>
-                  <CustomSelect
+                  <Select
                     value={selectedStudentId}
-                    onChange={(val) => setSelectedStudentId(String(val))}
+                    onValueChange={(val) => setSelectedStudentId(String(val))}
                     options={students.map((st) => ({
                       value: st.id,
                       label: `${st.fullName} — ${st.className}`,
@@ -839,32 +615,30 @@ export function EgeTaskBankView({
               )}
             </div>
 
-            {/* Название работы и дедлайн */}
             <div
               className={`grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t ${
-                isLight ? "border-slate-100" : "border-white/5"
+                isLight ? "border-slate-100" : "border-slate-800"
               }`}
             >
               <div className="md:col-span-2 space-y-1.5">
-                <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                <label className={`block text-xs font-semibold ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                   Название тренировочной работы:
                 </label>
-                <input
+                <Input
                   type="text"
                   value={workTitle}
                   onChange={(e) => setWorkTitle(e.target.value)}
                   placeholder="Например: Тренировочная работа №1 по планиметрии и уравнениям"
-                  className={inputClass}
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label
                   className={`text-xs font-semibold flex items-center gap-1.5 ${
-                    isLight ? "text-slate-600" : "text-zinc-400"
+                    isLight ? "text-slate-600" : "text-slate-400"
                   }`}
                 >
-                  <Calendar className={`h-3 w-3 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
+                  <Calendar className={`h-3.5 w-3.5 ${isLight ? "text-sky-600" : "text-sky-400"}`} />
                   Срок сдачи (дедлайн):
                 </label>
                 <DatePicker
@@ -877,97 +651,54 @@ export function EgeTaskBankView({
             </div>
 
             <div className="space-y-1.5">
-              <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+              <label className={`block text-xs font-semibold ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                 Комментарий / инструкция учителя (опционально):
               </label>
-              <input
+              <Input
                 type="text"
                 value={teacherComment}
                 onChange={(e) => setTeacherComment(e.target.value)}
                 placeholder="Например: Задания 1-12 проверяются автоматически, ход решений запишите в тетрадь"
-                className={inputClass}
               />
             </div>
-          </div>
+          </Card>
 
           {/* СЕКЦИЯ 2: БЫСТРЫЕ ШАБЛОНЫ И МАТРИЦА ЗАДАНИЙ 1-19 */}
-          <div className="glass-panel p-4 sm:p-5 rounded-2xl space-y-4">
+          <Card padding="md" className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3
                   className={`text-sm font-black uppercase tracking-wider flex items-center gap-2 ${
-                    isLight ? "text-slate-800" : "text-zinc-300"
+                    isLight ? "text-slate-800" : "text-slate-200"
                   }`}
                 >
-                  <Layers className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
+                  <Layers className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-sky-400"}`} />
                   2. Выберите количество заданий по номерам ЕГЭ (1–19)
                 </h3>
-                <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+                <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-slate-400"}`}>
                   Укажите, сколько задач каждого типа нужно автоматически подобрать и прикрепить
                 </p>
               </div>
 
-              {/* Кнопки пресетов */}
               <div className="flex items-center flex-wrap gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => applyPreset("part1")}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition cursor-pointer ${
-                    isLight
-                      ? "bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100"
-                      : "bg-cyan-500/15 text-cyan-300 border-cyan-500/30 hover:bg-cyan-500/25"
-                  }`}
-                >
+                <Button variant="secondary" size="sm" onClick={() => applyPreset("part1")}>
                   ⚡ Вся Часть 1 (№1–12)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => applyPreset("geometry")}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition cursor-pointer ${
-                    isLight
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                      : "bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25"
-                  }`}
-                >
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => applyPreset("geometry")}>
                   📐 Геометрия
-                </button>
-                <button
-                  type="button"
-                  onClick={() => applyPreset("algebra")}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition cursor-pointer ${
-                    isLight
-                      ? "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
-                      : "bg-indigo-500/15 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/25"
-                  }`}
-                >
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => applyPreset("algebra")}>
                   ∑ Алгебра
-                </button>
-                <button
-                  type="button"
-                  onClick={() => applyPreset("part2")}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition cursor-pointer ${
-                    isLight
-                      ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
-                      : "bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25"
-                  }`}
-                >
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => applyPreset("part2")}>
                   🔥 Часть 2 (№13–19)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => applyPreset("clear")}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition cursor-pointer ${
-                    isLight
-                      ? "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
-                      : "bg-rose-500/15 text-rose-300 border-rose-500/30 hover:bg-rose-500/25"
-                  }`}
-                >
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => applyPreset("clear")}>
                   Сброс
-                </button>
+                </Button>
               </div>
             </div>
 
-            {/* МАТРИЦА КАРТОЧЕК 1..19 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pt-2">
               {Array.from({ length: 19 }, (_, i) => i + 1).map((num) => {
                 const count = taskCounts[num] || 0;
@@ -979,14 +710,14 @@ export function EgeTaskBankView({
                 return (
                   <div
                     key={num}
-                    className={`p-3.5 rounded-2xl border transition-all h-full flex flex-col justify-between ${
+                    className={`p-3.5 rounded-2xl border transition-all duration-200 h-full flex flex-col justify-between ${
                       isSelected
                         ? isLight
                           ? "bg-sky-50/70 border-sky-300 ring-1 ring-sky-200 shadow-xs"
-                          : "bg-cyan-950/30 border-cyan-400/50 shadow-[0_0_15px_rgba(56,189,248,0.15)] ring-1 ring-cyan-500/40"
+                          : "bg-sky-950/30 border-sky-500/50 ring-1 ring-sky-500/30"
                         : isLight
                         ? "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
-                        : "bg-slate-900/60 border-white/10 hover:border-cyan-500/30"
+                        : "bg-slate-800/50 border-slate-700/80 hover:border-slate-600"
                     }`}
                   >
                     <div>
@@ -999,7 +730,7 @@ export function EgeTaskBankView({
                                 : "bg-amber-500/20 text-amber-300 border-amber-500/40"
                               : isLight
                               ? "bg-sky-50 text-sky-700 border-sky-200"
-                              : "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                              : "bg-sky-500/20 text-sky-300 border-sky-500/40"
                           }`}
                         >
                           №{num}
@@ -1022,7 +753,7 @@ export function EgeTaskBankView({
 
                       <p
                         className={`mt-2 text-xs font-bold line-clamp-2 min-h-[2.5rem] leading-snug ${
-                          isLight ? "text-slate-800" : "text-zinc-100"
+                          isLight ? "text-slate-800" : "text-slate-100"
                         }`}
                         title={meta.topic}
                       >
@@ -1030,52 +761,45 @@ export function EgeTaskBankView({
                       </p>
                     </div>
 
-                    {/* СЧЕТЧИК ЗАДАНИЙ */}
                     <div
                       className={`mt-3 flex items-center justify-between gap-2 pt-2.5 border-t ${
-                        isLight ? "border-slate-100" : "border-white/5"
+                        isLight ? "border-slate-100" : "border-slate-700/60"
                       }`}
                     >
-                      <span className={`text-[11px] font-medium ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+                      <span className={`text-[11px] font-medium ${isLight ? "text-slate-500" : "text-slate-400"}`}>
                         Выдать в работу:
                       </span>
                       <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="h-7 w-7 rounded-lg"
                           onClick={() => handleCountChange(num, -1)}
                           disabled={count <= 0}
-                          className={`w-7 h-7 rounded-lg border flex items-center justify-center text-xs font-bold transition cursor-pointer disabled:opacity-30 disabled:pointer-events-none ${
-                            isLight
-                              ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
-                              : "bg-white/5 border-white/10 text-zinc-300 hover:border-cyan-500/40 hover:text-cyan-300"
-                          }`}
                         >
                           -
-                        </button>
+                        </Button>
                         <span
                           className={`w-7 text-center text-xs font-black ${
                             count > 0
                               ? isLight
                                 ? "text-sky-600 scale-105"
-                                : "text-cyan-300 scale-105"
+                                : "text-sky-300 scale-105"
                               : isLight
                               ? "text-slate-400"
-                              : "text-zinc-500"
+                              : "text-slate-500"
                           }`}
                         >
                           {count}
                         </span>
-                        <button
-                          type="button"
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="h-7 w-7 rounded-lg"
                           onClick={() => handleCountChange(num, 1)}
-                          className={`w-7 h-7 rounded-lg border flex items-center justify-center text-xs font-bold transition cursor-pointer ${
-                            isLight
-                              ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
-                              : "bg-white/5 border-white/10 text-zinc-300 hover:border-cyan-500/40 hover:text-cyan-300"
-                          }`}
                         >
                           +
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -1083,115 +807,103 @@ export function EgeTaskBankView({
               })}
             </div>
 
-            {/* ИТОГОВАЯ ПАНЕЛЬ И КНОПКА ВЫДАЧИ */}
             <div
               className={`mt-4 p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
                 isLight
                   ? "bg-sky-50/70 border-sky-200"
-                  : "bg-gradient-to-r from-cyan-950/40 via-blue-950/20 to-black/40 border-cyan-500/30"
+                  : "bg-sky-950/30 border-sky-500/30"
               }`}
             >
               <div>
                 <div className="flex items-center gap-2">
-                  <Sparkles className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
-                  <p className={`text-xs font-bold ${isLight ? "text-slate-800" : "text-zinc-200"}`}>
+                  <Sparkles className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-sky-400"}`} />
+                  <p className={`text-xs font-bold ${isLight ? "text-slate-800" : "text-slate-200"}`}>
                     Итого выбрано:{" "}
-                    <span className={`font-black text-sm ${isLight ? "text-sky-700" : "text-cyan-300"}`}>
+                    <span className={`font-black text-sm ${isLight ? "text-sky-700" : "text-sky-300"}`}>
                       {totalTasksSelected} заданий
                     </span>
                   </p>
                 </div>
-                <p className={`text-[11px] mt-0.5 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                <p className={`text-[11px] mt-0.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                   Получатели:{" "}
-                  <span className={`font-semibold ${isLight ? "text-slate-900" : "text-zinc-200"}`}>
+                  <span className={`font-semibold ${isLight ? "text-slate-900" : "text-slate-200"}`}>
                     {recipientSummary}
                   </span>
                 </p>
               </div>
 
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="lg"
                 onClick={handleCreateAssignment}
                 disabled={isPending || totalTasksSelected === 0}
-                className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-40 ${
-                  isLight
-                    ? "bg-sky-600 hover:bg-sky-700 text-white shadow-sm"
-                    : "text-zinc-950 bg-gradient-to-r from-cyan-400 to-sky-400 hover:brightness-110 shadow-lg shadow-cyan-500/25"
-                }`}
               >
                 <Send className="h-4 w-4" />
                 <span>{isPending ? "Формирование варианта..." : "Сформировать и выдать работу"}</span>
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
       {/* ===================== ВКЛАДКА 2: УПРАВЛЕНИЕ БАНКОМ ЗАДАЧ И ИМПОРТ PDF ===================== */}
       {activeSubTab === "bank" && (
         <div className="space-y-6">
-          {/* БАННЕР СИНХРОНИЗАЦИИ И ИМПОРТА */}
-          <div className="glass-panel p-4 sm:p-5 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Кнопка 1: Синхронизация из локального PDF ФИПИ */}
+          <Card padding="md" className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div
               className={`p-4 rounded-xl border space-y-2.5 flex flex-col justify-between ${
-                isLight ? "bg-sky-50/70 border-sky-200" : "bg-cyan-950/30 border-cyan-500/30"
+                isLight ? "bg-sky-50/70 border-sky-200" : "bg-sky-950/30 border-sky-500/30"
               }`}
             >
               <div>
                 <div
                   className={`flex items-center gap-2 font-bold text-xs ${
-                    isLight ? "text-sky-800" : "text-cyan-300"
+                    isLight ? "text-sky-800" : "text-sky-300"
                   }`}
                 >
-                  <FileText className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
+                  <FileText className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-sky-400"}`} />
                   <span>Локальный PDF ФИПИ в корне</span>
                 </div>
-                <p className={`text-[11px] leading-relaxed mt-1 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                <p className={`text-[11px] leading-relaxed mt-1 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                   Файл «Открытый банк задач ФИПИ. ЕГЭ по профильной математике.pdf» (611 стр.) уже доступен в проекте.
                 </p>
               </div>
 
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="full"
                 onClick={handleSyncFromLocalPdf}
                 disabled={syncingLocalPdf || isPending}
-                className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-black text-xs transition cursor-pointer ${
-                  isLight
-                    ? "bg-sky-600 hover:bg-sky-700 text-white shadow-xs"
-                    : "bg-gradient-to-r from-cyan-500 to-sky-500 text-zinc-950 hover:brightness-110 shadow-md shadow-cyan-500/20"
-                }`}
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${syncingLocalPdf ? "animate-spin" : ""}`} />
                 <span>{syncingLocalPdf ? "Синхронизация..." : "Синхронизировать из локального PDF"}</span>
-              </button>
+              </Button>
             </div>
 
-            {/* Кнопка 2: Загрузка стороннего PDF */}
             <div
               className={`p-4 rounded-xl border space-y-2.5 flex flex-col justify-between ${
-                isLight ? "bg-slate-50 border-slate-200" : "bg-slate-900/40 border-white/10"
+                isLight ? "bg-slate-50 border-slate-200" : "bg-slate-800/50 border-slate-700"
               }`}
             >
               <div>
                 <div
                   className={`flex items-center gap-2 font-bold text-xs ${
-                    isLight ? "text-slate-800" : "text-zinc-200"
+                    isLight ? "text-slate-800" : "text-slate-200"
                   }`}
                 >
-                  <Upload className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
+                  <Upload className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-sky-400"}`} />
                   <span>Загрузить другой PDF-файл</span>
                 </div>
-                <p className={`text-[11px] leading-relaxed mt-1 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                <p className={`text-[11px] leading-relaxed mt-1 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                   Загрузите любой другой сборник задач в формате PDF для распознавания формулировок и ответов.
                 </p>
               </div>
 
               <label
-                className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-bold text-xs border transition cursor-pointer ${
+                className={`h-11 w-full flex items-center justify-center gap-2 px-4 rounded-xl font-medium text-sm border transition-all duration-200 cursor-pointer ${
                   isLight
                     ? "bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-2xs"
-                    : "bg-white/10 hover:bg-white/15 text-zinc-200 border-white/10"
+                    : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700"
                 }`}
               >
                 <Upload className="h-3.5 w-3.5" />
@@ -1200,7 +912,6 @@ export function EgeTaskBankView({
               </label>
             </div>
 
-            {/* Кнопка 3: Эталонный банк ФИПИ */}
             <div
               className={`p-4 rounded-xl border space-y-2.5 flex flex-col justify-between ${
                 isLight ? "bg-emerald-50/70 border-emerald-200" : "bg-emerald-950/20 border-emerald-500/20"
@@ -1215,47 +926,43 @@ export function EgeTaskBankView({
                   <RotateCcw className={`h-4 w-4 ${isLight ? "text-emerald-600" : "text-emerald-400"}`} />
                   <span>Эталонный банк ФИПИ</span>
                 </div>
-                <p className={`text-[11px] leading-relaxed mt-1 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                <p className={`text-[11px] leading-relaxed mt-1 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                   Быстро дополнить банк эталонными заданиями по всем 19 номерам с подробными решениями.
                 </p>
               </div>
 
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="full"
                 onClick={handleReseed}
                 disabled={isPending}
-                className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl border font-bold text-xs transition cursor-pointer ${
-                  isLight
-                    ? "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-xs"
-                    : "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/30"
-                }`}
               >
-                <CheckCircle2 className="h-3.5 w-3.5" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                 <span>Загрузить эталонный банк</span>
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
 
           {/* ФОРМА РУЧНОГО ДОБАВЛЕНИЯ ЗАДАНИЯ В БАНК */}
-          <div className="glass-panel p-4 sm:p-5 rounded-2xl space-y-4">
+          <Card padding="md" className="space-y-4">
             <h3
               className={`text-sm font-black uppercase tracking-wider flex items-center gap-2 ${
-                isLight ? "text-slate-800" : "text-zinc-300"
+                isLight ? "text-slate-800" : "text-slate-200"
               }`}
             >
-              <Plus className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
+              <Plus className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-sky-400"}`} />
               Добавить новое задание вручную
             </h3>
 
             <form onSubmit={handleCreateTask} className="space-y-3.5">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
-                  <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                  <label className={`block text-xs font-semibold ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                     Номер задания ЕГЭ:
                   </label>
-                  <CustomSelect
-                    value={newTaskNumber}
-                    onChange={(val) => {
+                  <Select
+                    value={String(newTaskNumber)}
+                    onValueChange={(val) => {
                       const num = Number(val);
                       setNewTaskNumber(num);
                       const meta = EGE_TASK_TOPICS[num];
@@ -1265,7 +972,7 @@ export function EgeTaskBankView({
                       }
                     }}
                     options={Array.from({ length: 19 }, (_, i) => i + 1).map((n) => ({
-                      value: n,
+                      value: String(n),
                       label: `№${n} — ${EGE_TASK_TOPICS[n]?.topic || ""}`,
                       badge: `№${n}`,
                     }))}
@@ -1273,25 +980,24 @@ export function EgeTaskBankView({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                  <label className={`block text-xs font-semibold ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                     Тема (подраздел):
                   </label>
-                  <input
+                  <Input
                     type="text"
                     value={newTaskTopic}
                     onChange={(e) => setNewTaskTopic(e.target.value)}
                     placeholder="Например: Векторы на координатной плоскости"
-                    className={inputClass}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                  <label className={`block text-xs font-semibold ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                     Сложность:
                   </label>
-                  <CustomSelect
+                  <Select
                     value={newTaskDifficulty}
-                    onChange={(val) => setNewTaskDifficulty(String(val))}
+                    onValueChange={(val) => setNewTaskDifficulty(String(val))}
                     options={[
                       { value: "BASE", label: "Базовый (Часть 1)", badge: "1 балл" },
                       { value: "ADVANCED", label: "Повышенный (Часть 2)", badge: "2-3 балла" },
@@ -1302,159 +1008,114 @@ export function EgeTaskBankView({
               </div>
 
               <div className="space-y-1.5">
-                <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                <label className={`block text-xs font-semibold ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                   Краткий заголовок задания:
                 </label>
-                <input
+                <Input
                   type="text"
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
                   placeholder="Например: Скалярное произведение векторов при заданных координатах"
-                  className={inputClass}
                   required
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                <label className={`block text-xs font-semibold ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                   Текст и условие задачи:
                 </label>
-                <textarea
+                <Textarea
                   rows={4}
                   value={newTaskContent}
                   onChange={(e) => setNewTaskContent(e.target.value)}
                   placeholder="Введите полное условие задачи, формулы, числовые данные..."
-                  className={`w-full rounded-xl p-3.5 text-xs focus:outline-none transition font-sans border ${
-                    isLight
-                      ? "bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-sky-500 shadow-2xs"
-                      : "bg-slate-900/80 border-cyan-500/30 text-zinc-100 placeholder-zinc-500 focus:border-cyan-400"
-                  }`}
                   required
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                  <label className={`block text-xs font-semibold ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                     Правильный ответ (для автопроверки):
                   </label>
-                  <input
+                  <Input
                     type="text"
                     value={newTaskAnswer}
                     onChange={(e) => setNewTaskAnswer(e.target.value)}
                     placeholder="Например: 12 или 0.75"
-                    className={inputClass}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                  <label className={`block text-xs font-semibold ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                     Пояснение / решение (опционально):
                   </label>
-                  <input
+                  <Input
                     type="text"
                     value={newTaskSolution}
                     onChange={(e) => setNewTaskSolution(e.target.value)}
                     placeholder="Краткий ход решения или критерии"
-                    className={inputClass}
                   />
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={isPending}
-                className={`px-5 py-2.5 rounded-xl font-black text-xs transition cursor-pointer ${
-                  isLight
-                    ? "bg-sky-600 hover:bg-sky-700 text-white shadow-xs"
-                    : "bg-cyan-500 text-zinc-950 hover:bg-cyan-400 shadow-md shadow-cyan-500/20"
-                }`}
-              >
+              <Button type="submit" variant="primary" disabled={isPending}>
                 + Добавить задание в базу
-              </button>
+              </Button>
             </form>
-          </div>
+          </Card>
 
           {/* СПИСОК И ФИЛЬТРАЦИЯ ЗАДАНИЙ В БАНКЕ */}
-          <div className="glass-panel p-4 sm:p-5 rounded-2xl space-y-4">
+          <Card padding="md" className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <h3
                 className={`text-sm font-black uppercase tracking-wider flex items-center gap-2 ${
-                  isLight ? "text-slate-800" : "text-zinc-300"
+                  isLight ? "text-slate-800" : "text-slate-200"
                 }`}
               >
-                <BookOpen className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
+                <BookOpen className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-sky-400"}`} />
                 Все задания в банке ({filteredTasks.length} из {tasks.length})
               </h3>
 
-              <div className="flex items-center gap-2">
-                <div className="relative w-full sm:w-64">
-                  <Search
-                    className={`h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${
-                      isLight ? "text-slate-400" : "text-zinc-400"
-                    }`}
-                  />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Поиск по условию..."
-                    className={`h-9 pl-9 pr-3 rounded-xl border text-xs w-full focus:outline-none transition ${
-                      isLight
-                        ? "bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-sky-500"
-                        : "bg-slate-900/80 border-cyan-500/30 text-zinc-100 placeholder-zinc-500 focus:border-cyan-400"
-                    }`}
-                  />
-                </div>
+              <div className="w-full sm:w-72">
+                <Input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Поиск по условию..."
+                  icon={<Search className="h-4 w-4" />}
+                />
               </div>
             </div>
 
-            {/* ФИЛЬТРЫ ПО НОМЕРАМ 1..19 */}
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-              <button
-                type="button"
+              <Button
+                variant={selectedTaskNumberFilter === "ALL" ? "primary" : "secondary"}
+                size="sm"
                 onClick={() => setSelectedTaskNumberFilter("ALL")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 border transition cursor-pointer ${
-                  selectedTaskNumberFilter === "ALL"
-                    ? isLight
-                      ? "bg-sky-600 text-white border-sky-600 shadow-xs"
-                      : "bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-xs"
-                    : isLight
-                    ? "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/70 hover:text-slate-900"
-                    : "bg-slate-900/60 text-zinc-400 border-white/5 hover:bg-white/5"
-                }`}
               >
                 Все типы ({tasks.length})
-              </button>
+              </Button>
               {Array.from({ length: 19 }, (_, i) => i + 1).map((n) => {
                 const count = tasksCountByNumber[n] || 0;
                 const isActive = selectedTaskNumberFilter === n;
                 return (
-                  <button
+                  <Button
                     key={n}
-                    type="button"
+                    variant={isActive ? "primary" : "secondary"}
+                    size="sm"
                     onClick={() => setSelectedTaskNumberFilter(n)}
-                    className={`px-2.5 py-1.5 rounded-xl text-xs font-bold shrink-0 border flex items-center gap-1.5 transition cursor-pointer ${
-                      isActive
-                        ? isLight
-                          ? "bg-sky-600 text-white border-sky-600 shadow-xs"
-                          : "bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-xs"
-                        : isLight
-                        ? "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/70 hover:text-slate-900"
-                        : "bg-slate-900/60 text-zinc-400 border-white/5 hover:bg-white/5"
-                    }`}
                   >
                     <span>№{n}</span>
                     <span className="text-[10px] opacity-75">({count})</span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>
 
-            {/* СПИСОК КАРТОЧЕК */}
             <div className="space-y-3 pt-2">
               {filteredTasks.length === 0 ? (
-                <div className={`text-center py-10 text-xs ${isLight ? "text-slate-500" : "text-zinc-500"}`}>
+                <div className={`text-center py-10 text-xs ${isLight ? "text-slate-500" : "text-slate-400"}`}>
                   Заданий по выбранным фильтрам не найдено.
                 </div>
               ) : (
@@ -1465,10 +1126,10 @@ export function EgeTaskBankView({
                   return (
                     <div
                       key={t.id}
-                      className={`p-3 sm:p-4 rounded-2xl border transition-all space-y-2.5 ${
+                      className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 space-y-2.5 ${
                         isLight
-                          ? "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
-                          : "bg-slate-900/70 border-white/5 hover:border-cyan-500/30 shadow-sm"
+                          ? "bg-slate-50/70 border-slate-200/90 hover:border-slate-300"
+                          : "bg-slate-800/40 border-slate-700/80 hover:border-slate-600"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -1481,20 +1142,20 @@ export function EgeTaskBankView({
                                   : "bg-amber-500/20 text-amber-300 border-amber-500/40"
                                 : isLight
                                 ? "bg-sky-50 text-sky-700 border-sky-200"
-                                : "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                                : "bg-sky-500/20 text-sky-300 border-sky-500/40"
                             }`}
                           >
                             Задание №{t.taskNumber}
                           </span>
-                          <span className={`text-xs font-bold ${isLight ? "text-slate-800" : "text-zinc-100"}`}>
+                          <span className={`text-xs font-bold ${isLight ? "text-slate-800" : "text-slate-100"}`}>
                             {t.topic}
                           </span>
                           {t.taskCode && (
                             <span
                               className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold border ${
                                 isLight
-                                  ? "bg-slate-100 text-slate-600 border-slate-200"
-                                  : "bg-cyan-500/10 text-cyan-300 border-cyan-500/30"
+                                  ? "bg-white text-slate-600 border-slate-200"
+                                  : "bg-sky-500/10 text-sky-300 border-sky-500/30"
                               }`}
                             >
                               Прототип #{t.taskCode}
@@ -1504,27 +1165,23 @@ export function EgeTaskBankView({
 
                         <div className="flex items-center gap-1.5 shrink-0">
                           {t.answer && (
-                            <button
-                              type="button"
+                            <Button
+                              variant="secondary"
+                              size="sm"
                               onClick={() => toggleAnswer(t.id)}
-                              className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg border flex items-center gap-1 transition cursor-pointer ${
-                                isLight
-                                  ? "bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200"
-                                  : "bg-white/5 text-zinc-300 hover:text-white border-white/10"
-                              }`}
                             >
                               {showAnswer ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                               <span>{showAnswer ? "Скрыть ответ" : "Показать ответ"}</span>
-                            </button>
+                            </Button>
                           )}
-                          <button
-                            type="button"
+                          <Button
+                            variant="danger"
+                            size="icon"
                             onClick={() => handleDeleteTask(t.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"
                             title="Удалить задание"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          </Button>
                         </div>
                       </div>
 
@@ -1545,7 +1202,7 @@ export function EgeTaskBankView({
                           return (
                             <MathText
                               text={t.content}
-                              className={`text-xs sm:text-sm ${isLight ? "text-slate-800" : "text-zinc-200"}`}
+                              className={`text-xs sm:text-sm ${isLight ? "text-slate-800" : "text-slate-200"}`}
                             />
                           );
                         })()}
@@ -1563,7 +1220,7 @@ export function EgeTaskBankView({
                             Ответ: <span className="font-mono text-sm ml-1">{t.answer}</span>
                           </p>
                           {t.solution && (
-                            <p className={`text-[11px] mt-1 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                            <p className={`text-[11px] mt-1 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
                               Решение: {t.solution}
                             </p>
                           )}
@@ -1579,24 +1236,24 @@ export function EgeTaskBankView({
                 </p>
               )}
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
       {/* ===================== ВКЛАДКА 3: ИСТОРИЯ ВЫДАННЫХ РАБОТ ===================== */}
       {activeSubTab === "history" && (
-        <div className="glass-panel p-4 sm:p-5 rounded-2xl space-y-4">
+        <Card padding="md" className="space-y-4">
           <h3
             className={`text-sm font-black uppercase tracking-wider flex items-center gap-2 ${
-              isLight ? "text-slate-800" : "text-zinc-300"
+              isLight ? "text-slate-800" : "text-slate-200"
             }`}
           >
-            <Clock className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
+            <Clock className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-sky-400"}`} />
             Выданные тренировочные работы ЕГЭ ({assignments.length})
           </h3>
 
           {assignments.length === 0 ? (
-            <div className={`text-center py-10 text-xs ${isLight ? "text-slate-500" : "text-zinc-500"}`}>
+            <div className={`text-center py-10 text-xs ${isLight ? "text-slate-500" : "text-slate-400"}`}>
               Вы еще не выдавали работ из банка ЕГЭ. Перейдите во вкладку «Конструктор выдачи», чтобы создать первую работу.
             </div>
           ) : (
@@ -1604,15 +1261,15 @@ export function EgeTaskBankView({
               {assignments.map((a) => (
                 <div
                   key={a.id}
-                  className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition ${
+                  className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all duration-200 ${
                     isLight
-                      ? "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
-                      : "bg-slate-900/70 border-white/10 hover:border-cyan-500/30"
+                      ? "bg-slate-50/70 border-slate-200 hover:border-slate-300"
+                      : "bg-slate-800/40 border-slate-700/80 hover:border-slate-600"
                   }`}
                 >
                   <div className="space-y-1">
                     <div className="flex items-center flex-wrap gap-2">
-                      <span className={`text-sm font-bold ${isLight ? "text-slate-900" : "text-zinc-100"}`}>
+                      <span className={`text-sm font-bold ${isLight ? "text-slate-900" : "text-slate-100"}`}>
                         {a.title}
                       </span>
                       {a.studentName ? (
@@ -1620,7 +1277,7 @@ export function EgeTaskBankView({
                           className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border ${
                             isLight
                               ? "bg-sky-50 text-sky-700 border-sky-200"
-                              : "bg-blue-500/20 text-blue-300 border-blue-500/30"
+                              : "bg-sky-500/20 text-sky-300 border-sky-500/30"
                           }`}
                         >
                           {a.studentName}
@@ -1638,9 +1295,9 @@ export function EgeTaskBankView({
                       )}
                     </div>
 
-                    <div className={`flex items-center flex-wrap gap-3 text-xs ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+                    <div className={`flex items-center flex-wrap gap-3 text-xs ${isLight ? "text-slate-500" : "text-slate-400"}`}>
                       <span>
-                        Заданий в работе: <b className={isLight ? "text-slate-800" : "text-zinc-200"}>{a.itemsCount}</b>
+                        Заданий в работе: <b className={isLight ? "text-slate-800" : "text-slate-200"}>{a.itemsCount}</b>
                       </span>
                       <span>
                         Выполнено: <b className={isLight ? "text-emerald-600" : "text-emerald-400"}>{a.completedCount}</b>
@@ -1653,27 +1310,27 @@ export function EgeTaskBankView({
                     </div>
 
                     {a.teacherComment && (
-                      <p className={`text-[11px] italic mt-0.5 ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+                      <p className={`text-[11px] italic mt-0.5 ${isLight ? "text-slate-500" : "text-slate-400"}`}>
                         «{a.teacherComment}»
                       </p>
                     )}
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
+                    <Button
+                      variant="danger"
+                      size="icon"
                       onClick={() => handleDeleteAssignment(a.id)}
-                      className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"
                       title="Удалить работу"
                     >
                       <Trash2 className="h-4 w-4" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </Card>
       )}
     </div>
   );

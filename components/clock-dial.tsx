@@ -152,15 +152,31 @@ export function ClockDial({
   const touchMoveRafRef = useRef<number | null>(null);
   const lastHapticDayRef = useRef<number>(0);
 
-  // Синхронизация при внешнем выборе дня в покое
+  // Синхронизация при внешнем выборе дня (через DatePicker или стрелки недель)
   useEffect(() => {
-    if (!isDraggingRef.current && animFrameRef.current === null) {
+    if (!isDraggingRef.current) {
+      if (animFrameRef.current !== null) {
+        cancelAnimationFrame(animFrameRef.current);
+        animFrameRef.current = null;
+      }
+      currentVelocityRef.current = 0;
       dragAnchorDateRef.current = activeDate;
       floatOffsetRef.current = 0;
       setFloatOffset(0);
       lastHapticDayRef.current = 0;
     }
   }, [activeDate]);
+
+  useEffect(() => {
+    return () => {
+      if (animFrameRef.current !== null) {
+        cancelAnimationFrame(animFrameRef.current);
+      }
+      if (touchMoveRafRef.current !== null) {
+        cancelAnimationFrame(touchMoveRafRef.current);
+      }
+    };
+  }, []);
 
   const [containerWidth, setContainerWidth] = useState<number>(360);
 
@@ -170,7 +186,7 @@ export function ClockDial({
       if (containerRef.current) {
         const newWidth = containerRef.current.clientWidth;
         if (newWidth > 0) {
-          setContainerWidth((prev) => (Math.abs(prev - newWidth) > 2 ? newWidth : prev));
+          setContainerWidth((prev) => (Math.abs(prev - newWidth) > 1 ? newWidth : prev));
         }
       }
     };
@@ -222,7 +238,7 @@ export function ClockDial({
           return;
         }
 
-        const stepFactor = 1 - Math.pow(1 - 0.22, timeFactor);
+        const stepFactor = 1 - Math.pow(1 - 0.24, timeFactor);
         floatOffsetRef.current += diff * stepFactor;
         setFloatOffset(floatOffsetRef.current);
 
@@ -531,22 +547,39 @@ export function ClockDial({
     return isSameDay(focusedDate, today);
   }, [focusedDate, serverToday]);
 
-  // Геометрия дуги: гарантирует отступ сверху от линии горизонта и размещение всех 7 дат (-3..+3) строго внутри карточки
-  const ANGLE_STEP = 10.2;
-  const horizonTopY = 52;
-  const textInsetFromHorizon = 22;
-  const sin3 = Math.sin((3 * ANGLE_STEP * Math.PI) / 180);
-  const edgePadding = containerWidth < 500 ? 32 : 48;
-  const safeHalfWidth = Math.max(105, containerWidth / 2 - edgePadding);
-  const maxAllowedR = safeHalfWidth / sin3;
-  const R_text = Math.min(Math.max(245, containerWidth * 0.52), maxAllowedR, 440);
-  const earthSize = Math.round((R_text + textInsetFromHorizon) * 2);
+  // Математически зафиксированная концентрическая геометрия планеты и дуги дат (-3..+3):
+  // Центр сферы Земли и центр дуги дат строго совпадают в точке (containerWidth / 2, horizonTopY + R_earth).
+  // Горизонтальный полуразмах (halfSpan) и вертикальный прогиб крайних дат (targetDrop для k = ±3)
+  // однозначно определяют радиус дуги R_text = (halfSpan^2 + targetDrop^2) / (2 * targetDrop)
+  // и угловой шаг ANGLE_STEP = arcsin(halfSpan / R_text) / 3.
+  const { horizonTopY, textInsetFromHorizon, R_text, earthSize, ANGLE_STEP } = useMemo(() => {
+    const safeWidth = Math.max(280, containerWidth);
+    const isCompact = safeWidth < 460;
+    const hTopY = 50;
+    const inset = 18;
+    const edgeMargin = isCompact ? 26 : 38;
+    const halfSpan = Math.min(Math.max(110, safeWidth / 2 - edgeMargin), 320);
+    const targetDrop = isCompact ? 34 : 40;
+
+    const rText = (halfSpan * halfSpan + targetDrop * targetDrop) / (2 * targetDrop);
+    const rEarth = rText + inset;
+    const theta3Rad = Math.asin(Math.min(0.95, halfSpan / rText));
+    const angleStepDeg = ((theta3Rad * 180) / Math.PI) / 3;
+
+    return {
+      horizonTopY: hTopY,
+      textInsetFromHorizon: inset,
+      R_text: rText,
+      earthSize: Math.round(rEarth * 2),
+      ANGLE_STEP: angleStepDeg,
+    };
+  }, [containerWidth]);
 
   // Вращение глобуса синхронно с направлением движения расписания
   const earthRotationAngle = useMemo(() => {
     const epochDays = Math.floor(dragAnchorDateRef.current.getTime() / (24 * 60 * 60 * 1000));
     return ((-epochDays - floatOffset) * ANGLE_STEP) % 360;
-  }, [floatOffset]);
+  }, [floatOffset, ANGLE_STEP]);
 
   // Непрерывная дуга дат: 9 элементов вокруг центрального дня
   const visibleDays = useMemo(() => {
@@ -579,7 +612,7 @@ export function ClockDial({
           startSnapSpring(Math.round(floatOffsetRef.current));
         }
       }}
-      className={`relative flex h-44 sm:h-48 w-full select-none flex-col items-center justify-center overflow-hidden rounded-3xl border cursor-ew-resize transition-colors ${
+      className={`relative flex h-44 sm:h-48 w-full select-none flex-col items-center justify-center overflow-hidden rounded-3xl border cursor-ew-resize transition-[background-color,border-color,box-shadow] duration-200 ease-out ${
         isLight
           ? "border-slate-200 bg-gradient-to-b from-sky-50/70 via-white to-white shadow-sm"
           : "border-cyan-500/20 bg-[#0B0F19] shadow-xl"
@@ -590,7 +623,7 @@ export function ClockDial({
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
             <span
-              className={`font-mono text-sm sm:text-base font-extrabold tracking-wider ${
+              className={`font-mono text-sm sm:text-base font-extrabold tracking-wider transition-colors duration-200 ${
                 isLight ? "text-slate-800" : "text-cyan-400"
               }`}
             >
@@ -685,8 +718,11 @@ export function ClockDial({
         />
       </div>
 
-      {/* 3D СТРЕЛКА КОМПАСА */}
-      <div className="pointer-events-none absolute top-2 z-30 flex flex-col items-center">
+      {/* 3D СТРЕЛКА КОМПАСА (строго по центру над вершиной горизонта) */}
+      <div
+        className="pointer-events-none absolute left-1/2 -translate-x-1/2 z-30 flex flex-col items-center"
+        style={{ top: `${horizonTopY - 30}px` }}
+      >
         <svg
           width="22"
           height="26"
@@ -732,7 +768,7 @@ export function ClockDial({
         </svg>
       </div>
 
-      {/* ЧИСЛА ДАТ ВНУТРИ ДУГИ ГОРИЗОНТА */}
+      {/* ЧИСЛА ДАТ ВНУТРИ ДУГИ ГОРИЗОНТА (КОНЦЕНТРИЧЕСКАЯ ОКРУЖНОСТЬ R_text) */}
       <div className="absolute inset-0 z-30 pointer-events-auto">
         {visibleDays.map((item) => {
           const relativeOffset = item.k - floatOffset;
@@ -760,10 +796,10 @@ export function ClockDial({
                 e.stopPropagation();
                 handleDayTap(item.k);
               }}
-              className="absolute left-1/2 cursor-pointer px-1 py-0.5"
+              className="absolute left-1/2 top-0 cursor-pointer px-1.5 py-0.5"
               style={{
-                top: `${y}px`,
-                transform: `translate(calc(-50% + ${x}px), 0) rotate(${angleDeg}deg) scale(${scale})`,
+                transformOrigin: "50% 0%",
+                transform: `translate3d(calc(-50% + ${x}px), ${y}px, 0) rotate(${angleDeg}deg) scale(${scale})`,
                 opacity,
                 backfaceVisibility: "hidden",
                 willChange: "transform, opacity",
@@ -771,7 +807,7 @@ export function ClockDial({
             >
               <div className="flex flex-col items-center justify-center">
                 <span
-                  className={`font-mono text-lg sm:text-2xl font-black leading-none ${
+                  className={`font-mono text-lg sm:text-2xl font-black leading-none transition-colors duration-150 ${
                     isLight
                       ? isCentered
                         ? "text-slate-900"
@@ -785,7 +821,7 @@ export function ClockDial({
                 </span>
 
                 <span
-                  className={`text-[10px] font-extrabold uppercase tracking-wider mt-1 ${
+                  className={`text-[10px] font-extrabold uppercase tracking-wider mt-1 transition-colors duration-150 ${
                     isLight
                       ? isCentered
                         ? "text-sky-600"

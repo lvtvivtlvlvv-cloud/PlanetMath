@@ -74,6 +74,7 @@ export function DatePicker({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openRafRef = useRef<number | null>(null);
 
   const [popoverCoords, setPopoverCoords] = useState<{
     top: number;
@@ -91,6 +92,7 @@ export function DatePicker({
     setMounted(true);
     return () => {
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+      if (openRafRef.current !== null) cancelAnimationFrame(openRafRef.current);
     };
   }, []);
 
@@ -132,23 +134,33 @@ export function DatePicker({
       clearTimeout(closeTimerRef.current);
       closeTimerRef.current = null;
     }
+    if (openRafRef.current !== null) {
+      cancelAnimationFrame(openRafRef.current);
+      openRafRef.current = null;
+    }
     if (selectedDate) {
       setViewMonth(selectedDate);
     }
     updatePosition();
     setIsRendered(true);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
+    openRafRef.current = requestAnimationFrame(() => {
+      openRafRef.current = requestAnimationFrame(() => {
         setIsVisible(true);
+        openRafRef.current = null;
       });
     });
   }, [selectedDate, updatePosition]);
 
   const closeCalendar = useCallback(() => {
+    if (openRafRef.current !== null) {
+      cancelAnimationFrame(openRafRef.current);
+      openRafRef.current = null;
+    }
     setIsVisible(false);
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     closeTimerRef.current = setTimeout(() => {
       setIsRendered(false);
+      closeTimerRef.current = null;
     }, 180);
   }, []);
 
@@ -247,17 +259,17 @@ export function DatePicker({
         type="button"
         onClick={toggleCalendar}
         className={`w-full ${
-          compact ? "h-9 px-3" : "h-10 px-3.5"
-        } rounded-xl border text-xs font-semibold flex items-center justify-between gap-2 transition-all cursor-pointer select-none outline-none ${
+          compact ? "h-9 px-3 text-xs" : "h-11 px-3.5 text-sm"
+        } rounded-xl border font-semibold flex items-center justify-between gap-2 transition-all duration-200 ease-out cursor-pointer select-none outline-none ${
           isLight
-            ? "bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 focus:border-sky-500 text-slate-800 shadow-2xs"
-            : "bg-slate-900/80 hover:bg-slate-900 border-white/15 hover:border-cyan-400/50 focus:border-cyan-400 text-zinc-100 shadow-sm backdrop-blur-md"
-        } ${isVisible ? (isLight ? "border-sky-500 ring-2 ring-sky-500/15" : "border-cyan-400 ring-2 ring-cyan-400/20") : ""}`}
+            ? "bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 focus:border-sky-500 text-slate-900 shadow-2xs"
+            : "bg-slate-900/90 hover:bg-slate-900 border-slate-700 hover:border-slate-600 focus:border-sky-500 text-slate-100 shadow-xs backdrop-blur-md"
+        } ${isVisible ? (isLight ? "border-sky-500 ring-2 ring-sky-500/20" : "border-sky-500 ring-2 ring-sky-500/25") : ""}`}
       >
         <div className="flex items-center gap-2 min-w-0 truncate">
           <CalendarIcon
             className={`h-4 w-4 shrink-0 ${
-              isLight ? "text-sky-600" : "text-cyan-400"
+              isLight ? "text-sky-600" : "text-sky-400"
             }`}
           />
           <span
@@ -305,10 +317,10 @@ export function DatePicker({
               transformOrigin: popoverCoords.transformOrigin,
               zIndex: 9999,
             }}
-            className={`rounded-2xl p-3.5 sm:p-4 backdrop-blur-md border transition-all duration-[180ms] ease-out select-none ${
+            className={`rounded-2xl p-3.5 sm:p-4 backdrop-blur-md border transition-[opacity,transform] duration-[180ms] ease-out will-change-[opacity,transform] select-none ${
               isLight
-                ? "bg-white/85 border-slate-200/90 shadow-[0_20px_50px_rgba(15,23,42,0.14)] text-slate-900"
-                : "bg-slate-900/85 border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.7)] text-slate-100"
+                ? "bg-white/90 border-slate-200/90 shadow-[0_20px_50px_rgba(15,23,42,0.14)] text-slate-900"
+                : "bg-slate-900/90 border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.7)] text-slate-100"
             } ${
               isVisible
                 ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"

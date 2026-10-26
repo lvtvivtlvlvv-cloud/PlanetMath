@@ -17,6 +17,7 @@ interface ThemeContextType {
   toggleScheduleViewMode: () => void;
   viewMode: ScheduleViewMode;
   setViewMode: (mode: ScheduleViewMode) => void;
+  isLight: boolean;
   mounted: boolean;
 }
 
@@ -110,6 +111,7 @@ export function ThemeProviderWrapper({ children }: { children: React.ReactNode }
         toggleScheduleViewMode,
         viewMode: scheduleViewMode,
         setViewMode: setScheduleViewMode,
+        isLight: colorMode === "light",
         mounted,
       }}
     >

@@ -43,6 +43,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { EgeStudentView, StudentEgeAssignmentItem } from "./ege-student-view";
+import { Button, Input, Textarea, Select, Card, SegmentedControl, Modal } from "./ui-kit";
 
 const SHORT_WEEKDAYS = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"];
 
@@ -425,18 +426,15 @@ export function StudentDashboard({
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <ThemeSwitcher />
             <form action={logoutAction}>
-              <button
+              <Button
                 type="submit"
+                variant="secondary"
+                size="icon"
                 title="Выйти из аккаунта"
                 aria-label="Выйти из аккаунта"
-                className={`flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border transition cursor-pointer shrink-0 ${
-                  isLight
-                    ? "border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-100 shadow-2xs"
-                    : "border-white/10 bg-[#111726]/90 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
-                }`}
               >
                 <LogOut className="h-4 w-4" />
-              </button>
+              </Button>
             </form>
           </div>
         </div>
@@ -532,41 +530,34 @@ export function StudentDashboard({
           })}
         </div>
 
-        <button
+        <Button
           type="button"
+          variant={isTabContentCollapsed ? "primary" : "secondary"}
+          size="sm"
           onClick={() => setIsTabContentCollapsed(!isTabContentCollapsed)}
-          className={`flex items-center gap-1.5 rounded-xl border px-2.5 sm:px-3 py-2 text-xs font-bold transition duration-200 shrink-0 cursor-pointer ${
-            isTabContentCollapsed
-              ? isLight
-                ? "bg-sky-50 text-sky-700 border-sky-200"
-                : "bg-blue-600/30 text-blue-300 border-blue-500/50"
-              : isLight
-              ? "bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
-              : "bg-white/5 border-zinc-700/60 text-zinc-400 hover:text-white hover:bg-white/10"
-          }`}
           title={isTabContentCollapsed ? "Развернуть вкладку" : "Свернуть вкладку"}
         >
           {isTabContentCollapsed ? (
             <>
               <ChevronDown className="h-3.5 w-3.5" />
-              <span className="text-[11px]">Развернуть</span>
+              <span>Развернуть</span>
             </>
           ) : (
             <>
               <ChevronUp className="h-3.5 w-3.5" />
-              <span className="text-[11px]">Свернуть</span>
+              <span>Свернуть</span>
             </>
           )}
-        </button>
+        </Button>
       </nav>
 
       {/* ЕСЛИ ВКЛАДКА СВЕРНУТА */}
       {isTabContentCollapsed && (
-        <div className="glass-panel p-4 sm:p-5 rounded-3xl flex items-center justify-between gap-3 border border-dashed animate-fade-in shadow-xs">
+        <Card padding="md" className="flex items-center justify-between gap-3 border-dashed animate-fade-in">
           <div className="flex items-center gap-3 min-w-0">
             <div
               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border ${
-                isLight ? "bg-sky-50 border-sky-200 text-sky-600" : "bg-white/5 border-white/10 text-zinc-300"
+                isLight ? "bg-sky-50 border-sky-200 text-sky-600" : "bg-slate-800 border-slate-700 text-slate-300"
               }`}
             >
               {activeTab === "schedule" ? (
@@ -581,7 +572,7 @@ export function StudentDashboard({
                   ? `Вкладка «Расписание» свернута`
                   : `Вкладка «Домашние задания» свернута`}
               </p>
-              <p className={`text-[11px] mt-0.5 truncate ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+              <p className={`text-[11px] mt-0.5 truncate ${isLight ? "text-slate-500" : "text-slate-400"}`}>
                 {activeTab === "schedule"
                   ? `${activeDayLessons.length} уроков на ${activeDateFormatted}. Нажмите, чтобы открыть`
                   : unsubmittedCount > 0
@@ -590,33 +581,35 @@ export function StudentDashboard({
               </p>
             </div>
           </div>
-          <button
+          <Button
             type="button"
+            variant="primary"
+            size="sm"
             onClick={() => setIsTabContentCollapsed(false)}
-            className="flex items-center gap-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 px-3.5 py-2 text-xs font-bold text-white shadow-xs transition shrink-0 cursor-pointer"
           >
             <ChevronDown className="h-4 w-4" />
             <span>Развернуть</span>
-          </button>
-        </div>
+          </Button>
+        </Card>
       )}
 
       {!isTabContentCollapsed && activeTab === "schedule" && (
         <section className="space-y-3.5 animate-tab-enter">
-          <div className="glass-panel flex flex-wrap items-center justify-between gap-2 rounded-2xl px-3.5 py-2.5 sm:px-4 sm:py-3">
+          <Card padding="sm" className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs sm:text-sm font-bold">Расписание:</span>
               <span
                 className={`rounded-lg px-2.5 py-1 text-xs font-semibold border ${
                   isLight
                     ? "bg-slate-100 text-slate-700 border-slate-200/80"
-                    : "bg-white/10 text-zinc-200 border-white/10"
+                    : "bg-slate-800 text-slate-200 border-slate-700"
                 }`}
               >
                 {monthTitle}
               </span>
-              <div className="w-38 sm:w-44">
+              <div className="w-40 sm:w-48">
                 <DatePicker
+                  compact
                   value={format(currentDate, "yyyy-MM-dd")}
                   onChange={(iso) => {
                     if (iso) {
@@ -628,14 +621,11 @@ export function StudentDashboard({
             </div>
 
             <div className="flex items-center gap-1.5">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => setIsCalendarCollapsed(!isCalendarCollapsed)}
-                className={`flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-xl border transition cursor-pointer ${
-                  isLight
-                    ? "bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-200 hover:bg-slate-200/70"
-                    : "text-zinc-400 hover:text-white hover:bg-white/5 border-zinc-700/60"
-                }`}
                 title={isCalendarCollapsed ? "Развернуть дни недели" : "Свернуть дни недели"}
               >
                 <Calendar className="h-3.5 w-3.5" />
@@ -647,34 +637,30 @@ export function StudentDashboard({
                 ) : (
                   <ChevronUp className="h-3 w-3" />
                 )}
-              </button>
+              </Button>
 
-              <div
-                className={`flex items-center rounded-xl border ${
-                  isLight ? "border-slate-200 bg-slate-100" : "border-zinc-700 bg-white/5"
-                }`}
-              >
-                <button
+              <div className="flex items-center gap-1">
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="icon"
                   onClick={() => handlePrevWeek(1)}
-                  className={`p-1.5 rounded-l-xl transition cursor-pointer ${
-                    isLight ? "hover:bg-slate-200/70 text-slate-700" : "hover:bg-white/10"
-                  }`}
+                  title="Предыдущая неделя"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="icon"
                   onClick={() => handleNextWeek(1)}
-                  className={`p-1.5 rounded-r-xl transition cursor-pointer ${
-                    isLight ? "hover:bg-slate-200/70 text-slate-700" : "hover:bg-white/10"
-                  }`}
+                  title="Следующая неделя"
                 >
                   <ChevronRight className="h-4 w-4" />
-                </button>
+                </Button>
               </div>
             </div>
-          </div>
+          </Card>
 
           <div className="space-y-3.5">
             <div
@@ -927,70 +913,37 @@ export function StudentDashboard({
       {/* ВКЛАДКА: ДОМАШНИЕ ЗАДАНИЯ (ДЗ) */}
       {!isTabContentCollapsed && activeTab === "homework" && (
         <section className="space-y-4 animate-tab-enter">
-          <div className="glass-panel flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl">
+          <Card padding="md" className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-sky-500 animate-pulse" />
                 <h2 className="text-lg sm:text-xl font-black tracking-tight">Домашние задания</h2>
               </div>
-              <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+              <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-slate-400"}`}>
                 Все выданные задания, проверка решений и оценки преподавателя
               </p>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap justify-between md:justify-end">
-              <div
-                className={`flex flex-wrap items-center gap-1 p-1 rounded-xl border text-xs font-bold ${
-                  isLight ? "bg-slate-100 border-slate-200/80" : "bg-black/30 border-zinc-700/60"
-                }`}
-              >
-                {[
-                  { id: "ALL", label: "Все", count: homeworks.length },
-                  { id: "NEED_SUBMIT", label: "Надо сдать", count: unsubmittedCount },
-                  { id: "PENDING", label: "На проверке", count: pendingCount },
-                  { id: "GRADED", label: "Проверено", count: gradedCount },
-                ].map((btn) => {
-                  const isActive = hwStatusFilter === btn.id;
-                  return (
-                    <button
-                      key={btn.id}
-                      type="button"
-                      onClick={() => setHwStatusFilter(btn.id as any)}
-                      className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition font-bold text-xs cursor-pointer ${
-                        isActive
-                          ? isLight
-                            ? "bg-sky-600 text-white shadow-xs"
-                            : "bg-cyan-500 text-black shadow-xs"
-                          : isLight
-                          ? "text-slate-600 hover:text-slate-900 hover:bg-white/70"
-                          : "text-zinc-400 hover:text-white"
-                      }`}
-                    >
-                      <span>{btn.label}</span>
-                      <span
-                        className={`text-[10px] rounded-full px-1.5 py-0.5 ${
-                          isActive
-                            ? "bg-black/20 text-white"
-                            : isLight
-                            ? "bg-slate-200/80 text-slate-700"
-                            : "bg-white/10 text-zinc-300"
-                        }`}
-                      >
-                        {btn.count}
-                      </span>
-                    </button>
-                  );
-                })}
+              <div className="overflow-x-auto no-scrollbar">
+                <SegmentedControl
+                  size="sm"
+                  value={hwStatusFilter}
+                  onChange={setHwStatusFilter}
+                  options={[
+                    { value: "ALL", label: "Все", badge: homeworks.length },
+                    { value: "NEED_SUBMIT", label: "Надо сдать", badge: unsubmittedCount },
+                    { value: "PENDING", label: "На проверке", badge: pendingCount },
+                    { value: "GRADED", label: "Проверено", badge: gradedCount },
+                  ]}
+                />
               </div>
 
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => setIsHwFiltersCollapsed(!isHwFiltersCollapsed)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
-                  isLight
-                    ? "bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
-                    : "border-zinc-700/60 bg-white/5 text-zinc-300 hover:text-white"
-                }`}
                 title="Свернуть / развернуть поиск и фильтры"
               >
                 <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -1002,109 +955,85 @@ export function StudentDashboard({
                 ) : (
                   <ChevronUp className="h-3.5 w-3.5" />
                 )}
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
 
           {!isHwFiltersCollapsed && (
             <div className="space-y-3">
-              <div className="glass-panel p-3 sm:p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
-                <div className="relative flex-1 min-w-[180px]">
-                  <Search
-                    className={`absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 ${
-                      isLight ? "text-slate-400" : "text-zinc-400"
-                    }`}
-                  />
-                  <input
+              <Card padding="sm" className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+                <div className="flex-1 min-w-[180px]">
+                  <Input
                     type="text"
                     placeholder="Поиск по предмету или теме..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full rounded-xl border pl-9 pr-8 py-1.5 text-xs focus:outline-none ${
-                      isLight
-                        ? "bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-sky-500"
-                        : "border-zinc-700/80 bg-black/20 text-white placeholder-zinc-500 focus:border-zinc-500"
-                    }`}
+                    icon={<Search className="h-4 w-4" />}
+                    rightElement={
+                      searchQuery ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setSearchQuery("")}
+                          className="h-6 w-6"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      ) : undefined
+                    }
                   />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
                   <span
-                    className={`text-xs font-bold flex items-center gap-1 ${
-                      isLight ? "text-slate-500" : "text-zinc-400"
+                    className={`text-xs font-bold flex items-center gap-1 shrink-0 ${
+                      isLight ? "text-slate-500" : "text-slate-400"
                     }`}
                   >
                     <ArrowUpDown className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">Сортировка:</span>
                   </span>
-                  <select
-                    value={hwSort}
-                    onChange={(e) => setHwSort(e.target.value as any)}
-                    className={`w-full sm:w-auto rounded-xl border px-3 py-1.5 text-xs font-bold focus:outline-none ${
-                      isLight
-                        ? "bg-white border-slate-200 text-slate-800 focus:border-sky-500"
-                        : "border-zinc-700 bg-zinc-900 text-zinc-200 focus:border-zinc-500"
-                    }`}
-                  >
-                    <option value="DEADLINE_NEAREST">Ближайший дедлайн</option>
-                    <option value="DEADLINE_FURTHEST">Дальний дедлайн</option>
-                    <option value="DATE_NEWEST">Сначала новые (по дате)</option>
-                    <option value="DATE_OLDEST">Сначала старые (по дате)</option>
-                    <option value="STATUS">Сначала не сданные</option>
-                    <option value="SUBJECT">По предмету (А-Я)</option>
-                  </select>
+                  <div className="w-full sm:w-56">
+                    <Select
+                      value={hwSort}
+                      onValueChange={(v) => setHwSort(v as any)}
+                      options={[
+                        { value: "DEADLINE_NEAREST", label: "Ближайший дедлайн" },
+                        { value: "DEADLINE_FURTHEST", label: "Дальний дедлайн" },
+                        { value: "DATE_NEWEST", label: "Сначала новые (по дате)" },
+                        { value: "DATE_OLDEST", label: "Сначала старые (по дате)" },
+                        { value: "STATUS", label: "Сначала не сданные" },
+                        { value: "SUBJECT", label: "По предмету (А-Я)" },
+                      ]}
+                    />
+                  </div>
                 </div>
-              </div>
+              </Card>
 
               {availableSubjects.length > 1 && (
                 <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 no-scrollbar">
-                  <button
-                    type="button"
+                  <Button
+                    variant={selectedSubjectFilter === "ALL" ? "primary" : "secondary"}
+                    size="sm"
                     onClick={() => setSelectedSubjectFilter("ALL")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition whitespace-nowrap shrink-0 cursor-pointer ${
-                      selectedSubjectFilter === "ALL"
-                        ? isLight
-                          ? "bg-sky-600 text-white border-sky-600 shadow-xs"
-                          : "bg-white text-zinc-900 border-white shadow-sm"
-                        : isLight
-                        ? "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/70 hover:text-slate-900"
-                        : "bg-zinc-800/60 text-zinc-400 border-transparent hover:text-white"
-                    }`}
                   >
                     Все предметы ({homeworks.length})
-                  </button>
+                  </Button>
                   {availableSubjects.map((sub) => {
                     const count = homeworks.filter(
                       (h) => h.subjectName.trim().toLowerCase() === sub.toLowerCase()
                     ).length;
                     const isActive = selectedSubjectFilter === sub;
                     return (
-                      <button
+                      <Button
                         key={sub}
-                        type="button"
+                        variant={isActive ? "primary" : "secondary"}
+                        size="sm"
                         onClick={() => setSelectedSubjectFilter(sub)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition whitespace-nowrap flex items-center gap-1.5 shrink-0 cursor-pointer ${
-                          isActive
-                            ? isLight
-                              ? "bg-sky-600 text-white border-sky-600 shadow-xs"
-                              : "bg-white text-zinc-900 border-white shadow-sm"
-                            : isLight
-                            ? "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/70 hover:text-slate-900"
-                            : "bg-zinc-800/60 text-zinc-400 border-transparent hover:text-white"
-                        }`}
                       >
                         <span>{sub}</span>
                         <span className="text-[10px] opacity-75">({count})</span>
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -1148,7 +1077,10 @@ export function StudentDashboard({
             </div>
           </div>
 
-          <div className="space-y-3 sm:space-y-4">
+          <div
+            key={`${hwStatusFilter}-${selectedSubjectFilter}-${hwSort}`}
+            className="space-y-3 sm:space-y-4 animate-tab-enter"
+          >
             {displayedHomeworks.length === 0 ? (
               <div
                 className={`flex flex-col items-center justify-center rounded-2xl border border-dashed p-6 sm:p-8 text-center ${
@@ -1447,531 +1379,434 @@ export function StudentDashboard({
         </section>
       )}
 
-      {/* Модальное окно сдачи ДЗ */}
-      {activeHwModal && (
-        <div className="fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex items-center justify-center bg-black/60 p-2 sm:p-4 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] backdrop-blur-sm overflow-hidden">
-          <div className="glass-panel w-full max-w-[min(95vw,calc(100vw-1.5rem))] sm:max-w-lg max-h-[90dvh] flex flex-col overflow-hidden rounded-3xl p-4 sm:p-6 shadow-2xl">
-            <div
-              className={`flex items-center justify-between gap-2 border-b pb-3 shrink-0 ${
-                isLight ? "border-slate-200" : "border-zinc-800"
-              }`}
-            >
-              <div className="min-w-0 flex-1 overflow-hidden">
-                <h3 className="font-bold text-sm sm:text-base truncate">Сдача домашнего задания</h3>
-                <p className={`text-xs truncate ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
-                  {activeHwModal.subjectName}: {activeHwModal.title}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveHwModal(null)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white transition shrink-0"
-              >
-                <X className="h-5 w-5" />
-              </button>
+      {/* Модальное окно сдачи ДЗ (через единый <Modal /> дизайн-системы) */}
+      <Modal
+        isOpen={Boolean(activeHwModal)}
+        onClose={() => setActiveHwModal(null)}
+        title="Сдача домашнего задания"
+        subtitle={activeHwModal ? `${activeHwModal.subjectName}: ${activeHwModal.title}` : ""}
+        icon={<Send className="w-4 h-4" />}
+        maxWidth="lg"
+      >
+        {activeHwModal && (
+          <form onSubmit={handleSubmitSolution} className="space-y-4 text-xs sm:text-sm">
+            <div>
+              <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+                Ваш ответ или комментарий:
+              </label>
+              <Textarea
+                rows={3}
+                required
+                value={submitText}
+                onChange={(e) => setSubmitText(e.target.value)}
+                placeholder="Опишите выполненное задание..."
+              />
             </div>
 
-            <form onSubmit={handleSubmitSolution} className="mt-3 space-y-3.5 text-xs overflow-y-auto flex-1 min-h-0 pr-0.5">
+            <div>
+              <label className={`block text-xs font-semibold mb-1.5 ${isLight ? "text-slate-600" : "text-slate-400"}`}>
+                Прикрепить фото или файл:
+              </label>
               <div>
-                <label className={`font-medium ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
-                  Ваш ответ или комментарий:
+                <label
+                  className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl border h-10 px-3.5 text-xs font-medium transition-colors duration-200 ${
+                    isLight
+                      ? "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      : "border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700"
+                  }`}
+                >
+                  <Paperclip className="h-3.5 w-3.5" />
+                  <span>Выбрать файлы</span>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        setSubmitFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+                      }
+                    }}
+                    className="hidden"
+                  />
                 </label>
-                <textarea
-                  rows={3}
-                  required
-                  value={submitText}
-                  onChange={(e) => setSubmitText(e.target.value)}
-                  placeholder="Опишите выполненное задание..."
-                  className={`mt-1 w-full rounded-2xl border p-3 text-sm focus:outline-none ${
-                    isLight
-                      ? "bg-white border-slate-200 text-slate-800 focus:border-sky-500"
-                      : "border-zinc-700 bg-transparent text-white"
-                  }`}
-                />
               </div>
 
-              <div>
-                <label className={`font-medium ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
-                  Прикрепить фото или файл:
-                </label>
-                <div className="mt-1">
-                  <label
-                    className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs ${
-                      isLight
-                        ? "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
-                        : "border-zinc-700 hover:bg-white/5"
-                    }`}
-                  >
-                    <Paperclip className="h-3.5 w-3.5" />
-                    <span>Выбрать файлы</span>
-                    <input
-                      type="file"
-                      multiple
-                      onChange={(e) => {
-                        if (e.target.files) {
-                          setSubmitFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
-                        }
-                      }}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-
-                {submitFiles.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {submitFiles.map((file, idx) => (
-                      <span
-                        key={idx}
-                        className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-medium ${
-                          isLight ? "bg-slate-100 text-slate-700" : "bg-white/10"
-                        }`}
-                      >
-                        <span className="max-w-[140px] truncate">{file.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => setSubmitFiles((prev) => prev.filter((_, i) => i !== idx))}
-                          className="text-slate-400 hover:text-red-500"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveHwModal(null)}
-                  className={`rounded-xl px-4 py-2 font-medium ${
-                    isLight ? "hover:bg-slate-100 text-slate-600" : "hover:bg-white/10"
-                  }`}
-                >
-                  Отмена
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="theme-btn flex items-center gap-1.5 px-5 py-2 font-bold disabled:opacity-50"
-                >
-                  <Send className="h-3.5 w-3.5" />
-                  <span>{isSubmitting ? "Отправка..." : "Отправить"}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Модальное окно просмотра проверенной работы */}
-      {viewCheckedHwModal && (
-        <div
-          onClick={() => setViewCheckedHwModal(null)}
-          className={`fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex items-center justify-center p-2 sm:p-4 pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md overflow-hidden font-sans ${
-            isLight ? "bg-slate-900/40 text-slate-900" : "bg-zinc-950/90 text-zinc-100"
-          }`}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-[min(95vw,calc(100vw-1rem))] lg:max-w-6xl h-full max-h-[90dvh] flex flex-col rounded-2xl sm:rounded-3xl overflow-hidden border shadow-2xl ${
-              isLight ? "border-slate-200/90 bg-white/95" : "border-white/10 bg-[#05070A]"
-            }`}
-          >
-            <div
-              className={`flex h-12 sm:h-14 w-full items-center justify-between gap-2 px-3 sm:px-5 border-b shadow-xs shrink-0 overflow-hidden backdrop-blur-xl ${
-                isLight
-                  ? "bg-white/95 border-slate-200 text-slate-900"
-                  : "bg-[#090D18]/95 border-sky-500/25 text-zinc-100"
-              }`}
-            >
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
-                <span
-                  className={`flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-xl font-bold text-xs shrink-0 border ${
-                    isLight
-                      ? "bg-sky-50 text-sky-700 border-sky-200"
-                      : "bg-sky-500/20 text-sky-300 border-sky-500/30"
-                  }`}
-                >
-                  ДЗ
-                </span>
-                <div className="min-w-0 flex-1 overflow-hidden">
-                  <h3
-                    className={`text-xs sm:text-base font-extrabold truncate ${
-                      isLight ? "text-slate-900" : "text-zinc-100"
-                    }`}
-                  >
-                    {viewCheckedHwModal.title}
-                  </h3>
-                  <p
-                    className={`text-[10px] sm:text-[11px] font-semibold truncate ${
-                      isLight ? "text-slate-500" : "text-zinc-400"
-                    }`}
-                  >
-                    {viewCheckedHwModal.subjectName} • Проверено учителем
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setCheckedPageRotation((prev) => (prev + 90) % 360)}
-                  className={`flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border transition shrink-0 cursor-pointer ${
-                    isLight
-                      ? "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-950"
-                      : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white"
-                  }`}
-                  title="Повернуть лист на 90°"
-                >
-                  <RotateCw className="h-4 w-4" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setCheckedZoom((prev) => (prev === 1 ? 1.25 : prev === 1.25 ? 1.5 : 1))}
-                  className={`flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border transition shrink-0 cursor-pointer ${
-                    isLight
-                      ? "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-950"
-                      : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white"
-                  }`}
-                  title="Масштаб"
-                >
-                  {checkedZoom > 1 ? <ZoomOut className="h-4 w-4" /> : <ZoomIn className="h-4 w-4" />}
-                </button>
-
-                {parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment).modifiedImageUrl ? (
-                  <a
-                    href={parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment).modifiedImageUrl}
-                    download={`Проверенное_ДЗ_${viewCheckedHwModal.subjectName}.jpg`}
-                    className={`hidden sm:flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold shadow-2xs shrink-0 transition ${
-                      isLight
-                        ? "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-950"
-                        : "border-white/15 bg-white/10 text-zinc-200 hover:bg-white/15"
-                    }`}
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    <span>Скачать с пометками</span>
-                  </a>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => window.print()}
-                    className={`hidden sm:flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold shadow-2xs shrink-0 transition cursor-pointer ${
-                      isLight
-                        ? "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-950"
-                        : "border-white/15 bg-white/10 text-zinc-200 hover:bg-white/15"
-                    }`}
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    <span>Печать / PDF</span>
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => setViewCheckedHwModal(null)}
-                  className={`flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border transition shrink-0 cursor-pointer ${
-                    isLight
-                      ? "border-slate-200 bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200"
-                      : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/15 hover:text-white"
-                  }`}
-                  title="Закрыть"
-                >
-                  <X className="h-4 w-4 sm:h-5 sm:w-5" />
-                </button>
-              </div>
-            </div>
-
-            <div
-              className={`flex flex-1 min-h-0 overflow-hidden flex-col md:flex-row ${
-                isLight ? "bg-slate-100/90" : "bg-[#05070A]"
-              }`}
-            >
-              {(() => {
-                const feedback = parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment);
-                const studentSubmittedImg =
-                  viewCheckedHwModal.submission?.attachments?.find(
-                    (a: any) =>
-                      a.fileType?.startsWith("image/") || a.fileUrl?.match(/\.(jpeg|jpg|png|webp|gif)/i)
-                  )?.fileUrl || viewCheckedHwModal.submission?.attachments?.[0]?.fileUrl;
-
-                return (
-                  <div
-                    className={`flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col items-center justify-start ${
-                      isLight ? "bg-slate-100/90" : "bg-[#2E3440]"
-                    }`}
-                  >
-                    <div
-                      className={`relative w-full max-w-3xl overflow-hidden rounded-2xl shadow-xl bg-white border transition-all duration-300 my-auto ${
-                        isLight ? "border-slate-200" : "border-zinc-700"
-                      }`}
-                      style={{
-                        transform: `rotate(${checkedPageRotation}deg) scale(${checkedZoom})`,
-                        transformOrigin: "center center",
-                      }}
-                    >
-                      {feedback.modifiedImageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={feedback.modifiedImageUrl}
-                          alt="Проверенная работа с исправлениями учителя"
-                          style={{ filter: "none" }}
-                          className="w-full h-auto object-contain block select-none"
-                        />
-                      ) : (
-                        <div className="relative w-full aspect-[3/4] bg-[#FAF9F5] select-none overflow-hidden">
-                          {studentSubmittedImg ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={studentSubmittedImg}
-                              alt="Работа ученика"
-                              style={{ filter: "none" }}
-                              className="w-full h-full object-contain pointer-events-none"
-                            />
-                          ) : (
-                            <div className="absolute inset-0 p-8 sm:p-12 text-[#1E293B] font-serif leading-relaxed flex flex-col justify-between overflow-hidden">
-                              <div
-                                className="absolute inset-0 opacity-25 pointer-events-none"
-                                style={{
-                                  backgroundImage:
-                                    "linear-gradient(to right, #94A3B8 1px, transparent 1px), linear-gradient(to bottom, #94A3B8 1px, transparent 1px)",
-                                  backgroundSize: "20px 20px",
-                                }}
-                              />
-
-                              <div className="relative z-0 space-y-1.5 border-b border-blue-400/40 pb-2">
-                                <div className="flex items-center justify-between font-mono text-xs font-bold text-blue-900">
-                                  <span>{user.fullName}</span>
-                                  <span>{viewCheckedHwModal.targetDate}</span>
-                                </div>
-                                <div className="text-center font-mono text-sm sm:text-base font-extrabold text-blue-950">
-                                  ДЗ: {viewCheckedHwModal.subjectName} — {viewCheckedHwModal.title}
-                                </div>
-                              </div>
-
-                              <div className="relative z-0 space-y-3 text-xs sm:text-sm font-mono text-blue-950 my-auto">
-                                {viewCheckedHwModal.submission?.content ? (
-                                  <div className="bg-white/60 p-5 rounded-2xl border border-blue-200 shadow-xs">
-                                    <p className="font-bold text-blue-900 text-sm mb-1">Решение ученика:</p>
-                                    <p className="font-sans leading-relaxed text-blue-950">
-                                      {viewCheckedHwModal.submission.content}
-                                    </p>
-                                  </div>
-                                ) : (
-                                  <div className="bg-white/60 p-5 rounded-2xl border border-blue-200 shadow-xs">
-                                    <p className="font-bold text-blue-900 text-sm mb-1">Выполненное задание:</p>
-                                    <p className="font-sans leading-relaxed text-blue-950">
-                                      {viewCheckedHwModal.description ||
-                                        `Задание по предмету «${viewCheckedHwModal.subjectName}» выполнено.`}
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="relative z-0 flex items-center justify-between text-[11px] font-mono text-zinc-500 pt-3 border-t border-zinc-300">
-                                <span>Работа проверена преподавателем</span>
-                                <span>
-                                  {viewCheckedHwModal.submission?.submittedAt
-                                    ? `Сдано: ${String(viewCheckedHwModal.submission.submittedAt).slice(0, 10)}`
-                                    : "Проверено"}
-                                </span>
-                              </div>
-                            </div>
-                          )}
-
-                          {feedback.annotations && feedback.annotations.length > 0 && (
-                            <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
-                              {feedback.annotations
-                                .filter((item: any) => item.type === "stroke" && item.points?.length > 1)
-                                .map((stroke: any) => {
-                                  const d = stroke.points
-                                    .map((pt: any, idx: number) => `${idx === 0 ? "M" : "L"} ${pt.x} ${pt.y}`)
-                                    .join(" ");
-                                  return (
-                                    <path
-                                      key={stroke.id}
-                                      d={d}
-                                      fill="none"
-                                      stroke={stroke.color || "#EF4444"}
-                                      strokeWidth={stroke.width || 3}
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    />
-                                  );
-                                })}
-                            </svg>
-                          )}
-
-                          {feedback.annotations && feedback.annotations.length > 0 && (
-                            <div className="absolute inset-0 pointer-events-none z-20">
-                              {feedback.annotations
-                                .filter((item: any) => item.type === "text" && item.text)
-                                .map((textItem: any) => (
-                                  <div
-                                    key={textItem.id}
-                                    className="absolute -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white/95 px-3 py-1 text-xs font-black shadow-md border"
-                                    style={{
-                                      left: `${textItem.x}%`,
-                                      top: `${textItem.y}%`,
-                                      color: textItem.color || "#EF4444",
-                                      borderColor: textItem.color || "#EF4444",
-                                    }}
-                                  >
-                                    {textItem.text}
-                                  </div>
-                                ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {(() => {
-                const feedback = parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment);
-                const taskEntries = Object.entries(feedback.tasks || {});
-                const gradeVal = viewCheckedHwModal.submission?.grade ?? 5;
-                let gradeColor = "bg-emerald-600";
-                let gradeText = "Отлично!";
-                if (gradeVal === 4) {
-                  gradeColor = "bg-green-600";
-                  gradeText = "Хорошо!";
-                } else if (gradeVal === 3) {
-                  gradeColor = "bg-amber-500";
-                  gradeText = "Удовлетворительно";
-                } else if (gradeVal === 2) {
-                  gradeColor = "bg-rose-600";
-                  gradeText = "Неудовлетворительно";
-                }
-
-                return (
-                  <aside
-                    className={`w-full md:w-80 shrink-0 border-t md:border-t-0 md:border-l p-4 sm:p-5 flex flex-col justify-between overflow-y-auto max-h-[240px] md:max-h-none ${
-                      isLight
-                        ? "bg-white/95 border-slate-200 text-slate-900"
-                        : "bg-[#070A12]/95 border-sky-500/20 text-zinc-100"
-                    }`}
-                  >
-                    <div className="space-y-4 sm:space-y-5">
-                      {taskEntries.length > 0 && (
-                        <div>
-                          <h4
-                            className={`text-xs font-black uppercase tracking-wider ${
-                              isLight ? "text-slate-800" : "text-zinc-200"
-                            }`}
-                          >
-                            Выполнение заданий ({taskEntries.length} задач)
-                          </h4>
-                          <p className={`text-[11px] mt-0.5 ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
-                            Отметки преподавателя по номерам:
-                          </p>
-
-                          <div className="mt-3 grid grid-cols-5 gap-1.5">
-                            {taskEntries.map(([num, isOk]) => (
-                              <div
-                                key={num}
-                                className={`flex h-9 items-center justify-center rounded-xl text-xs font-black shadow-2xs ${
-                                  isOk === true
-                                    ? "bg-emerald-500 text-white"
-                                    : isOk === false
-                                    ? "bg-rose-500 text-white"
-                                    : isLight
-                                    ? "bg-slate-100 text-slate-600 border border-slate-200"
-                                    : "bg-white/5 text-zinc-400 border border-white/10"
-                                }`}
-                              >
-                                {num}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <div
-                        className={`pt-3 sm:pt-4 border-t space-y-2 ${
-                          isLight ? "border-slate-200" : "border-white/10"
-                        }`}
-                      >
-                        <span
-                          className={`text-xs font-black block ${
-                            isLight ? "text-slate-800" : "text-zinc-200"
-                          }`}
-                        >
-                          Итоговая оценка учителя:
-                        </span>
-
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`flex h-12 w-12 items-center justify-center rounded-2xl ${gradeColor} text-xl font-black text-white shadow-md`}
-                          >
-                            {gradeVal}
-                          </div>
-                          <div>
-                            <div
-                              className={`text-xs font-extrabold ${
-                                isLight ? "text-slate-900" : "text-zinc-100"
-                              }`}
-                            >
-                              {gradeText}
-                            </div>
-                            <div className={`text-[10px] ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
-                              Работа зачтена в электронный дневник
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div
-                        className={`pt-3 sm:pt-4 border-t ${
-                          isLight ? "border-slate-200" : "border-white/10"
-                        }`}
-                      >
-                        <span
-                          className={`text-xs font-black block mb-1 ${
-                            isLight ? "text-slate-800" : "text-zinc-200"
-                          }`}
-                        >
-                          Замечания преподавателя:
-                        </span>
-                        <div
-                          className={`rounded-2xl border p-3.5 text-xs leading-relaxed shadow-2xs ${
-                            isLight
-                              ? "border-slate-200 bg-slate-50 text-slate-800"
-                              : "border-white/10 bg-white/5 text-zinc-200"
-                          }`}
-                        >
-                          {feedback.text || "Работа проверена преподавателем. Все требования выполнены."}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div
-                      className={`pt-4 border-t ${
-                        isLight ? "border-slate-200" : "border-white/10"
+              {submitFiles.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {submitFiles.map((file, idx) => (
+                    <span
+                      key={idx}
+                      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-medium ${
+                        isLight ? "bg-slate-100 text-slate-700" : "bg-slate-800 text-slate-200"
                       }`}
                     >
+                      <span className="max-w-[140px] truncate">{file.name}</span>
                       <button
                         type="button"
-                        onClick={() => setViewCheckedHwModal(null)}
-                        className={`w-full rounded-xl py-2.5 text-xs font-black transition cursor-pointer ${
-                          isLight
-                            ? "bg-sky-600 text-white hover:bg-sky-700 shadow-xs"
-                            : "bg-sky-500 text-slate-950 hover:bg-sky-400"
+                        onClick={() => setSubmitFiles((prev) => prev.filter((_, i) => i !== idx))}
+                        className="text-slate-400 hover:text-rose-500"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button type="button" variant="ghost" onClick={() => setActiveHwModal(null)}>
+                Отмена
+              </Button>
+              <Button type="submit" variant="primary" disabled={isSubmitting}>
+                <Send className="h-3.5 w-3.5" />
+                <span>{isSubmitting ? "Отправка..." : "Отправить"}</span>
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      {/* Модальное окно просмотра проверенной работы (через единый <Modal /> дизайн-системы) */}
+      <Modal
+        isOpen={Boolean(viewCheckedHwModal)}
+        onClose={() => setViewCheckedHwModal(null)}
+        maxWidth="6xl"
+        title={viewCheckedHwModal?.title || "Проверенная работа"}
+        subtitle={viewCheckedHwModal ? `${viewCheckedHwModal.subjectName} • Проверено учителем` : ""}
+        icon={<BookOpen className="w-4 h-4" />}
+        bodyClassName={`flex flex-1 min-h-0 overflow-hidden flex-col md:flex-row ${
+          isLight ? "bg-slate-100/90" : "bg-slate-950"
+        }`}
+        headerActions={
+          viewCheckedHwModal ? (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button
+                variant="secondary"
+                size="icon"
+                onClick={() => setCheckedPageRotation((prev) => (prev + 90) % 360)}
+                title="Повернуть лист на 90°"
+              >
+                <RotateCw className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="secondary"
+                size="icon"
+                onClick={() => setCheckedZoom((prev) => (prev === 1 ? 1.25 : prev === 1.25 ? 1.5 : 1))}
+                title="Масштаб"
+              >
+                {checkedZoom > 1 ? <ZoomOut className="h-4 w-4" /> : <ZoomIn className="h-4 w-4" />}
+              </Button>
+
+              {parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment).modifiedImageUrl ? (
+                <a
+                  href={parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment).modifiedImageUrl}
+                  download={`Проверенное_ДЗ_${viewCheckedHwModal.subjectName}.jpg`}
+                  className={`hidden sm:inline-flex items-center gap-1.5 rounded-xl border h-8 px-3 text-xs font-medium transition ${
+                    isLight
+                      ? "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      : "border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700"
+                  }`}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Скачать с пометками</span>
+                </a>
+              ) : (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => window.print()}
+                  className="hidden sm:inline-flex"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Печать / PDF</span>
+                </Button>
+              )}
+            </div>
+          ) : null
+        }
+      >
+        {viewCheckedHwModal && (
+          <>
+            {(() => {
+              const feedback = parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment);
+              const studentSubmittedImg =
+                viewCheckedHwModal.submission?.attachments?.find(
+                  (a: any) =>
+                    a.fileType?.startsWith("image/") || a.fileUrl?.match(/\.(jpeg|jpg|png|webp|gif)/i)
+                )?.fileUrl || viewCheckedHwModal.submission?.attachments?.[0]?.fileUrl;
+
+              return (
+                <div
+                  className={`flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col items-center justify-start ${
+                    isLight ? "bg-slate-100/90" : "bg-[#2E3440]"
+                  }`}
+                >
+                  <div
+                    className={`relative w-full max-w-3xl overflow-hidden rounded-2xl shadow-xl bg-white border transition-all duration-300 my-auto ${
+                      isLight ? "border-slate-200" : "border-slate-700"
+                    }`}
+                    style={{
+                      transform: `rotate(${checkedPageRotation}deg) scale(${checkedZoom})`,
+                      transformOrigin: "center center",
+                    }}
+                  >
+                    {feedback.modifiedImageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={feedback.modifiedImageUrl}
+                        alt="Проверенная работа с исправлениями учителя"
+                        style={{ filter: "none" }}
+                        className="w-full h-auto object-contain block select-none"
+                      />
+                    ) : (
+                      <div className="relative w-full aspect-[3/4] bg-[#FAF9F5] select-none overflow-hidden">
+                        {studentSubmittedImg ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={studentSubmittedImg}
+                            alt="Работа ученика"
+                            style={{ filter: "none" }}
+                            className="w-full h-full object-contain pointer-events-none"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 p-8 sm:p-12 text-[#1E293B] font-serif leading-relaxed flex flex-col justify-between overflow-hidden">
+                            <div
+                              className="absolute inset-0 opacity-25 pointer-events-none"
+                              style={{
+                                backgroundImage:
+                                  "linear-gradient(to right, #94A3B8 1px, transparent 1px), linear-gradient(to bottom, #94A3B8 1px, transparent 1px)",
+                                backgroundSize: "20px 20px",
+                              }}
+                            />
+
+                            <div className="relative z-0 space-y-1.5 border-b border-blue-400/40 pb-2">
+                              <div className="flex items-center justify-between font-mono text-xs font-bold text-blue-900">
+                                <span>{user.fullName}</span>
+                                <span>{viewCheckedHwModal.targetDate}</span>
+                              </div>
+                              <div className="text-center font-mono text-sm sm:text-base font-extrabold text-blue-950">
+                                ДЗ: {viewCheckedHwModal.subjectName} — {viewCheckedHwModal.title}
+                              </div>
+                            </div>
+
+                            <div className="relative z-0 space-y-3 text-xs sm:text-sm font-mono text-blue-950 my-auto">
+                              {viewCheckedHwModal.submission?.content ? (
+                                <div className="bg-white/60 p-5 rounded-2xl border border-blue-200 shadow-xs">
+                                  <p className="font-bold text-blue-900 text-sm mb-1">Решение ученика:</p>
+                                  <p className="font-sans leading-relaxed text-blue-950">
+                                    {viewCheckedHwModal.submission.content}
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="bg-white/60 p-5 rounded-2xl border border-blue-200 shadow-xs">
+                                  <p className="font-bold text-blue-900 text-sm mb-1">Выполненное задание:</p>
+                                  <p className="font-sans leading-relaxed text-blue-950">
+                                    {viewCheckedHwModal.description ||
+                                      `Задание по предмету «${viewCheckedHwModal.subjectName}» выполнено.`}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="relative z-0 flex items-center justify-between text-[11px] font-mono text-zinc-500 pt-3 border-t border-zinc-300">
+                              <span>Работа проверена преподавателем</span>
+                              <span>
+                                {viewCheckedHwModal.submission?.submittedAt
+                                  ? `Сдано: ${String(viewCheckedHwModal.submission.submittedAt).slice(0, 10)}`
+                                  : "Проверено"}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {feedback.annotations && feedback.annotations.length > 0 && (
+                          <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
+                            {feedback.annotations
+                              .filter((item: any) => item.type === "stroke" && item.points?.length > 1)
+                              .map((stroke: any) => {
+                                const d = stroke.points
+                                  .map((pt: any, idx: number) => `${idx === 0 ? "M" : "L"} ${pt.x} ${pt.y}`)
+                                  .join(" ");
+                                return (
+                                  <path
+                                    key={stroke.id}
+                                    d={d}
+                                    fill="none"
+                                    stroke={stroke.color || "#EF4444"}
+                                    strokeWidth={stroke.width || 3}
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                );
+                              })}
+                          </svg>
+                        )}
+
+                        {feedback.annotations && feedback.annotations.length > 0 && (
+                          <div className="absolute inset-0 pointer-events-none z-20">
+                            {feedback.annotations
+                              .filter((item: any) => item.type === "text" && item.text)
+                              .map((textItem: any) => (
+                                <div
+                                  key={textItem.id}
+                                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white/95 px-3 py-1 text-xs font-black shadow-md border"
+                                  style={{
+                                    left: `${textItem.x}%`,
+                                    top: `${textItem.y}%`,
+                                    color: textItem.color || "#EF4444",
+                                    borderColor: textItem.color || "#EF4444",
+                                  }}
+                                >
+                                  {textItem.text}
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {(() => {
+              const feedback = parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment);
+              const taskEntries = Object.entries(feedback.tasks || {});
+              const gradeVal = viewCheckedHwModal.submission?.grade ?? 5;
+              let gradeColor = "bg-emerald-600";
+              let gradeText = "Отлично!";
+              if (gradeVal === 4) {
+                gradeColor = "bg-green-600";
+                gradeText = "Хорошо!";
+              } else if (gradeVal === 3) {
+                gradeColor = "bg-amber-500";
+                gradeText = "Удовлетворительно";
+              } else if (gradeVal === 2) {
+                gradeColor = "bg-rose-600";
+                gradeText = "Неудовлетворительно";
+              }
+
+              return (
+                <aside
+                  className={`w-full md:w-80 shrink-0 border-t md:border-t-0 md:border-l p-4 sm:p-5 flex flex-col justify-between overflow-y-auto max-h-[240px] md:max-h-none ${
+                    isLight
+                      ? "bg-white border-slate-200 text-slate-900"
+                      : "bg-slate-900 border-slate-800 text-slate-100"
+                  }`}
+                >
+                  <div className="space-y-4 sm:space-y-5">
+                    {taskEntries.length > 0 && (
+                      <div>
+                        <h4
+                          className={`text-xs font-black uppercase tracking-wider ${
+                            isLight ? "text-slate-800" : "text-slate-200"
+                          }`}
+                        >
+                          Выполнение заданий ({taskEntries.length} задач)
+                        </h4>
+                        <p className={`text-[11px] mt-0.5 ${isLight ? "text-slate-500" : "text-slate-400"}`}>
+                          Отметки преподавателя по номерам:
+                        </p>
+
+                        <div className="mt-3 grid grid-cols-5 gap-1.5">
+                          {taskEntries.map(([num, isOk]) => (
+                            <div
+                              key={num}
+                              className={`flex h-9 items-center justify-center rounded-xl text-xs font-black shadow-2xs ${
+                                isOk === true
+                                  ? "bg-emerald-500 text-white"
+                                  : isOk === false
+                                  ? "bg-rose-500 text-white"
+                                  : isLight
+                                  ? "bg-slate-100 text-slate-600 border border-slate-200"
+                                  : "bg-slate-800 text-slate-400 border border-slate-700"
+                              }`}
+                            >
+                              {num}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div
+                      className={`pt-3 sm:pt-4 border-t space-y-2 ${
+                        isLight ? "border-slate-200" : "border-slate-800"
+                      }`}
+                    >
+                      <span
+                        className={`text-xs font-black block ${
+                          isLight ? "text-slate-800" : "text-slate-200"
                         }`}
                       >
-                        Закрыть просмотр
-                      </button>
+                        Итоговая оценка учителя:
+                      </span>
+
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-12 w-12 items-center justify-center rounded-2xl ${gradeColor} text-xl font-black text-white shadow-md`}
+                        >
+                          {gradeVal}
+                        </div>
+                        <div>
+                          <div
+                            className={`text-xs font-extrabold ${
+                              isLight ? "text-slate-900" : "text-slate-100"
+                            }`}
+                          >
+                            {gradeText}
+                          </div>
+                          <div className={`text-[10px] ${isLight ? "text-slate-500" : "text-slate-400"}`}>
+                            Работа зачтена в электронный дневник
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </aside>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
+
+                    <div
+                      className={`pt-3 sm:pt-4 border-t ${
+                        isLight ? "border-slate-200" : "border-slate-800"
+                      }`}
+                    >
+                      <span
+                        className={`text-xs font-black block mb-1 ${
+                          isLight ? "text-slate-800" : "text-slate-200"
+                        }`}
+                      >
+                        Замечания преподавателя:
+                      </span>
+                      <div
+                        className={`rounded-2xl border p-3.5 text-xs leading-relaxed shadow-2xs ${
+                          isLight
+                            ? "border-slate-200 bg-slate-50 text-slate-800"
+                            : "border-slate-800 bg-slate-800/50 text-slate-200"
+                        }`}
+                      >
+                        {feedback.text || "Работа проверена преподавателем. Все требования выполнены."}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`pt-4 border-t ${
+                      isLight ? "border-slate-200" : "border-slate-800"
+                    }`}
+                  >
+                    <Button
+                      variant="primary"
+                      size="full"
+                      onClick={() => setViewCheckedHwModal(null)}
+                    >
+                      Закрыть просмотр
+                    </Button>
+                  </div>
+                </aside>
+              );
+            })()}
+          </>
+        )}
+      </Modal>
     </div>
   );
 }
