@@ -560,7 +560,7 @@ export function EgeTaskBankView({
       </Modal>
 
       {/* ВЕРХНЯЯ ШАПКА РАЗДЕЛА */}
-      <Card padding="md" className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <Card padding="md" className="flex flex-col lg:flex-row lg:flex-wrap lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <div
             className={`p-2.5 rounded-xl border shrink-0 ${
@@ -593,7 +593,8 @@ export function EgeTaskBankView({
         {/* АДАПТИВНЫЙ СЕГМЕНТИРОВАННЫЙ ПЕРЕКЛЮЧАТЕЛЬ ПОДВКЛАДОК */}
         <SegmentedControl
           fullWidth
-          className="lg:w-auto flex-wrap sm:flex-nowrap"
+          fullWidthUntil="sm"
+          className="shrink-0"
           value={activeSubTab}
           onChange={setActiveSubTab}
           options={[

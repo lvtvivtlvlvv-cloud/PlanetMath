@@ -561,7 +561,7 @@ export function AdminDashboard({
     : "rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-semibold text-zinc-100 focus:outline-none focus:border-cyan-500";
 
   return (
-    <div className="min-h-screen w-full max-w-5xl mx-auto overflow-x-hidden space-y-5 p-3 sm:p-6 lg:p-8 pr-[max(0.75rem,env(safe-area-inset-right))] pl-[max(0.75rem,env(safe-area-inset-left))]">
+    <div className="min-h-screen w-full mx-auto overflow-x-hidden space-y-5 max-w-5xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-[1680px] p-3 sm:p-6 lg:p-8 pr-[max(0.75rem,env(safe-area-inset-right))] pl-[max(0.75rem,env(safe-area-inset-left))]">
       {/* КОМПАКТНАЯ ШАПКА БЕЗ СДВИГА ЗАГОЛОВКА */}
       <header
         className={`flex items-center justify-between gap-2 sm:gap-4 border-b pb-3.5 ${

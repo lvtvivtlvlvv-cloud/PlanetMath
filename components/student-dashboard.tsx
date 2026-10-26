@@ -419,7 +419,7 @@ export function StudentDashboard({
   }, [homeworks]);
 
   return (
-    <div className="min-h-screen w-full max-w-5xl mx-auto overflow-x-hidden space-y-4 sm:space-y-5 p-3 sm:p-6 lg:p-8 pr-[max(0.75rem,env(safe-area-inset-right))] pl-[max(0.75rem,env(safe-area-inset-left))]">
+    <div className="min-h-screen w-full mx-auto overflow-x-hidden space-y-4 sm:space-y-5 max-w-5xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-[1680px] p-3 sm:p-6 lg:p-8 pr-[max(0.75rem,env(safe-area-inset-right))] pl-[max(0.75rem,env(safe-area-inset-left))]">
       {/* ШАПКА УЧЕНИКА С ПОЛНЫМ ОТОБРАЖЕНИЕМ ЗАГОЛОВКА И ФИО */}
       <header
         className={`flex flex-col gap-1.5 border-b pb-3.5 ${
