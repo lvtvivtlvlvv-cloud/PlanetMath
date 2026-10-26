@@ -359,7 +359,9 @@ export function AdminDashboard({
   egeAssignments = [],
   serverDate,
 }: AdminDashboardProps) {
-  const { theme } = useAppTheme();
+  const { colorMode, scheduleViewMode } = useAppTheme();
+  const isLight = colorMode === "light";
+  const isPlanetSchedule = scheduleViewMode === "planet";
   const [activeTab, setActiveTab] = useState<"schedule" | "journal" | "homeworks" | "submissions" | "ege" | "students" | "teachers">("schedule");
   const [selectedClassId, setSelectedClassId] = useState<string>(classes[0]?.id || "");
   const [scheduleMode, setScheduleMode] = useState<"calendar" | "excel">("calendar");
@@ -425,13 +427,13 @@ export function AdminDashboard({
   const scheduleTouchStartY = useRef<number | null>(null);
 
   const handleScheduleTouchStart = (e: React.TouchEvent) => {
-    if (isPlanet) return;
+    if (isPlanetSchedule) return;
     scheduleTouchStartX.current = e.touches[0].clientX;
     scheduleTouchStartY.current = e.touches[0].clientY;
   };
 
   const handleScheduleTouchEnd = (e: React.TouchEvent) => {
-    if (isPlanet || scheduleTouchStartX.current === null || scheduleTouchStartY.current === null) return;
+    if (isPlanetSchedule || scheduleTouchStartX.current === null || scheduleTouchStartY.current === null) return;
     const dx = e.changedTouches[0].clientX - scheduleTouchStartX.current;
     const dy = e.changedTouches[0].clientY - scheduleTouchStartY.current;
     scheduleTouchStartX.current = null;
@@ -604,22 +606,8 @@ export function AdminDashboard({
     return Array.from(new Set(submissions.map((s) => s.subjectName)));
   }, [submissions]);
 
-  const isPlanet = theme === "planet";
-  const isGarden = theme === "garden";
-
-  const roomColorClass =
-    isPlanet
-      ? "theme-room-text"
-      : isGarden
-      ? "text-[#FEC868]"
-      : "text-emerald-400";
-
-  const hwBadgeClass =
-    isPlanet
-      ? "theme-hw-chip"
-      : isGarden
-      ? "bg-[#1B291D] text-[#FEC868] border border-[#FEC868]/40 rounded-full px-3 py-1 font-bold"
-      : "bg-emerald-950/50 text-emerald-300 border border-emerald-500/20";
+  const roomColorClass = "theme-room-text";
+  const hwBadgeClass = "theme-hw-chip";
 
   const journalHomeworks: HomeworkCardItem[] = useMemo(() => {
     return homeworks
@@ -781,15 +769,9 @@ export function AdminDashboard({
           { id: "teachers", label: `Учителя (${teachers.length})` },
         ].map((tab) => {
           const isActive = activeTab === tab.id;
-
-          let activeClasses = "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 shadow-md";
-          if (isPlanet) {
-            activeClasses = "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-[0_0_16px_rgba(56,189,248,0.25)] backdrop-blur-md";
-          } else if (theme === "standart") {
-            activeClasses = "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_16px_rgba(16,185,129,0.2)] backdrop-blur-md";
-          } else if (isGarden) {
-            activeClasses = "bg-[#FEC868]/20 text-[#FEC868] border-[#FEC868]/40 shadow-[0_0_16px_rgba(254,200,104,0.2)]";
-          }
+          const activeClasses = isLight
+            ? "bg-sky-500 text-white border-sky-600 shadow-sm"
+            : "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-[0_0_16px_rgba(56,189,248,0.25)] backdrop-blur-md";
 
           return (
             <button
@@ -799,6 +781,8 @@ export function AdminDashboard({
               className={`rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold border whitespace-nowrap shrink-0 transition-[color,background-color,border-color,box-shadow] duration-200 outline-none focus:outline-none min-h-[38px] ${
                 isActive
                   ? activeClasses
+                  : isLight
+                  ? "border-transparent text-slate-600 hover:text-slate-900 hover:bg-sky-100/60"
                   : "border-transparent text-zinc-400 hover:text-white hover:bg-white/5"
               }`}
             >
@@ -884,8 +868,8 @@ export function AdminDashboard({
             )}
 
             {scheduleMode === "calendar" ? (
-              <div className={isGarden ? "space-y-0" : "space-y-4"}>
-                {/* Циферблат стабилен в DOM */}
+              <div className="space-y-4">
+                {/* Циферблат / полоса дней */}
                 <ThemeCalendarStrip
                   currentDate={currentDate}
                   onSelectDate={handleSelectDate}
@@ -912,23 +896,16 @@ export function AdminDashboard({
                       : weekAnimDirection === "left"
                       ? "animate-week-left"
                       : ""
-                  } ${
-                    isGarden
-                      ? "rounded-b-[40px] sm:rounded-b-[50px] bg-[#141E15] p-5 sm:p-7 shadow-2xl text-[#F8F6F0] border-b-2 border-x-2 border-t-0 border-[#2D3E2F] relative z-0 -mt-1"
-                      : "space-y-4 pt-1"
-                  }`}
+                  } space-y-4 pt-1`}
                 >
                   <div className="flex justify-between items-center mb-4">
                     <span
                       className={`font-bold text-sm tracking-wide ${
-                        isGarden
-                          ? "text-[#F8F6F0] font-extrabold flex items-center gap-2"
-                          : isPlanet
-                          ? "text-cyan-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]"
-                          : "text-emerald-400 font-bold"
+                        isLight
+                          ? "text-sky-700"
+                          : "text-cyan-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]"
                       }`}
                     >
-                      {isGarden && <span className="h-2.5 w-2.5 rounded-full bg-[#FEC868] shadow-[0_0_8px_#FEC868] shrink-0" />}
                       {selectedDayOfWeek === 7
                         ? `Воскресенье, ${activeDateFormatted} — Выходной день`
                         : `Уроки на ${activeDateFormatted} (${SHORT_WEEKDAYS[selectedDayOfWeek - 1].toUpperCase()})`}
@@ -960,11 +937,7 @@ export function AdminDashboard({
                             setLessonDayOfWeek(selectedDayOfWeek);
                             setIsAddLessonOpen(true);
                           }}
-                          className={
-                            isGarden
-                              ? "rounded-full px-4 py-2 text-xs font-black bg-[#2E5A36] text-[#F8F6F0] hover:bg-[#3B6F45] border border-[#447A4E] shadow-[0_4px_14px_rgba(46,90,54,0.35)] flex items-center gap-1.5 transition active:scale-95"
-                              : "theme-btn flex items-center gap-1.5 px-4 py-2 text-xs font-bold shadow-md"
-                          }
+                          className="theme-btn flex items-center gap-1.5 px-4 py-2 text-xs font-bold shadow-md"
                         >
                           <Plus className="h-3.5 w-3.5" />
                           <span>Добавить занятие</span>
@@ -976,18 +949,16 @@ export function AdminDashboard({
                   <div className="space-y-3 min-h-[380px]">
                     {activeDayLessons.length === 0 ? (
                       <div
-                        className={`flex h-64 flex-col items-center justify-center p-8 text-center text-sm ${
-                          isGarden
-                            ? "rounded-[34px] border-2 border-dashed border-[#FEC868]/50 text-[#FEC868] bg-[#FEC868]/10"
-                            : isPlanet
-                            ? "rounded-3xl border border-cyan-500/20 text-cyan-300/80 bg-cyan-950/10"
-                            : "rounded-3xl border border-dashed border-zinc-800 text-zinc-400"
+                        className={`flex h-64 flex-col items-center justify-center p-8 text-center text-sm rounded-3xl border ${
+                          isLight
+                            ? "border-sky-300/60 text-sky-800 bg-sky-50/70"
+                            : "border-cyan-500/20 text-cyan-300/80 bg-cyan-950/10"
                         }`}
                       >
                         {selectedDayOfWeek === 7 ? (
                           <>
-                            <span className={`text-base font-bold ${isGarden ? "text-[#FEC868]" : "text-cyan-300"}`}>Воскресенье — выходной</span>
-                            <span className={`text-xs mt-1 ${isGarden ? "text-[#ABC270]" : "text-zinc-400"}`}>Занятий нет, учебный процесс возобновится в понедельник</span>
+                            <span className={`text-base font-bold ${isLight ? "text-sky-700" : "text-cyan-300"}`}>Воскресенье — выходной</span>
+                            <span className={`text-xs mt-1 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>Занятий нет, учебный процесс возобновится в понедельник</span>
                           </>
                         ) : (
                           <span>Уроков в этот день нет</span>
@@ -1007,34 +978,28 @@ export function AdminDashboard({
                           <div key={l.id} className="flex items-stretch gap-3 sm:gap-4">
                             <div className="flex w-12 sm:w-14 flex-col justify-between py-1 text-right shrink-0">
                               <span
-                                className={`text-xs sm:text-sm font-bold ${
-                                  isGarden ? "text-[#FEC868] font-black" : "text-zinc-100"
+                                className={`font-mono text-xs sm:text-sm font-bold tabular-nums ${
+                                  isLight ? "text-slate-900" : "text-zinc-100"
                                 }`}
                               >
                                 {l.startTime}
                               </span>
                               <span
-                                className={`text-xs sm:text-sm font-medium ${
-                                  isGarden ? "text-[#FEC868]/75 font-bold" : "text-zinc-400"
+                                className={`font-mono text-xs sm:text-sm font-medium tabular-nums ${
+                                  isLight ? "text-slate-500" : "text-zinc-400"
                                 }`}
                               >
                                 {l.endTime}
                               </span>
                             </div>
 
-                            <div
-                              className={`group flex-1 min-w-0 p-4 sm:p-5 shadow-sm transition-all duration-200 ${
-                                isGarden
-                                  ? "bg-[#FEC868] text-[#2C2114] border border-[#DEAC4E] shadow-[0_4px_16px_rgba(254,200,104,0.25)] hover:bg-[#FFD782] hover:border-[#F2C063] hover:shadow-[0_8px_24px_rgba(254,200,104,0.4)] hover:-translate-y-0.5 rounded-[28px] sm:rounded-[36px]"
-                                  : "glass-panel glass-interactive rounded-2xl sm:rounded-3xl"
-                              }`}
-                            >
+                            <div className="group flex-1 min-w-0 p-4 sm:p-5 shadow-sm transition-all duration-200 glass-panel glass-interactive rounded-2xl sm:rounded-3xl">
                               <div className="flex items-start justify-between">
                                 <div>
-                                  <div className={`text-xs font-black ${isGarden ? "text-[#1C4222]" : roomColorClass}`}>
+                                  <div className={`text-xs font-black ${roomColorClass}`}>
                                     {l.room.toLowerCase().startsWith("каб") ? l.room : `каб. ${l.room}`}
                                   </div>
-                                  <div className={`mt-0.5 text-xs ${isGarden ? "text-[#5A452C] font-semibold" : "text-zinc-400"}`}>
+                                  <div className={`mt-0.5 text-xs ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
                                     {l.teacherName ? formatTeacherName(l.teacherName) : "Преподаватель не указан"}
                                   </div>
                                 </div>
@@ -1045,11 +1010,7 @@ export function AdminDashboard({
                                       setHwPreset({ subjectName: l.subjectName, targetDate: targetDayStr });
                                       setIsHwModalOpen(true);
                                     }}
-                                    className={
-                                      isGarden
-                                        ? "rounded-full bg-[#1C4222] hover:bg-[#28572F] px-2.5 py-1 text-[11px] font-black text-[#F8F6F0] shadow-sm transition"
-                                        : "rounded-lg bg-white/10 px-2 py-0.5 text-[11px] font-medium hover:bg-white/20 text-zinc-200"
-                                    }
+                                    className="rounded-lg bg-white/10 px-2 py-0.5 text-[11px] font-medium hover:bg-white/20 text-zinc-200"
                                   >
                                     + ДЗ
                                   </button>
@@ -1060,34 +1021,26 @@ export function AdminDashboard({
                                         await deleteSingleLessonAction(l.id!);
                                       }
                                     }}
-                                    className={
-                                      isGarden
-                                        ? "rounded-full p-1 text-red-800 hover:bg-red-500/20 transition"
-                                        : "rounded p-1 text-red-400 hover:bg-red-950/40"
-                                    }
+                                    className="rounded p-1 text-red-500 hover:bg-red-500/15"
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
                                   </button>
                                 </div>
                               </div>
 
-                              <div className={`mt-4 text-sm sm:text-base font-black ${isGarden ? "text-[#241A0E]" : "text-white"}`}>
+                              <div className={`mt-4 text-sm sm:text-base font-black ${isLight ? "text-slate-900" : "text-white"}`}>
                                 {l.subjectName}
                               </div>
 
                               {attachedHw.length > 0 && (
-                                <div className={`mt-3 space-y-1.5 border-t pt-2 ${isGarden ? "border-[#DEAC4A]/60" : "border-zinc-700/60"}`}>
+                                <div className={`mt-3 space-y-1.5 border-t pt-2 ${isLight ? "border-sky-200" : "border-zinc-700/60"}`}>
                                   {attachedHw.map((h) => (
                                     <div
                                       key={h.id}
-                                      className={`flex items-center justify-between gap-2 rounded-xl px-2.5 py-1 text-xs ${
-                                        isGarden
-                                          ? "bg-[#FCE5A2] text-[#2B1F12] border border-[#DEAC4A]/70 shadow-xs"
-                                          : hwBadgeClass
-                                      }`}
+                                      className={`flex items-center justify-between gap-2 rounded-xl px-2.5 py-1 text-xs ${hwBadgeClass}`}
                                     >
                                       <div className="flex items-center gap-1.5 min-w-0">
-                                        <BookOpen className={`h-3.5 w-3.5 shrink-0 ${isGarden ? "text-[#1C4222]" : ""}`} />
+                                        <BookOpen className="h-3.5 w-3.5 shrink-0" />
                                         <span className="truncate font-bold">ДЗ: {h.title}</span>
                                       </div>
                                       <button

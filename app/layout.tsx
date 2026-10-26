@@ -29,31 +29,24 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                const raw = localStorage.getItem('app-theme') || 'standart';
-                const t = (raw === 'planet' || raw === 'clock') ? 'planet' : (raw === 'garden' ? 'garden' : 'standart');
-                document.documentElement.setAttribute('data-theme', t);
-                document.documentElement.classList.add('dark');
-                document.documentElement.setAttribute('data-mode', 'dark');
+                const mode = localStorage.getItem('planet-color-mode') === 'light' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', 'planet');
+                document.documentElement.setAttribute('data-mode', mode);
+                if (mode === 'dark') {
+                  document.documentElement.classList.add('dark');
+                  document.documentElement.classList.remove('light');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.add('light');
+                }
               } catch (e) {}
             `,
           }}
         />
       </head>
-      <body suppressHydrationWarning className="relative min-h-screen w-full max-w-full overflow-x-hidden selection:bg-cyan-500/30 selection:text-cyan-200">
-        {/* АМБИЕНТ-ФОН БЕЗ ТЯЖЕЛЫХ BLUR-СЛОЕВ ДЛЯ ИСКЛЮЧЕНИЯ ПЕРЕГРУЗКИ GPU НА IOS SAFARI */}
-        <div
-          className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#06080D]"
-          style={{
-            backgroundImage: `
-              radial-gradient(ellipse 900px 480px at 50% -12%, rgba(34, 211, 238, 0.12) 0%, transparent 70%),
-              radial-gradient(circle 600px at 100% 50%, rgba(14, 165, 233, 0.08) 0%, transparent 70%),
-              radial-gradient(circle 600px at 0% 100%, rgba(16, 185, 129, 0.08) 0%, transparent 70%),
-              linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)
-            `,
-            backgroundSize: "100% 100%, 100% 100%, 100% 100%, 44px 44px, 44px 44px",
-          }}
-        />
+      <body suppressHydrationWarning className="relative min-h-screen w-full max-w-full overflow-x-hidden selection:bg-sky-500/30 selection:text-sky-700 dark:selection:text-cyan-200">
+        {/* АМБИЕНТ-ФОН ТЕМЫ PLANET (АДАПТИРУЕТСЯ ПОД DARK / LIGHT РЕЖИМ) */}
+        <div className="planet-ambient-bg fixed inset-0 pointer-events-none z-0 overflow-hidden transition-colors duration-300" />
 
         {/* ОСНОВНОЙ КОНТЕНТ */}
         <div className="relative z-10 w-full max-w-full overflow-x-hidden" suppressHydrationWarning>

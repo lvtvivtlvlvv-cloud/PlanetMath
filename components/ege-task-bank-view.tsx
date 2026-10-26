@@ -200,9 +200,6 @@ export function EgeTaskBankView({
   students = [],
   classes = [],
 }: EgeTaskBankViewProps) {
-  const { theme } = useAppTheme();
-  const isPlanet = theme === "planet";
-  const isGarden = theme === "garden";
 
   const [activeSubTab, setActiveSubTab] = useState<"constructor" | "bank" | "history">("constructor");
   const [isPending, startTransition] = useTransition();
@@ -639,11 +636,7 @@ export function EgeTaskBankView({
                 onClick={() => setActiveSubTab(tab.id as any)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                   isActive
-                    ? isPlanet
-                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 shadow-xs"
-                      : isGarden
-                      ? "bg-[#FEC868]/20 text-[#FEC868] border border-[#FEC868]/30 shadow-xs"
-                      : "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 shadow-xs"
+                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 shadow-xs"
                     : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
                 }`}
               >

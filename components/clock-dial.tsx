@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { format, addDays, isSameDay, getDay } from "date-fns";
 import { ru } from "date-fns/locale";
+import { useAppTheme } from "./theme-context";
 
 export interface WeekDayItem {
   dayOfWeek: number;
@@ -28,12 +29,18 @@ interface ClockDialProps {
 const SHORT_WEEKDAYS = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"];
 
 // Вынесенный в memo компонент для нулевой нагрузки на VDOM при вращении в Firefox и Chrome
-const EarthSphereGraphic = React.memo(function EarthSphereGraphic() {
+const EarthSphereGraphic = React.memo(function EarthSphereGraphic({ isLight }: { isLight: boolean }) {
   return (
     <div
-      className="relative h-full w-full rounded-full border border-cyan-500/30 overflow-hidden shadow-[inset_0_20px_70px_rgba(15,23,42,0.95)]"
+      className={`relative h-full w-full rounded-full overflow-hidden ${
+        isLight
+          ? "border border-sky-400/50 shadow-[inset_0_20px_60px_rgba(2,132,199,0.22)]"
+          : "border border-cyan-500/30 shadow-[inset_0_20px_70px_rgba(15,23,42,0.95)]"
+      }`}
       style={{
-        background: "radial-gradient(circle at 50% 25%, #0e2038 0%, #081424 45%, #02060d 85%)",
+        background: isLight
+          ? "radial-gradient(circle at 50% 25%, #f0f9ff 0%, #bae6fd 48%, #7dd3fc 90%)"
+          : "radial-gradient(circle at 50% 25%, #0e2038 0%, #081424 45%, #02060d 85%)",
         WebkitMaskImage: "-webkit-radial-gradient(white, black)",
       }}
     >
@@ -45,8 +52,8 @@ const EarthSphereGraphic = React.memo(function EarthSphereGraphic() {
         >
           <defs>
             <linearGradient id="softLandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.36" />
-              <stop offset="100%" stopColor="#0284c7" stopOpacity="0.24" />
+              <stop offset="0%" stopColor={isLight ? "#0284c7" : "#0ea5e9"} stopOpacity={isLight ? "0.28" : "0.36"} />
+              <stop offset="100%" stopColor={isLight ? "#0369a1" : "#0284c7"} stopOpacity={isLight ? "0.18" : "0.24"} />
             </linearGradient>
 
             {/* Строгая круговая маска — исключает любые синие шлейфы за пределами шара */}
@@ -57,7 +64,7 @@ const EarthSphereGraphic = React.memo(function EarthSphereGraphic() {
 
           <g clipPath="url(#earthSphereClip)">
             {/* Координатная сетка параллелей и меридианов */}
-            <g stroke="rgba(56, 189, 248, 0.16)" strokeWidth="1" fill="none">
+            <g stroke={isLight ? "rgba(2, 132, 199, 0.22)" : "rgba(56, 189, 248, 0.16)"} strokeWidth="1" fill="none">
               <circle cx="270" cy="270" r="225" strokeDasharray="3 5" />
               <circle cx="270" cy="270" r="160" strokeDasharray="3 5" />
               <circle cx="270" cy="270" r="90" strokeDasharray="3 5" />
@@ -65,15 +72,15 @@ const EarthSphereGraphic = React.memo(function EarthSphereGraphic() {
               <ellipse cx="270" cy="270" rx="268" ry="195" />
               <ellipse cx="270" cy="270" rx="115" ry="268" />
               <ellipse cx="270" cy="270" rx="195" ry="268" />
-              <line x1="270" y1="2" x2="270" y2="538" stroke="rgba(56, 189, 248, 0.22)" />
-              <line x1="2" y1="270" x2="538" y2="270" stroke="rgba(56, 189, 248, 0.22)" />
+              <line x1="270" y1="2" x2="270" y2="538" stroke={isLight ? "rgba(2, 132, 199, 0.3)" : "rgba(56, 189, 248, 0.22)"} />
+              <line x1="2" y1="270" x2="538" y2="270" stroke={isLight ? "rgba(2, 132, 199, 0.3)" : "rgba(56, 189, 248, 0.22)"} />
             </g>
 
             {/* Очертания материков Земли (строго обрезаны внутри сферы) */}
             <g
               transform="translate(270 270) scale(1.35) translate(-270 -270)"
               fill="url(#softLandGrad)"
-              stroke="rgba(56, 189, 248, 0.65)"
+              stroke={isLight ? "rgba(2, 132, 199, 0.65)" : "rgba(56, 189, 248, 0.65)"}
               strokeWidth="0.85"
             >
               <path d="M 235,130 Q 250,105 275,90 Q 320,78 375,78 Q 430,82 465,100 Q 475,125 460,150 Q 445,175 425,195 Q 410,215 395,245 Q 380,250 375,230 Q 365,260 355,245 Q 348,225 342,230 Q 332,225 328,195 Q 322,180 305,168 Q 285,165 270,160 Q 245,165 235,165 Q 225,150 235,130 Z" />
@@ -105,6 +112,8 @@ export function ClockDial({
   onScrubDay,
   onSelectDay,
 }: ClockDialProps) {
+  const { colorMode } = useAppTheme();
+  const isLight = colorMode === "light";
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Вычисляем активную дату строго без UTC-смещений
@@ -569,19 +578,32 @@ export function ClockDial({
           startSnapSpring(Math.round(floatOffsetRef.current));
         }
       }}
-      className="relative flex h-56 w-full select-none flex-col items-center justify-center overflow-hidden rounded-3xl border border-cyan-500/20 bg-[#06080D] shadow-2xl cursor-ew-resize"
+      className={`relative flex h-56 w-full select-none flex-col items-center justify-center overflow-hidden rounded-3xl border cursor-ew-resize transition-colors ${
+        isLight
+          ? "border-sky-300/80 bg-gradient-to-b from-[#E0F2FE] via-[#F0F9FF] to-[#E0F2FE] shadow-[0_12px_32px_-8px_rgba(14,165,233,0.18)]"
+          : "border-cyan-500/20 bg-[#06080D] shadow-2xl"
+      }`}
     >
       {/* ЧИСЛО И МЕСЯЦ В ЛЕВОМ ВЕРХНЕМ УГЛУ */}
       <div className="absolute top-4 left-6 z-30 flex items-center gap-2.5 pointer-events-none">
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xl sm:text-2xl font-black tracking-widest text-cyan-400 drop-shadow-[0_0_12px_rgba(56,189,248,0.75)]">
+            <span
+              className={`font-mono text-xl sm:text-2xl font-black tracking-widest ${
+                isLight
+                  ? "text-sky-700 drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)]"
+                  : "text-cyan-400 drop-shadow-[0_0_12px_rgba(56,189,248,0.75)]"
+              }`}
+            >
               {focusedDateText}
             </span>
-            <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_#22D3EE]" />
           </div>
           {isFocusedToday && (
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 -mt-0.5">
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wider -mt-0.5 ${
+                isLight ? "text-emerald-600" : "text-emerald-400"
+              }`}
+            >
               Сегодня
             </span>
           )}
@@ -590,15 +612,16 @@ export function ClockDial({
 
       {/* ВРАЩАЮЩАЯСЯ ЗЕМЛЯ НА ЗАДНЕМ ПЛАНЕ */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
-        {/* Атмосферное свечение вокруг Земли (чистое, без ореолов и размазывания) */}
+        {/* Атмосферное свечение вокруг Земли */}
         <div
           className="absolute left-1/2 -translate-x-1/2 rounded-full pointer-events-none"
           style={{
             width: `${earthSize + 16}px`,
             height: `${earthSize + 16}px`,
             top: `${horizonTopY - 8}px`,
-            background:
-              "radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, rgba(14, 165, 233, 0.03) 52%, transparent 70%)",
+            background: isLight
+              ? "radial-gradient(circle, rgba(14, 165, 233, 0.22) 0%, rgba(14, 165, 233, 0.05) 52%, transparent 70%)"
+              : "radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, rgba(14, 165, 233, 0.03) 52%, transparent 70%)",
           }}
         />
 
@@ -621,11 +644,11 @@ export function ClockDial({
               backfaceVisibility: "hidden",
             }}
           >
-            <EarthSphereGraphic />
+            <EarthSphereGraphic isLight={isLight} />
           </div>
         </div>
 
-        {/* Статичная космическая тень горизонта (не вращается, физически точна) */}
+        {/* Статичная тень горизонта */}
         <div
           className="pointer-events-none absolute left-1/2 -translate-x-1/2 overflow-hidden rounded-full"
           style={{
@@ -637,10 +660,10 @@ export function ClockDial({
           <svg className="h-full w-full" viewBox="0 0 540 540">
             <defs>
               <linearGradient id="orbitDarkDim" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#06080D" stopOpacity="0.94" />
-                <stop offset="35%" stopColor="#06080D" stopOpacity="0.82" />
-                <stop offset="65%" stopColor="#06080D" stopOpacity="0.35" />
-                <stop offset="100%" stopColor="#06080D" stopOpacity="0" />
+                <stop offset="0%" stopColor={isLight ? "#E0F2FE" : "#06080D"} stopOpacity="0.92" />
+                <stop offset="35%" stopColor={isLight ? "#F0F9FF" : "#06080D"} stopOpacity="0.78" />
+                <stop offset="65%" stopColor={isLight ? "#F0F9FF" : "#06080D"} stopOpacity="0.32" />
+                <stop offset="100%" stopColor={isLight ? "#F0F9FF" : "#06080D"} stopOpacity="0" />
               </linearGradient>
             </defs>
             <rect x="0" y="0" width="540" height="250" fill="url(#orbitDarkDim)" />
@@ -649,12 +672,16 @@ export function ClockDial({
 
         {/* Неоновый контур горизонта Земли */}
         <div
-          className="absolute left-1/2 -translate-x-1/2 rounded-full border-t-2 border-cyan-400/80 pointer-events-none"
+          className={`absolute left-1/2 -translate-x-1/2 rounded-full border-t-2 pointer-events-none ${
+            isLight ? "border-sky-500/80" : "border-cyan-400/80"
+          }`}
           style={{
             width: `${earthSize + 2}px`,
             height: `${earthSize + 2}px`,
             top: `${horizonTopY - 1}px`,
-            boxShadow: "0 -2px 10px rgba(34,211,238,0.5)",
+            boxShadow: isLight
+              ? "0 -2px 10px rgba(14,165,233,0.35)"
+              : "0 -2px 10px rgba(34,211,238,0.5)",
           }}
         />
       </div>
@@ -666,7 +693,11 @@ export function ClockDial({
           height="32"
           viewBox="0 0 28 32"
           fill="none"
-          className="drop-shadow-[0_0_14px_rgba(34,211,238,0.95)]"
+          className={
+            isLight
+              ? "drop-shadow-[0_2px_10px_rgba(2,132,199,0.55)]"
+              : "drop-shadow-[0_0_14px_rgba(34,211,238,0.95)]"
+          }
         >
           <defs>
             <linearGradient id="compassLeftFacet" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -735,27 +766,41 @@ export function ClockDial({
             >
               <div className="flex flex-col items-center justify-center">
                 <span
-                  className={`font-mono text-2xl sm:text-3xl font-black leading-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.95)] ${
-                    isCentered
+                  className={`font-mono text-2xl sm:text-3xl font-black leading-none ${
+                    isLight
+                      ? isCentered
+                        ? "text-slate-950 drop-shadow-[0_2px_10px_rgba(255,255,255,0.95)]"
+                        : "text-slate-500 hover:text-slate-900 drop-shadow-[0_1px_4px_rgba(255,255,255,0.8)]"
+                      : isCentered
                       ? "text-white drop-shadow-[0_0_18px_rgba(255,255,255,0.95)]"
-                      : "text-zinc-400 hover:text-white"
+                      : "text-zinc-400 hover:text-white drop-shadow-[0_4px_10px_rgba(0,0,0,0.95)]"
                   }`}
                 >
                   {item.dateNumber < 10 ? `0${item.dateNumber}` : item.dateNumber}
                 </span>
 
                 <span
-                  className={`text-[10px] font-extrabold uppercase tracking-wider mt-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] ${
-                    isCentered
+                  className={`text-[10px] font-extrabold uppercase tracking-wider mt-1 ${
+                    isLight
+                      ? isCentered
+                        ? "text-sky-700"
+                        : "text-slate-500"
+                      : isCentered
                       ? "text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.7)]"
-                      : "text-zinc-500"
+                      : "text-zinc-500 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]"
                   }`}
                 >
                   {item.short}
                 </span>
 
                 {item.isToday && (
-                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-cyan-400 ring-2 ring-cyan-400/40 shadow-[0_0_8px_#22D3EE]" />
+                  <span
+                    className={`mt-1 h-1.5 w-1.5 rounded-full ${
+                      isLight
+                        ? "bg-sky-600 ring-2 ring-sky-400/50 shadow-[0_0_6px_#0284C7]"
+                        : "bg-cyan-400 ring-2 ring-cyan-400/40 shadow-[0_0_8px_#22D3EE]"
+                    }`}
+                  />
                 )}
               </div>
             </div>

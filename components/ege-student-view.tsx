@@ -50,9 +50,6 @@ interface EgeStudentViewProps {
 }
 
 export function EgeStudentView({ studentId, items = [] }: EgeStudentViewProps) {
-  const { theme } = useAppTheme();
-  const isPlanet = theme === "planet";
-  const isGarden = theme === "garden";
 
   const [groupingMode, setGroupingMode] = useState<"by_work" | "by_task_number">("by_work");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "PENDING" | "COMPLETED">("ALL");

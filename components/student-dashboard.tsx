@@ -100,7 +100,9 @@ interface StudentDashboardProps {
 }
 
 export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = [], serverDate }: StudentDashboardProps) {
-  const { theme } = useAppTheme();
+  const { colorMode, scheduleViewMode } = useAppTheme();
+  const isLight = colorMode === "light";
+  const isPlanetSchedule = scheduleViewMode === "planet";
 
   // Синхронизация времени с хостом компьютера (2026 год)
   const hostToday = useMemo(() => {
@@ -157,13 +159,13 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
   const scheduleTouchStartY = useRef<number | null>(null);
 
   const handleScheduleTouchStart = (e: React.TouchEvent) => {
-    if (isPlanet) return;
+    if (isPlanetSchedule) return;
     scheduleTouchStartX.current = e.touches[0].clientX;
     scheduleTouchStartY.current = e.touches[0].clientY;
   };
 
   const handleScheduleTouchEnd = (e: React.TouchEvent) => {
-    if (isPlanet || scheduleTouchStartX.current === null || scheduleTouchStartY.current === null) return;
+    if (isPlanetSchedule || scheduleTouchStartX.current === null || scheduleTouchStartY.current === null) return;
     const dx = e.changedTouches[0].clientX - scheduleTouchStartX.current;
     const dy = e.changedTouches[0].clientY - scheduleTouchStartY.current;
     scheduleTouchStartX.current = null;
@@ -247,22 +249,8 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
     }
   };
 
-  const isPlanet = theme === "planet";
-  const isGarden = theme === "garden";
-
-  const roomColorClass =
-    isPlanet
-      ? "theme-room-text"
-      : isGarden
-      ? "text-[#FEC868]"
-      : "text-emerald-400";
-
-  const hwBadgeClass =
-    isPlanet
-      ? "theme-hw-chip"
-      : isGarden
-      ? "bg-[#1B291D] text-[#FEC868] border border-[#FEC868]/40 rounded-full px-3 py-1 font-bold"
-      : "bg-emerald-950/50 text-emerald-300 border border-emerald-500/20";
+  const roomColorClass = "theme-room-text";
+  const hwBadgeClass = "theme-hw-chip";
 
   // Табы студента: Расписание vs Домашние задания vs Задания ЕГЭ
   const [activeTab, setActiveTab] = useState<"schedule" | "homework" | "ege">("schedule");
@@ -478,14 +466,9 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
             },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
-            let activeClasses = "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 shadow-md";
-            if (isPlanet) {
-              activeClasses = "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-[0_0_16px_rgba(56,189,248,0.25)] backdrop-blur-md";
-            } else if (theme === "standart") {
-              activeClasses = "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_16px_rgba(16,185,129,0.2)] backdrop-blur-md";
-            } else if (isGarden) {
-              activeClasses = "bg-[#FEC868]/20 text-[#FEC868] border-[#FEC868]/40 shadow-[0_0_16px_rgba(254,200,104,0.2)]";
-            }
+            const activeClasses = isLight
+              ? "bg-sky-500 text-white border-sky-600 shadow-sm"
+              : "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-[0_0_16px_rgba(56,189,248,0.25)] backdrop-blur-md";
 
             const Icon = tab.icon;
 
@@ -497,6 +480,8 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
                 className={`flex items-center gap-1.5 sm:gap-2 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold border whitespace-nowrap shrink-0 transition duration-200 select-none ${
                   isActive
                     ? activeClasses
+                    : isLight
+                    ? "border-transparent text-slate-600 hover:text-slate-900 hover:bg-sky-100/60"
                     : "border-transparent text-zinc-400 hover:text-white hover:bg-white/5"
                 }`}
               >
@@ -620,7 +605,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
           </div>
         </div>
 
-        <div className={theme === "garden" ? "space-y-0" : "space-y-4"}>
+        <div className="space-y-4">
           {!isCalendarCollapsed && (
             <ThemeCalendarStrip
               currentDate={currentDate}
@@ -648,54 +633,40 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
                 : weekAnimDirection === "left"
                 ? "animate-week-left"
                 : ""
-            } ${
-              isGarden
-                ? "rounded-b-[40px] sm:rounded-b-[50px] bg-[#141E15] p-5 sm:p-7 shadow-2xl text-[#F8F6F0] border-b-2 border-x-2 border-t-0 border-[#2D3E2F] relative z-0 -mt-1"
-                : "space-y-3 pt-1"
-            }`}
+            } space-y-3 pt-1`}
           >
-            {/* ПОДПИСЬ ТЕКУЩЕЙ ВЫБРАННОЙ ДАТЫ (без разделительной полосы) */}
+            {/* ПОДПИСЬ ТЕКУЩЕЙ ВЫБРАННОЙ ДАТЫ */}
             <div className="mb-4">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <span
                   className={`font-bold text-sm tracking-wide ${
-                    isGarden
-                      ? "text-[#F8F6F0] font-extrabold flex items-center gap-2"
-                      : isPlanet
-                      ? "text-cyan-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]"
-                      : "text-emerald-400 font-bold"
+                    isLight
+                      ? "text-sky-700"
+                      : "text-cyan-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]"
                   }`}
                 >
-                  {isGarden && <span className="h-2.5 w-2.5 rounded-full bg-[#FEC868] shadow-[0_0_8px_#FEC868] shrink-0" />}
                   {selectedDayOfWeek === 7
                     ? `Воскресенье, ${activeDateFormatted} — Выходной день`
                     : `Уроки на ${activeDateFormatted} (${SHORT_WEEKDAYS[selectedDayOfWeek - 1].toUpperCase()})`}
                 </span>
-                {isGarden && (
-                  <span className="text-[11px] font-bold text-[#ABC270] uppercase tracking-wider px-3.5 py-0.5 rounded-full bg-[#1C2B1D] border border-[#2E4230]">
-                    {selectedDayOfWeek === 7 ? "Выходной" : SHORT_WEEKDAYS[selectedDayOfWeek - 1].toUpperCase()}
-                  </span>
-                )}
               </div>
             </div>
 
             <div className="space-y-3 min-h-[380px]">
               {activeDayLessons.length === 0 ? (
                 <div
-                  className={`flex h-64 flex-col items-center justify-center p-8 text-center text-sm ${
-                    isGarden
-                      ? "rounded-[34px] border-2 border-dashed border-[#FEC868]/50 text-[#FEC868] bg-[#FEC868]/10"
-                      : isPlanet
-                      ? "rounded-3xl border border-cyan-500/20 text-cyan-300/80 bg-cyan-950/10"
-                      : "rounded-3xl border border-dashed border-zinc-800 text-zinc-400"
+                  className={`flex h-64 flex-col items-center justify-center p-8 text-center text-sm rounded-3xl border ${
+                    isLight
+                      ? "border-sky-300/60 text-sky-800 bg-sky-50/70"
+                      : "border-cyan-500/20 text-cyan-300/80 bg-cyan-950/10"
                   }`}
                 >
                   {selectedDayOfWeek === 7 ? (
                     <>
-                      <span className={`text-base font-bold ${isGarden ? "text-[#FEC868]" : "text-cyan-300"}`}>
+                      <span className={`text-base font-bold ${isLight ? "text-sky-700" : "text-cyan-300"}`}>
                         Воскресенье — выходной
                       </span>
-                      <span className={`text-xs mt-1 ${isGarden ? "text-[#ABC270]" : "text-zinc-400"}`}>
+                      <span className={`text-xs mt-1 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
                         В этот день занятий нет, уроки начнутся в понедельник
                       </span>
                     </>
@@ -716,65 +687,57 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
                     <div key={l.id} className="flex items-stretch gap-3 sm:gap-4">
                       <div className="flex w-12 sm:w-14 flex-col justify-between py-1 text-right shrink-0">
                         <span
-                          className={`text-xs sm:text-sm font-bold ${
-                            isGarden ? "text-[#FEC868] font-black" : "text-zinc-100"
+                          className={`font-mono text-xs sm:text-sm font-bold tabular-nums ${
+                            isLight ? "text-slate-900" : "text-zinc-100"
                           }`}
                         >
                           {l.startTime}
                         </span>
                         <span
-                          className={`text-xs sm:text-sm font-medium ${
-                            isGarden ? "text-[#FEC868]/75 font-bold" : "text-zinc-400"
+                          className={`font-mono text-xs sm:text-sm font-medium tabular-nums ${
+                            isLight ? "text-slate-500" : "text-zinc-400"
                           }`}
                         >
                           {l.endTime}
                         </span>
                       </div>
 
-                      <div
-                        className={`group flex-1 min-w-0 p-3.5 sm:p-5 shadow-sm transition-all duration-200 ${
-                          isGarden
-                            ? "bg-[#FEC868] text-[#2C2114] border border-[#DEAC4E] shadow-[0_4px_16px_rgba(254,200,104,0.25)] hover:bg-[#FFD782] hover:border-[#F2C063] hover:shadow-[0_8px_24px_rgba(254,200,104,0.4)] hover:-translate-y-0.5 rounded-[28px] sm:rounded-[36px]"
-                            : "glass-panel glass-interactive rounded-2xl sm:rounded-3xl"
-                        }`}
-                      >
+                      <div className="group flex-1 min-w-0 p-3.5 sm:p-5 shadow-sm transition-all duration-200 glass-panel glass-interactive rounded-2xl sm:rounded-3xl">
                         <div className="flex items-start justify-between">
                           <div>
-                            <div className={`text-xs font-black ${isGarden ? "text-[#1C4222]" : roomColorClass}`}>
+                            <div className={`text-xs font-black ${roomColorClass}`}>
                               {l.room.toLowerCase().startsWith("каб") ? l.room : `каб. ${l.room}`}
                             </div>
-                            <div className={`mt-0.5 text-xs ${isGarden ? "text-[#5A452C] font-semibold" : "text-zinc-400"}`}>
+                            <div className={`mt-0.5 text-xs ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
                               {l.teacherName}
                             </div>
                           </div>
                         </div>
 
-                        <div className={`mt-3 text-sm sm:text-base font-black ${isGarden ? "text-[#241A0E]" : "text-white"}`}>
+                        <div className={`mt-3 text-sm sm:text-base font-black ${isLight ? "text-slate-900" : "text-white"}`}>
                           {l.subjectName}
                         </div>
 
                         {attachedHw.length > 0 && (
-                          <div className={`mt-3 space-y-2 border-t pt-2 ${isGarden ? "border-[#DEAC4A]/60" : "border-zinc-700/60"}`}>
+                          <div className={`mt-3 space-y-2 border-t pt-2 ${isLight ? "border-sky-200" : "border-zinc-700/60"}`}>
                             {attachedHw.map((h) => {
                               const sub = h.submission;
                               return (
                                 <div
                                   key={h.id}
-                                  className={`p-3.5 ${
-                                    isGarden
-                                      ? "rounded-[22px] bg-[#FCE5A2] border border-[#DEAC4A]/70 text-[#2B1F12] shadow-xs"
-                                      : isPlanet
-                                      ? "rounded-xl bg-[#090D15]/80 border border-cyan-500/25"
-                                      : "rounded-xl border border-zinc-700/60 bg-black/20"
+                                  className={`p-3.5 rounded-xl border ${
+                                    isLight
+                                      ? "bg-sky-50/90 border-sky-200/90"
+                                      : "bg-[#090D15]/80 border-cyan-500/25"
                                   }`}
                                 >
                                   <div className="flex items-start justify-between gap-2">
                                     <div>
-                                      <div className={`flex items-center gap-1.5 font-bold text-xs ${isGarden ? "text-[#1C4222]" : roomColorClass}`}>
+                                      <div className={`flex items-center gap-1.5 font-bold text-xs ${roomColorClass}`}>
                                         <BookOpen className="h-3.5 w-3.5" />
                                         <span>ДЗ: {h.title}</span>
                                       </div>
-                                      <p className={`mt-1 text-xs ${isGarden ? "text-[#523E25]" : "text-zinc-400"}`}>{h.description}</p>
+                                      <p className={`mt-1 text-xs ${isLight ? "text-slate-600" : "text-zinc-400"}`}>{h.description}</p>
                                     </div>
 
                                     {sub?.grade ? (
@@ -782,7 +745,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
                                         {sub.grade}
                                       </span>
                                     ) : sub ? (
-                                      <span className="flex items-center gap-1 rounded bg-amber-500/20 px-2 py-0.5 text-[11px] font-semibold text-amber-400">
+                                      <span className="flex items-center gap-1 rounded bg-amber-500/20 px-2 py-0.5 text-[11px] font-semibold text-amber-500 dark:text-amber-400">
                                         <Clock className="h-3 w-3" />
                                         Сдано
                                       </span>
@@ -790,11 +753,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
                                       <button
                                         type="button"
                                         onClick={() => setActiveHwModal(h)}
-                                        className={
-                                          isGarden
-                                            ? "rounded-full px-4 py-1.5 text-xs font-black bg-[#2E5A36] text-[#F8F6F0] hover:bg-[#3B6F45] border border-[#447A4E]/60 shadow-md transition"
-                                            : "theme-btn px-3 py-1 text-xs font-bold"
-                                        }
+                                        className="theme-btn px-3 py-1 text-xs font-bold"
                                       >
                                         Сдать
                                       </button>
@@ -824,13 +783,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
                                     return (
                                       <div className="mt-2 space-y-2">
                                         {parsedFb.text ? (
-                                          <div className={`rounded-xl p-2.5 text-xs ${
-                                            isPlanet
-                                              ? "bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"
-                                              : isGarden
-                                              ? "bg-[#FEC868]/10 text-[#FEC868] border border-[#FEC868]/20"
-                                              : "bg-emerald-500/10 text-emerald-300"
-                                          }`}>
+                                          <div className="rounded-xl p-2.5 text-xs bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
                                             <span className="font-bold">Комментарий учителя: </span>
                                             {parsedFb.text}
                                           </div>
@@ -901,11 +854,9 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
                       onClick={() => setHwStatusFilter(btn.id as any)}
                       className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl transition font-black text-xs ${
                         isActive
-                          ? isGarden
-                            ? "bg-[#FEC868] text-[#2C2114] shadow-xs"
-                            : isPlanet
-                            ? "bg-cyan-500 text-black shadow-xs"
-                            : "bg-emerald-500 text-white shadow-xs"
+                          ? isLight
+                            ? "bg-sky-600 text-white shadow-xs"
+                            : "bg-cyan-500 text-black shadow-xs"
                           : "text-zinc-400 hover:text-white"
                       }`}
                     >
@@ -1393,21 +1344,9 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
         <div className="fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex items-center justify-center bg-zinc-950/90 p-2 sm:p-4 pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md overflow-hidden text-zinc-100 font-sans">
           <div className="w-full max-w-[min(95vw,calc(100vw-1rem))] lg:max-w-6xl h-full max-h-[90dvh] flex flex-col rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
             {/* Header */}
-            <div className={`flex h-12 sm:h-14 w-full items-center justify-between gap-2 px-3 sm:px-5 border-b shadow-sm shrink-0 overflow-hidden ${
-              isPlanet
-                ? "bg-[#090D18]/95 border-sky-500/25 text-zinc-100 backdrop-blur-xl"
-                : isGarden
-                ? "bg-[#141C16]/95 border-[#FEC868]/25 text-zinc-100 backdrop-blur-xl"
-                : "bg-[#0C121A]/95 border-emerald-500/25 text-zinc-100 backdrop-blur-xl"
-            }`}>
+            <div className="flex h-12 sm:h-14 w-full items-center justify-between gap-2 px-3 sm:px-5 border-b shadow-sm shrink-0 overflow-hidden bg-[#090D18]/95 border-sky-500/25 text-zinc-100 backdrop-blur-xl">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
-                <span className={`flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-xl font-bold text-xs shrink-0 ${
-                  isPlanet
-                    ? "bg-sky-500/20 text-sky-300 border border-sky-500/30"
-                    : isGarden
-                    ? "bg-[#FEC868]/20 text-[#FEC868] border border-[#FEC868]/30"
-                    : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                }`}>
+                <span className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-xl font-bold text-xs shrink-0 bg-sky-500/20 text-sky-300 border border-sky-500/30">
                   ДЗ
                 </span>
                 <div className="min-w-0 flex-1 overflow-hidden">
@@ -1627,13 +1566,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
               }
 
               return (
-                <aside className={`w-full md:w-80 shrink-0 border-t md:border-t-0 md:border-l p-4 sm:p-5 flex flex-col justify-between overflow-y-auto max-h-[240px] md:max-h-none ${
-                  isPlanet
-                    ? "bg-[#070A12]/95 border-sky-500/20 text-zinc-100"
-                    : isGarden
-                    ? "bg-[#111713]/95 border-[#FEC868]/20 text-zinc-100"
-                    : "bg-[#0A0E15]/95 border-emerald-500/20 text-zinc-100"
-                }`}>
+                <aside className="w-full md:w-80 shrink-0 border-t md:border-t-0 md:border-l p-4 sm:p-5 flex flex-col justify-between overflow-y-auto max-h-[240px] md:max-h-none bg-[#070A12]/95 border-sky-500/20 text-zinc-100">
                   <div className="space-y-4 sm:space-y-5">
                     {/* 1. Выполнение заданий (если отмечены учителем) */}
                     {taskEntries.length > 0 && (
@@ -1701,13 +1634,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
                     <button
                       type="button"
                       onClick={() => setViewCheckedHwModal(null)}
-                      className={`w-full rounded-xl py-2.5 text-xs font-black transition ${
-                        isPlanet
-                          ? "bg-sky-500 text-slate-950 hover:bg-sky-400 shadow-[0_0_16px_rgba(56,189,248,0.3)]"
-                          : isGarden
-                          ? "bg-[#FEC868] text-zinc-950 hover:bg-[#ffe082] shadow-[0_0_16px_rgba(254,200,104,0.3)]"
-                          : "bg-emerald-600 text-white hover:bg-emerald-500 shadow-[0_0_16px_rgba(16,185,129,0.3)]"
-                      }`}
+                      className="w-full rounded-xl py-2.5 text-xs font-black transition bg-sky-500 text-slate-950 hover:bg-sky-400 shadow-[0_0_16px_rgba(56,189,248,0.3)]"
                     >
                       Закрыть просмотр
                     </button>
@@ -1721,7 +1648,13 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
       )}
 
       {/* МОБИЛЬНАЯ НИЖНЯЯ ПАНЕЛЬ ДЛЯ ТЕЛЕФОНОВ И ПЛАНШЕТОВ */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800/80 px-3 py-2 flex items-center justify-around shadow-[0_-8px_24px_rgba(0,0,0,0.6)]">
+      <div
+        className={`sm:hidden fixed bottom-0 left-0 right-0 z-40 backdrop-blur-xl border-t px-3 py-2 flex items-center justify-around ${
+          isLight
+            ? "bg-white/95 border-sky-200 shadow-[0_-8px_24px_rgba(14,165,233,0.12)]"
+            : "bg-zinc-950/95 border-zinc-800/80 shadow-[0_-8px_24px_rgba(0,0,0,0.6)]"
+        }`}
+      >
         <button
           type="button"
           onClick={() => {
@@ -1730,7 +1663,11 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
           }}
           className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition text-xs font-bold ${
             activeTab === "schedule" && !isTabContentCollapsed
-              ? "text-emerald-400 bg-emerald-500/10"
+              ? isLight
+                ? "text-sky-600 bg-sky-500/15"
+                : "text-cyan-400 bg-cyan-500/15"
+              : isLight
+              ? "text-slate-500 hover:text-slate-900"
               : "text-zinc-400 hover:text-white"
           }`}
         >
@@ -1747,14 +1684,18 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
           }}
           className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-xl transition text-xs font-bold ${
             activeTab === "homework" && !isTabContentCollapsed
-              ? "text-blue-400 bg-blue-500/10"
+              ? isLight
+                ? "text-sky-600 bg-sky-500/15"
+                : "text-blue-400 bg-blue-500/10"
+              : isLight
+              ? "text-slate-500 hover:text-slate-900"
               : "text-zinc-400 hover:text-white"
           }`}
         >
           <BookOpen className="h-4 w-4 mb-0.5" />
           <span className="text-[10px]">Домашние</span>
           {unsubmittedCount > 0 && (
-            <span className="absolute -top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-rose-500 text-[9px] font-black text-white flex items-center justify-center animate-pulse">
+            <span className="absolute -top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-rose-500 text-[9px] font-black text-white flex items-center justify-center">
               {unsubmittedCount}
             </span>
           )}
@@ -1768,14 +1709,18 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
           }}
           className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-xl transition text-xs font-bold ${
             activeTab === "ege" && !isTabContentCollapsed
-              ? "text-cyan-400 bg-cyan-500/10"
+              ? isLight
+                ? "text-sky-600 bg-sky-500/15"
+                : "text-cyan-400 bg-cyan-500/10"
+              : isLight
+              ? "text-slate-500 hover:text-slate-900"
               : "text-zinc-400 hover:text-white"
           }`}
         >
           <GraduationCap className="h-4 w-4 mb-0.5" />
           <span className="text-[10px]">ЕГЭ</span>
           {pendingEgeCount > 0 && (
-            <span className="absolute -top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-cyan-500 text-[9px] font-black text-zinc-950 flex items-center justify-center animate-pulse">
+            <span className="absolute -top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-cyan-500 text-[9px] font-black text-zinc-950 flex items-center justify-center">
               {pendingEgeCount}
             </span>
           )}
@@ -1784,12 +1729,14 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
         <button
           type="button"
           onClick={() => setIsTabContentCollapsed(!isTabContentCollapsed)}
-          className="flex flex-col items-center justify-center py-1 px-3 rounded-xl transition text-xs font-bold text-zinc-400 hover:text-white"
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition text-xs font-bold ${
+            isLight ? "text-slate-500 hover:text-slate-900" : "text-zinc-400 hover:text-white"
+          }`}
         >
           {isTabContentCollapsed ? (
             <>
-              <ChevronDown className="h-4 w-4 mb-0.5 text-blue-400" />
-              <span className="text-[10px] text-blue-400">Развернуть</span>
+              <ChevronDown className="h-4 w-4 mb-0.5 text-sky-500" />
+              <span className="text-[10px] text-sky-500">Развернуть</span>
             </>
           ) : (
             <>

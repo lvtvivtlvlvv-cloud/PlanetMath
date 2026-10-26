@@ -27,9 +27,10 @@ export function ThemeCalendarStrip({
   onNextWeek,
   onScrubDay,
 }: ThemeCalendarStripProps) {
-  const { theme } = useAppTheme();
+  const { scheduleViewMode, colorMode } = useAppTheme();
+  const isLight = colorMode === "light";
 
-  // Жест свайпа для переключения недель в темах standart и garden
+  // Жест свайпа для переключения недель в стандартном режиме расписания
   const touchStartX = React.useRef<number | null>(null);
   const touchStartY = React.useRef<number | null>(null);
 
@@ -54,12 +55,15 @@ export function ThemeCalendarStrip({
     }
   };
 
-  // 1. ТЕМА PLANET: планетарный циферблат с Землёй
-  if (theme === "planet") {
+  // 1. РЕЖИМ ПЛАНЕТЫ: интерактивный планетарный циферблат с Землёй
+  if (scheduleViewMode === "planet") {
     return (
       <ClockDial
         currentDate={currentDate || new Date()}
-        onSelectDate={onSelectDate || ((d) => onScrubDay && onScrubDay(d, d.getDay() === 0 ? 7 : d.getDay()))}
+        onSelectDate={
+          onSelectDate ||
+          ((d) => onScrubDay && onScrubDay(d, d.getDay() === 0 ? 7 : d.getDay()))
+        }
         serverToday={serverToday}
         days={days}
         selectedDayOfWeek={selectedDayOfWeek}
@@ -71,58 +75,12 @@ export function ThemeCalendarStrip({
     );
   }
 
-  // 2. ТЕМА GARDEN: органические сверхскругленные дни, физически соединяющиеся с таблицей
-  if (theme === "garden") {
-    return (
-      <div
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        className="relative z-10 w-full rounded-t-[40px] sm:rounded-t-[50px] bg-[#141E15] border-t-2 border-x-2 border-b-0 border-[#2D3E2F] px-2.5 sm:px-4 pt-3.5 pb-2 shadow-xl select-none"
-      >
-        <div className="flex items-center justify-between gap-1.5 sm:gap-2">
-          {days.map((w) => {
-            const isSelected = selectedDayOfWeek === w.dayOfWeek;
-            return (
-              <button
-                key={w.dayOfWeek}
-                type="button"
-                onClick={() => onSelectDay(w.dayOfWeek)}
-                className={`relative flex flex-1 flex-col items-center justify-center py-2.5 sm:py-3 rounded-[22px] sm:rounded-[28px] transition-all duration-200 select-none ${
-                  isSelected
-                    ? "bg-[#FEC868] text-[#382C1E] shadow-[0_6px_20px_rgba(254,200,104,0.4)] font-black scale-[1.04] z-20"
-                    : "text-[#ABC270]/80 hover:text-[#F8F6F0] hover:bg-white/5 font-semibold"
-                }`}
-              >
-                <span className="text-base sm:text-lg font-black leading-none">
-                  {w.dateNumber}
-                </span>
-                <span
-                  className={`text-[10px] sm:text-[11px] uppercase font-bold mt-1 tracking-wider ${
-                    isSelected ? "text-[#382C1E]" : "text-[#ABC270]/60"
-                  }`}
-                >
-                  {w.short}
-                </span>
-                {w.isToday && !isSelected && (
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#FEC868] mt-1 shadow-[0_0_6px_#FEC868]" />
-                )}
-                {isSelected && (
-                  <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-x-[6px] border-x-transparent border-t-[7px] border-t-[#FEC868] z-30" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  // 3. ТЕМА «СТАНДАРТ» (Единая обновленная тема со свайпом)
+  // 2. СТАНДАРТНЫЙ РЕЖИМ РАСПИСАНИЯ (7 дней недели в стиле Planet Dark / Light)
   return (
     <div
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="glass-panel rounded-2xl p-2 sm:p-2.5 shadow-md select-none"
+      className="glass-panel rounded-2xl p-2 sm:p-2.5 shadow-sm select-none"
     >
       <div className="flex items-center justify-between gap-1.5 sm:gap-2">
         {days.map((w) => {
@@ -132,16 +90,26 @@ export function ThemeCalendarStrip({
               key={w.dayOfWeek}
               type="button"
               onClick={() => onSelectDay(w.dayOfWeek)}
-              className={`standart-date-btn relative flex flex-1 flex-col items-center justify-center h-14 sm:h-16 rounded-xl transition-all ${
-                isSelected ? "selected-date font-bold" : "text-emerald-100/70"
+              className={`planet-date-btn relative flex flex-1 flex-col items-center justify-center h-14 sm:h-16 rounded-xl transition-all ${
+                isSelected
+                  ? "selected-date font-bold"
+                  : isLight
+                  ? "text-slate-600 hover:text-slate-950"
+                  : "text-sky-100/80 hover:text-white"
               }`}
             >
-              <span className="text-base sm:text-lg font-bold leading-none">
-                {w.dateNumber}
+              <span className="font-mono text-base sm:text-lg font-bold leading-none tabular-nums">
+                {w.dateNumber < 10 ? `0${w.dateNumber}` : w.dateNumber}
               </span>
               <span
                 className={`text-[10px] sm:text-[11px] font-semibold uppercase mt-1 ${
-                  isSelected ? "text-emerald-950 font-extrabold" : "text-zinc-400"
+                  isSelected
+                    ? isLight
+                      ? "text-white font-extrabold"
+                      : "text-slate-950 font-extrabold"
+                    : isLight
+                    ? "text-slate-500"
+                    : "text-zinc-400"
                 }`}
               >
                 {w.short}
@@ -150,8 +118,12 @@ export function ThemeCalendarStrip({
                 <span
                   className={`absolute top-1.5 right-1.5 h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full ${
                     isSelected
-                      ? "bg-emerald-950"
-                      : "bg-emerald-400 shadow-[0_0_6px_#10B981]"
+                      ? isLight
+                        ? "bg-white"
+                        : "bg-slate-950"
+                      : isLight
+                      ? "bg-sky-600 shadow-[0_0_6px_#0284C7]"
+                      : "bg-cyan-400 shadow-[0_0_6px_#22D3EE]"
                   }`}
                 />
               )}

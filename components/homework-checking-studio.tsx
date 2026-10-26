@@ -167,77 +167,48 @@ export function HomeworkCheckingStudio({
   const [isRightCollapsed, setIsRightCollapsed] = useState<boolean>(false);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
 
-  const { theme } = useAppTheme();
-  const isPlanet = theme === "planet";
-  const isGarden = theme === "garden";
+  const { colorMode } = useAppTheme();
+  const isLight = colorMode === "light";
 
-  // Dynamic theme styling matching the chosen theme
+  // Dynamic theme styling matching the Planet theme (Dark / Light)
   const themeTokens = {
-    headerBg: isPlanet
-      ? "bg-[#090D18]/95 border-sky-500/25 text-zinc-100 backdrop-blur-xl"
-      : isGarden
-      ? "bg-[#141C16]/95 border-[#FEC868]/25 text-zinc-100 backdrop-blur-xl"
-      : "bg-[#0C121A]/95 border-emerald-500/25 text-zinc-100 backdrop-blur-xl",
+    headerBg: isLight
+      ? "bg-white/95 border-sky-300/70 text-slate-900 backdrop-blur-xl"
+      : "bg-[#090D18]/95 border-sky-500/25 text-zinc-100 backdrop-blur-xl",
 
-    sidebarBg: isPlanet
-      ? "bg-[#070A12]/95 border-sky-500/20 text-zinc-100 backdrop-blur-xl"
-      : isGarden
-      ? "bg-[#111713]/95 border-[#FEC868]/20 text-zinc-100 backdrop-blur-xl"
-      : "bg-[#0A0E15]/95 border-emerald-500/20 text-zinc-100 backdrop-blur-xl",
+    sidebarBg: isLight
+      ? "bg-[#F0F7FF]/95 border-sky-300/60 text-slate-900 backdrop-blur-xl"
+      : "bg-[#070A12]/95 border-sky-500/20 text-zinc-100 backdrop-blur-xl",
 
-    panelSubHeaderBg: isPlanet
-      ? "bg-sky-950/30 border-sky-500/20 text-zinc-200"
-      : isGarden
-      ? "bg-[#1A251D]/50 border-[#FEC868]/20 text-zinc-200"
-      : "bg-emerald-950/30 border-emerald-500/20 text-zinc-200",
+    panelSubHeaderBg: isLight
+      ? "bg-sky-100/70 border-sky-300/60 text-slate-800"
+      : "bg-sky-950/30 border-sky-500/20 text-zinc-200",
 
-    accentBtn: isPlanet
-      ? "bg-sky-500 hover:bg-sky-400 text-slate-950 shadow-[0_0_16px_rgba(56,189,248,0.35)]"
-      : isGarden
-      ? "bg-[#FEC868] hover:bg-[#ffe082] text-zinc-950 shadow-[0_0_16px_rgba(254,200,104,0.35)]"
-      : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_16px_rgba(16,185,129,0.3)]",
+    accentBtn: isLight
+      ? "bg-sky-600 hover:bg-sky-500 text-white shadow-[0_4px_14px_rgba(2,132,199,0.3)]"
+      : "bg-sky-500 hover:bg-sky-400 text-slate-950 shadow-[0_0_16px_rgba(56,189,248,0.35)]",
 
-    activeToolBtn: isPlanet
-      ? "bg-sky-500 text-slate-950 shadow-sm"
-      : isGarden
-      ? "bg-[#FEC868] text-zinc-950 shadow-sm"
-      : "bg-emerald-600 text-white shadow-sm",
+    activeToolBtn: isLight
+      ? "bg-sky-600 text-white shadow-sm"
+      : "bg-sky-500 text-slate-950 shadow-sm",
 
-    activeStudentItem: isPlanet
-      ? "bg-sky-500/15 border-l-4 border-sky-400 text-sky-200"
-      : isGarden
-      ? "bg-[#FEC868]/15 border-l-4 border-[#FEC868] text-[#FEC868]"
-      : "bg-emerald-500/15 border-l-4 border-emerald-500 text-emerald-300",
+    activeStudentItem: isLight
+      ? "bg-sky-500/15 border-l-2 border-sky-600 text-sky-900"
+      : "bg-sky-500/15 border-l-2 border-sky-400 text-sky-200",
 
-    focusBtn: isPlanet
-      ? "bg-sky-500 hover:bg-sky-400 text-slate-950 font-black shadow-[0_0_12px_rgba(56,189,248,0.35)]"
-      : isGarden
-      ? "bg-[#FEC868] hover:bg-[#ffe082] text-zinc-950 font-black shadow-[0_0_12px_rgba(254,200,104,0.35)]"
-      : "bg-emerald-600 hover:bg-emerald-500 text-white font-black shadow-[0_0_12px_rgba(16,185,129,0.3)]",
+    focusBtn: isLight
+      ? "bg-sky-600 hover:bg-sky-500 text-white font-black shadow-[0_4px_12px_rgba(2,132,199,0.3)]"
+      : "bg-sky-500 hover:bg-sky-400 text-slate-950 font-black shadow-[0_0_12px_rgba(56,189,248,0.35)]",
 
-    accentText: isPlanet
-      ? "text-sky-400"
-      : isGarden
-      ? "text-[#FEC868]"
-      : "text-emerald-400",
+    accentText: isLight ? "text-sky-600" : "text-sky-400",
 
-    accentBorder: isPlanet
-      ? "border-sky-500/30"
-      : isGarden
-      ? "border-[#FEC868]/30"
-      : "border-emerald-500/30",
+    accentBorder: isLight ? "border-sky-400/50" : "border-sky-500/30",
 
-    collapsedStrip: isPlanet
-      ? "bg-[#070A12] border-sky-500/20 text-sky-300 hover:bg-sky-950/40"
-      : isGarden
-      ? "bg-[#111713] border-[#FEC868]/20 text-[#FEC868] hover:bg-[#1A251D]/60"
-      : "bg-[#0A0E15] border-emerald-500/20 text-emerald-300 hover:bg-emerald-950/40",
+    collapsedStrip: isLight
+      ? "bg-sky-100/90 border-sky-300/60 text-sky-800 hover:bg-sky-200/70"
+      : "bg-[#070A12] border-sky-500/20 text-sky-300 hover:bg-sky-950/40",
 
-    progressBar: isPlanet
-      ? "bg-sky-400"
-      : isGarden
-      ? "bg-[#FEC868]"
-      : "bg-emerald-500",
+    progressBar: isLight ? "bg-sky-600" : "bg-sky-400",
   };
 
   // Индекс и переключение между учениками
@@ -1478,11 +1449,9 @@ export function HomeworkCheckingStudio({
               type="button"
               onClick={() => setIsFocusMode(false)}
               className={`fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-xs font-black shadow-2xl backdrop-blur-md transition active:scale-95 ${
-                isPlanet
-                  ? "bg-[#090D18]/95 border-sky-500/40 text-sky-200 hover:border-sky-400 shadow-[0_0_20px_rgba(56,189,248,0.3)]"
-                  : isGarden
-                  ? "bg-[#141C16]/95 border-[#FEC868]/40 text-[#FEC868] hover:border-[#FEC868] shadow-[0_0_20px_rgba(254,200,104,0.3)]"
-                  : "bg-[#0C121A]/95 border-emerald-500/40 text-emerald-200 hover:border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                isLight
+                  ? "bg-white/95 border-sky-400/60 text-sky-800 hover:border-sky-500 shadow-[0_10px_25px_rgba(2,132,199,0.2)]"
+                  : "bg-[#090D18]/95 border-sky-500/40 text-sky-200 hover:border-sky-400 shadow-[0_0_20px_rgba(56,189,248,0.3)]"
               }`}
               title="Развернуть все панели [Esc]"
             >
