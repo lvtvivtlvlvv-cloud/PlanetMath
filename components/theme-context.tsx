@@ -15,6 +15,8 @@ interface ThemeContextType {
   scheduleViewMode: ScheduleViewMode;
   setScheduleViewMode: (mode: ScheduleViewMode) => void;
   toggleScheduleViewMode: () => void;
+  viewMode: ScheduleViewMode;
+  setViewMode: (mode: ScheduleViewMode) => void;
   mounted: boolean;
 }
 
@@ -23,7 +25,8 @@ const normalizeColorMode = (m: string | null | undefined): ColorMode => {
 };
 
 const normalizeScheduleViewMode = (v: string | null | undefined): ScheduleViewMode => {
-  return v === "standard" ? "standard" : "planet";
+  if (v === "standard" || v === "calendar" || v === "classic") return "standard";
+  return "planet";
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -36,7 +39,7 @@ export function ThemeProviderWrapper({ children }: { children: React.ReactNode }
   const applyToDom = (mode: ColorMode) => {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
-    root.setAttribute("data-theme", "planet");
+    root.setAttribute("data-theme", mode === "dark" ? "planet-dark" : "planet-light");
     root.setAttribute("data-mode", mode);
 
     if (mode === "dark") {
@@ -88,7 +91,6 @@ export function ThemeProviderWrapper({ children }: { children: React.ReactNode }
   };
 
   const setTheme = () => {
-    // Оставлена только тема planet
     try {
       localStorage.setItem("app-theme", "planet");
     } catch {}
@@ -106,18 +108,24 @@ export function ThemeProviderWrapper({ children }: { children: React.ReactNode }
         scheduleViewMode,
         setScheduleViewMode,
         toggleScheduleViewMode,
+        viewMode: scheduleViewMode,
+        setViewMode: setScheduleViewMode,
         mounted,
       }}
     >
-      {children}
+      <div
+        className={`min-h-screen w-full transition-colors duration-300 planet-ambient-bg ${
+          colorMode === "light" ? "text-slate-900" : "text-zinc-100"
+        }`}
+      >
+        {children}
+      </div>
     </ThemeContext.Provider>
   );
 }
 
 export function useAppTheme() {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error("useAppTheme must be used within ThemeProviderWrapper");
-  }
-  return context;
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error("useAppTheme must be used inside ThemeProviderWrapper");
+  return ctx;
 }

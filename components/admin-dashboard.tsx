@@ -53,7 +53,6 @@ import {
   BookOpen,
   GraduationCap,
   PenTool,
-  Users,
 } from "lucide-react";
 
 export function formatTeacherName(fullName: string): string {
@@ -84,7 +83,11 @@ function parseTeacherComment(raw: string | null | undefined) {
   if (!raw) return { text: "", annotations: [], tasks: {}, modifiedImageUrl: "" };
   try {
     const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object" && ("text" in parsed || "annotations" in parsed || "tasks" in parsed || "modifiedImageUrl" in parsed)) {
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      ("text" in parsed || "annotations" in parsed || "tasks" in parsed || "modifiedImageUrl" in parsed)
+    ) {
       return {
         text: parsed.text || "",
         annotations: parsed.annotations || [],
@@ -95,190 +98,6 @@ function parseTeacherComment(raw: string | null | undefined) {
   } catch {}
   return { text: raw, annotations: [], tasks: {}, modifiedImageUrl: "" };
 }
-
-// 12 учеников со сданными работами для задания «Векторы» (строго по фото 1)
-const MOCK_VECTOR_SUBMISSIONS: StudentSubmissionItem[] = [
-  {
-    id: "sub_shelepova",
-    studentId: "st_1",
-    studentName: "Шелепова Анна Александровна",
-    avatarColor: "#EF4444",
-    initials: "ША",
-    submittedAt: "16.09.2026, 17:45",
-    pagesCount: 1,
-    pageImages: [],
-    status: "PENDING",
-    grade: null,
-    teacherComment: "",
-    annotations: [],
-    tasksCompleted: { 1: true, 2: true, 3: true, 4: true, 5: true, 6: false, 7: true, 8: true, 9: true, 10: true, 11: true, 12: true, 13: true, 14: true },
-  },
-  {
-    id: "sub_ananyan",
-    studentId: "st_2",
-    studentName: "Ананян Криста Кристовна",
-    avatarColor: "#F59E0B",
-    initials: "АК",
-    submittedAt: "16.09.2026, 17:50",
-    pagesCount: 1,
-    pageImages: [],
-    status: "PENDING",
-    grade: null,
-    teacherComment: "",
-    annotations: [],
-    tasksCompleted: {},
-  },
-  {
-    id: "sub_mironov",
-    studentId: "st_3",
-    studentName: "Миронов Максим Максимович",
-    avatarColor: "#8B5CF6",
-    initials: "ММ",
-    submittedAt: "16.09.2026, 17:55",
-    pagesCount: 2,
-    pageImages: [],
-    status: "GRADED",
-    grade: 5,
-    teacherComment: "Отличное оформление векторных проекций!",
-    annotations: [],
-    tasksCompleted: { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true, 9: true, 10: true, 11: true, 12: true, 13: true, 14: true },
-  },
-  {
-    id: "sub_akakieva",
-    studentId: "st_4",
-    studentName: "Акакиева Кристина Олеговна",
-    avatarColor: "#EC4899",
-    initials: "АК",
-    submittedAt: "16.09.2026, 18:02",
-    pagesCount: 1,
-    pageImages: [],
-    status: "PENDING",
-    grade: null,
-    teacherComment: "",
-    annotations: [],
-    tasksCompleted: {},
-  },
-  {
-    id: "sub_artishchev",
-    studentId: "st_5",
-    studentName: "Артищев Иван Сергеевич",
-    avatarColor: "#10B981",
-    initials: "АА",
-    submittedAt: "16.09.2026, 18:15",
-    pagesCount: 1,
-    pageImages: [],
-    status: "PENDING",
-    grade: null,
-    teacherComment: "",
-    annotations: [],
-    tasksCompleted: {},
-  },
-  {
-    id: "sub_borisov",
-    studentId: "st_6",
-    studentName: "Борисов Дмитрий Андреевич",
-    avatarColor: "#3B82F6",
-    initials: "БМ",
-    submittedAt: "16.09.2026, 18:20",
-    pagesCount: 2,
-    pageImages: [],
-    status: "PENDING",
-    grade: null,
-    teacherComment: "",
-    annotations: [],
-    tasksCompleted: {},
-  },
-  {
-    id: "sub_baranova",
-    studentId: "st_7",
-    studentName: "Баранова Алиса Игоревна",
-    avatarColor: "#14B8A6",
-    initials: "БА",
-    submittedAt: "16.09.2026, 18:40",
-    pagesCount: 1,
-    pageImages: [],
-    status: "PENDING",
-    grade: null,
-    teacherComment: "",
-    annotations: [],
-    tasksCompleted: {},
-  },
-  {
-    id: "sub_danilov",
-    studentId: "st_8",
-    studentName: "Данилов Леонид Павлович",
-    avatarColor: "#6366F1",
-    initials: "ДЛ",
-    submittedAt: "16.09.2026, 19:05",
-    pagesCount: 1,
-    pageImages: [],
-    status: "PENDING",
-    grade: null,
-    teacherComment: "",
-    annotations: [],
-    tasksCompleted: {},
-  },
-  {
-    id: "sub_smirnov",
-    studentId: "st_9",
-    studentName: "Смирнов Артем Денисович",
-    avatarColor: "#F97316",
-    initials: "СА",
-    submittedAt: "16.09.2026, 19:25",
-    pagesCount: 1,
-    pageImages: [],
-    status: "PENDING",
-    grade: null,
-    teacherComment: "",
-    annotations: [],
-    tasksCompleted: {},
-  },
-  {
-    id: "sub_novikova",
-    studentId: "st_10",
-    studentName: "Новикова Валерия Сергеевна",
-    avatarColor: "#D946EF",
-    initials: "НВ",
-    submittedAt: "16.09.2026, 19:40",
-    pagesCount: 2,
-    pageImages: [],
-    status: "PENDING",
-    grade: null,
-    teacherComment: "",
-    annotations: [],
-    tasksCompleted: {},
-  },
-  {
-    id: "sub_ushakov",
-    studentId: "st_11",
-    studentName: "Ушаков Михаил Романович",
-    avatarColor: "#06B6D4",
-    initials: "УМ",
-    submittedAt: "16.09.2026, 20:00",
-    pagesCount: 1,
-    pageImages: [],
-    status: "PENDING",
-    grade: null,
-    teacherComment: "",
-    annotations: [],
-    tasksCompleted: {},
-  },
-  {
-    id: "sub_kuznetsova",
-    studentId: "st_12",
-    studentName: "Кузнецова Ксения Владимировна",
-    avatarColor: "#84CC16",
-    initials: "КК",
-    submittedAt: "16.09.2026, 20:15",
-    pagesCount: 1,
-    pageImages: [],
-    status: "PENDING",
-    grade: null,
-    teacherComment: "",
-    annotations: [],
-    tasksCompleted: {},
-  },
-];
 
 export interface StudentItem {
   id: string;
@@ -362,23 +181,22 @@ export function AdminDashboard({
   const { colorMode, scheduleViewMode } = useAppTheme();
   const isLight = colorMode === "light";
   const isPlanetSchedule = scheduleViewMode === "planet";
-  const [activeTab, setActiveTab] = useState<"schedule" | "journal" | "homeworks" | "submissions" | "ege" | "students" | "teachers">("schedule");
+  const [activeTab, setActiveTab] = useState<
+    "schedule" | "journal" | "homeworks" | "submissions" | "ege" | "students" | "teachers"
+  >("schedule");
   const [selectedClassId, setSelectedClassId] = useState<string>(classes[0]?.id || "");
   const [scheduleMode, setScheduleMode] = useState<"calendar" | "excel">("calendar");
 
-  // Состояние студии проверки ДЗ
   const [checkingHomeworkData, setCheckingHomeworkData] = useState<any | null>(null);
   const [isCheckingStudioOpen, setIsCheckingStudioOpen] = useState(false);
   const [studioSubmissionsList, setStudioSubmissionsList] = useState<StudentSubmissionItem[]>([]);
 
-  // Синхронизация времени с хостом компьютера (2026 год)
   const hostToday = useMemo(() => {
     return serverDate ? parseISO(serverDate) : new Date();
   }, [serverDate]);
 
   const [currentDate, setCurrentDate] = useState<Date>(hostToday);
 
-  // Периодическое фоновое обновление времени с компьютера
   useEffect(() => {
     const syncWithHost = async () => {
       try {
@@ -387,7 +205,6 @@ export function AdminDashboard({
           const data = await res.json();
           if (data.serverTime) {
             const hostNow = parseISO(data.serverTime);
-            // Если дата сменилась на компьютере — обновляем
             if (!isSameDay(hostNow, hostToday)) {
               setCurrentDate(hostNow);
             }
@@ -401,12 +218,10 @@ export function AdminDashboard({
 
   const [weekAnimDirection, setWeekAnimDirection] = useState<"left" | "right" | null>(null);
 
-  // Понедельник текущей отображаемой недели
   const monday = useMemo(() => {
     return startOfWeek(currentDate, { weekStartsOn: 1 });
   }, [currentDate]);
 
-  // День недели в школьном формате: 1 (Пн) .. 7 (Вс)
   const selectedDayOfWeek = useMemo(() => {
     const dow = getDay(currentDate);
     return dow === 0 ? 7 : dow;
@@ -422,7 +237,6 @@ export function AdminDashboard({
     setCurrentDate((prev) => addWeeks(prev, weeks));
   };
 
-  // Свайп для переключения недель на карточке расписания в темах standart и garden
   const scheduleTouchStartX = useRef<number | null>(null);
   const scheduleTouchStartY = useRef<number | null>(null);
 
@@ -448,7 +262,6 @@ export function AdminDashboard({
     }
   };
 
-  // Выбор конкретной даты
   const handleSelectDate = (date: Date) => {
     setCurrentDate(date);
   };
@@ -458,7 +271,6 @@ export function AdminDashboard({
     return formatted.charAt(0).toUpperCase() + formatted.slice(1);
   }, [monday]);
 
-  // Дни текущей недели (7 дней)
   const weekDayDates = useMemo(() => {
     return [0, 1, 2, 3, 4, 5, 6].map((i) => {
       const d = addDays(monday, i);
@@ -736,29 +548,50 @@ export function AdminDashboard({
     );
   };
 
+  const selectClass = isLight
+    ? "rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-800 focus:outline-none focus:border-sky-500 shadow-2xs"
+    : "rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-semibold text-zinc-100 focus:outline-none focus:border-cyan-500";
+
   return (
-    <div className="min-h-screen w-full max-w-5xl mx-auto overflow-x-hidden space-y-6 p-4 sm:p-6 lg:p-8 pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))]">
-      <header className="flex flex-col gap-3 sm:gap-4 border-b border-zinc-200/40 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Панель Учителя</h1>
-          <p className="text-xs text-zinc-400 mt-0.5">2026–2027 учебный год</p>
+    <div className="min-h-screen w-full max-w-5xl mx-auto overflow-x-hidden space-y-5 p-3 sm:p-6 lg:p-8 pr-[max(0.75rem,env(safe-area-inset-right))] pl-[max(0.75rem,env(safe-area-inset-left))]">
+      {/* КОМПАКТНАЯ ШАПКА БЕЗ СДВИГА ЗАГОЛОВКА */}
+      <header
+        className={`flex items-center justify-between gap-2 sm:gap-4 border-b pb-3.5 ${
+          isLight ? "border-slate-200/80" : "border-zinc-800/80"
+        }`}
+      >
+        <div className="min-w-0 flex-1">
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight truncate">Панель Учителя</h1>
+          <p className={`text-xs mt-0.5 truncate ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+            2026–2027 учебный год
+          </p>
         </div>
-        <div className="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 shrink-0 w-full sm:w-auto">
+
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <ThemeSwitcher />
           <form action={logoutAction}>
             <button
               type="submit"
-              className="flex items-center gap-1.5 rounded-xl border border-red-200/80 bg-red-50/70 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400 min-h-[36px] shrink-0"
+              title="Выйти из аккаунта"
+              aria-label="Выйти из аккаунта"
+              className={`flex h-9 w-9 items-center justify-center rounded-xl border transition cursor-pointer shrink-0 ${
+                isLight
+                  ? "border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-100 shadow-2xs"
+                  : "border-zinc-800 bg-[#111726]/90 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
+              }`}
             >
-              <LogOut className="h-3.5 w-3.5" />
-              <span>Выйти</span>
+              <LogOut className="h-4 w-4" />
             </button>
           </form>
         </div>
       </header>
 
-      {/* НАВИГАЦИОННЫЕ ВКЛАДКИ С ГОРИЗОНТАЛЬНЫМ СКРОЛЛОМ НА МОБИЛЬНЫХ */}
-      <nav className="flex items-center gap-2 border-b border-zinc-200/40 pb-2 dark:border-zinc-800 overflow-x-auto scrollbar-none py-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
+      {/* ВЕРХНИЙ РЯД ВКЛАДОК С ГОРИЗОНТАЛЬНЫМ СКРОЛЛОМ БЕЗ ВЫПАДЕНИЯ ЗА РАМКИ */}
+      <nav
+        className={`flex items-center gap-2 overflow-x-auto no-scrollbar whitespace-nowrap px-4 -mx-4 sm:mx-0 sm:px-0 border-b pb-2.5 pt-0.5 ${
+          isLight ? "border-slate-200/80" : "border-zinc-800/80"
+        }`}
+      >
         {[
           { id: "schedule", label: "Расписание" },
           { id: "journal", label: "Журнал ДЗ" },
@@ -769,20 +602,19 @@ export function AdminDashboard({
           { id: "teachers", label: `Учителя (${teachers.length})` },
         ].map((tab) => {
           const isActive = activeTab === tab.id;
-          const activeClasses = isLight
-            ? "bg-sky-500 text-white border-sky-600 shadow-sm"
-            : "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-[0_0_16px_rgba(56,189,248,0.25)] backdrop-blur-md";
 
           return (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id as any)}
-              className={`rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold border whitespace-nowrap shrink-0 transition-[color,background-color,border-color,box-shadow] duration-200 outline-none focus:outline-none min-h-[38px] ${
+              className={`rounded-xl px-3.5 py-2 text-xs sm:text-sm font-bold border whitespace-nowrap shrink-0 transition duration-200 outline-none focus:outline-none cursor-pointer ${
                 isActive
-                  ? activeClasses
+                  ? isLight
+                    ? "bg-sky-600 text-white border-sky-600 shadow-xs"
+                    : "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-[0_0_16px_rgba(56,189,248,0.2)]"
                   : isLight
-                  ? "border-transparent text-slate-600 hover:text-slate-900 hover:bg-sky-100/60"
+                  ? "bg-slate-100 border-slate-200/80 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
                   : "border-transparent text-zinc-400 hover:text-white hover:bg-white/5"
               }`}
             >
@@ -795,37 +627,53 @@ export function AdminDashboard({
       {/* КОНТЕНТ ВКЛАДОК */}
       <div key={activeTab} className="animate-tab-enter">
         {activeTab === "schedule" && (
-          <section className="space-y-4">
-            <div className="glass-panel flex flex-col gap-4 rounded-2xl p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-base font-bold">Расписание занятий:</span>
-                <span className="rounded-lg bg-black/10 px-2.5 py-1 text-xs font-semibold dark:bg-white/10">
+          <section className="space-y-3.5">
+            <div className="glass-panel flex flex-col gap-3 rounded-2xl p-3.5 sm:p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="text-sm sm:text-base font-bold">Расписание занятий:</span>
+                <span
+                  className={`rounded-lg px-2.5 py-1 text-xs font-semibold border ${
+                    isLight
+                      ? "bg-slate-100 text-slate-700 border-slate-200/80"
+                      : "bg-white/10 text-zinc-200 border-white/10"
+                  }`}
+                >
                   {monthTitle}
                 </span>
                 <select
                   value={selectedClassId}
                   onChange={(e) => handleClassChange(e.target.value)}
-                  className="h-9 rounded-lg border border-zinc-700 bg-transparent px-3 text-xs font-semibold focus:outline-none"
+                  className={`h-9 ${selectClass}`}
                 >
                   {classes.map((c) => (
-                    <option key={c.id} value={c.id} className="text-zinc-900">Класс: {c.name}</option>
+                    <option key={c.id} value={c.id}>
+                      Класс: {c.name}
+                    </option>
                   ))}
                 </select>
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="flex items-center rounded-lg border border-zinc-700">
+              <div className="flex items-center gap-2 flex-wrap">
+                <div
+                  className={`flex items-center rounded-xl border ${
+                    isLight ? "border-slate-200 bg-slate-100" : "border-zinc-700 bg-white/5"
+                  }`}
+                >
                   <button
                     type="button"
                     onClick={() => handlePrevWeek(1)}
-                    className="p-1.5 hover:bg-white/5"
+                    className={`p-1.5 rounded-l-xl transition cursor-pointer ${
+                      isLight ? "hover:bg-slate-200/70 text-slate-700" : "hover:bg-white/10"
+                    }`}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
                     onClick={() => handleNextWeek(1)}
-                    className="p-1.5 hover:bg-white/5"
+                    className={`p-1.5 rounded-r-xl transition cursor-pointer ${
+                      isLight ? "hover:bg-slate-200/70 text-slate-700" : "hover:bg-white/10"
+                    }`}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>
@@ -834,9 +682,17 @@ export function AdminDashboard({
                 <button
                   type="button"
                   onClick={() => setScheduleMode(scheduleMode === "calendar" ? "excel" : "calendar")}
-                  className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium hover:bg-white/5"
+                  className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                    isLight
+                      ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200/70"
+                      : "border-zinc-700 hover:bg-white/5 text-zinc-200"
+                  }`}
                 >
-                  {scheduleMode === "calendar" ? <TableIcon className="h-3.5 w-3.5" /> : <CalendarIcon className="h-3.5 w-3.5" />}
+                  {scheduleMode === "calendar" ? (
+                    <TableIcon className="h-3.5 w-3.5" />
+                  ) : (
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                  )}
                   <span>{scheduleMode === "calendar" ? "Табличный режим" : "Вид календаря"}</span>
                 </button>
 
@@ -845,7 +701,11 @@ export function AdminDashboard({
                     <button
                       type="button"
                       onClick={addTableRow}
-                      className="flex items-center gap-1 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold hover:bg-white/20"
+                      className={`flex items-center gap-1 rounded-xl border px-3 py-1.5 text-xs font-bold cursor-pointer ${
+                        isLight
+                          ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
+                          : "bg-white/10 border-white/10 hover:bg-white/20"
+                      }`}
                     >
                       <Plus className="h-3.5 w-3.5" />
                       <span>Строка</span>
@@ -853,7 +713,7 @@ export function AdminDashboard({
                     <button
                       type="button"
                       onClick={handleSaveScheduleBatch}
-                      className="theme-btn flex items-center gap-1 px-3 py-1.5 text-xs font-semibold"
+                      className="theme-btn flex items-center gap-1 px-3 py-1.5 text-xs font-bold cursor-pointer"
                     >
                       <Save className="h-3.5 w-3.5" />
                       <span>Сохранить</span>
@@ -864,12 +724,13 @@ export function AdminDashboard({
             </div>
 
             {scheduleSavedMsg && (
-              <p className="text-xs font-semibold text-cyan-400">✓ Изменения расписания сохранены</p>
+              <p className={`text-xs font-semibold ${isLight ? "text-sky-600" : "text-cyan-400"}`}>
+                ✓ Изменения расписания сохранены
+              </p>
             )}
 
             {scheduleMode === "calendar" ? (
-              <div className="space-y-4">
-                {/* Циферблат / полоса дней */}
+              <div className="space-y-3.5">
                 <ThemeCalendarStrip
                   currentDate={currentDate}
                   onSelectDate={handleSelectDate}
@@ -885,7 +746,6 @@ export function AdminDashboard({
                   onScrubDay={(targetDate) => setCurrentDate(targetDate)}
                 />
 
-                {/* Блок уроков */}
                 <div
                   key={monday.toISOString()}
                   onTouchStart={handleScheduleTouchStart}
@@ -896,14 +756,12 @@ export function AdminDashboard({
                       : weekAnimDirection === "left"
                       ? "animate-week-left"
                       : ""
-                  } space-y-4 pt-1`}
+                  } space-y-3`}
                 >
-                  <div className="flex justify-between items-center mb-4">
+                  <div className="flex justify-between items-center gap-2 flex-wrap px-1">
                     <span
-                      className={`font-bold text-sm tracking-wide ${
-                        isLight
-                          ? "text-sky-700"
-                          : "text-cyan-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]"
+                      className={`font-bold text-xs sm:text-sm tracking-wide ${
+                        isLight ? "text-slate-700" : "text-cyan-400"
                       }`}
                     >
                       {selectedDayOfWeek === 7
@@ -917,14 +775,16 @@ export function AdminDashboard({
                           type="button"
                           onClick={() => {
                             const targetDayStr = format(currentDate, "yyyy-MM-dd");
-                            const hwForDay = homeworks.find((h) => h.targetDate === targetDayStr) || (homeworks.length > 0 ? homeworks[0] : null);
+                            const hwForDay =
+                              homeworks.find((h) => h.targetDate === targetDayStr) ||
+                              (homeworks.length > 0 ? homeworks[0] : null);
                             if (hwForDay) {
                               openCheckingStudio(hwForDay);
                             } else {
                               setActiveTab("journal");
                             }
                           }}
-                          className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-3.5 py-2 text-xs font-bold text-white shadow-md transition active:scale-95"
+                          className="flex items-center gap-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer"
                           title="Проверить домашнее задание"
                         >
                           <PenTool className="h-3.5 w-3.5" />
@@ -937,7 +797,7 @@ export function AdminDashboard({
                             setLessonDayOfWeek(selectedDayOfWeek);
                             setIsAddLessonOpen(true);
                           }}
-                          className="theme-btn flex items-center gap-1.5 px-4 py-2 text-xs font-bold shadow-md"
+                          className="theme-btn flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold cursor-pointer"
                         >
                           <Plus className="h-3.5 w-3.5" />
                           <span>Добавить занятие</span>
@@ -946,22 +806,26 @@ export function AdminDashboard({
                     )}
                   </div>
 
-                  <div className="space-y-3 min-h-[380px]">
+                  <div className="space-y-2.5">
                     {activeDayLessons.length === 0 ? (
                       <div
-                        className={`flex h-64 flex-col items-center justify-center p-8 text-center text-sm rounded-3xl border ${
+                        className={`flex flex-col items-center justify-center py-8 px-6 text-center text-sm rounded-2xl border ${
                           isLight
-                            ? "border-sky-300/60 text-sky-800 bg-sky-50/70"
-                            : "border-cyan-500/20 text-cyan-300/80 bg-cyan-950/10"
+                            ? "border-slate-200 text-slate-600 bg-white shadow-2xs"
+                            : "border-cyan-500/20 text-zinc-300 bg-slate-900/40"
                         }`}
                       >
                         {selectedDayOfWeek === 7 ? (
                           <>
-                            <span className={`text-base font-bold ${isLight ? "text-sky-700" : "text-cyan-300"}`}>Воскресенье — выходной</span>
-                            <span className={`text-xs mt-1 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>Занятий нет, учебный процесс возобновится в понедельник</span>
+                            <span className={`text-sm font-bold ${isLight ? "text-slate-800" : "text-cyan-300"}`}>
+                              Воскресенье — выходной
+                            </span>
+                            <span className={`text-xs mt-1 ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+                              Занятий нет, учебный процесс возобновится в понедельник
+                            </span>
                           </>
                         ) : (
-                          <span>Уроков в этот день нет</span>
+                          <span className="text-xs sm:text-sm font-medium">Уроков в этот день нет</span>
                         )}
                       </div>
                     ) : (
@@ -979,21 +843,21 @@ export function AdminDashboard({
                             <div className="flex w-12 sm:w-14 flex-col justify-between py-1 text-right shrink-0">
                               <span
                                 className={`font-mono text-xs sm:text-sm font-bold tabular-nums ${
-                                  isLight ? "text-slate-900" : "text-zinc-100"
+                                  isLight ? "text-slate-800" : "text-zinc-100"
                                 }`}
                               >
                                 {l.startTime}
                               </span>
                               <span
                                 className={`font-mono text-xs sm:text-sm font-medium tabular-nums ${
-                                  isLight ? "text-slate-500" : "text-zinc-400"
+                                  isLight ? "text-slate-400" : "text-zinc-400"
                                 }`}
                               >
                                 {l.endTime}
                               </span>
                             </div>
 
-                            <div className="group flex-1 min-w-0 p-4 sm:p-5 shadow-sm transition-all duration-200 glass-panel glass-interactive rounded-2xl sm:rounded-3xl">
+                            <div className="group flex-1 min-w-0 p-3.5 sm:p-4 transition-all duration-200 glass-panel glass-interactive rounded-2xl">
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className={`text-xs font-black ${roomColorClass}`}>
@@ -1010,7 +874,11 @@ export function AdminDashboard({
                                       setHwPreset({ subjectName: l.subjectName, targetDate: targetDayStr });
                                       setIsHwModalOpen(true);
                                     }}
-                                    className="rounded-lg bg-white/10 px-2 py-0.5 text-[11px] font-medium hover:bg-white/20 text-zinc-200"
+                                    className={`rounded-lg px-2 py-0.5 text-[11px] font-bold border cursor-pointer ${
+                                      isLight
+                                        ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
+                                        : "bg-white/10 border-white/10 hover:bg-white/20 text-zinc-200"
+                                    }`}
                                   >
                                     + ДЗ
                                   </button>
@@ -1021,23 +889,31 @@ export function AdminDashboard({
                                         await deleteSingleLessonAction(l.id!);
                                       }
                                     }}
-                                    className="rounded p-1 text-red-500 hover:bg-red-500/15"
+                                    className="rounded p-1 text-red-500 hover:bg-red-500/15 cursor-pointer"
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
                                   </button>
                                 </div>
                               </div>
 
-                              <div className={`mt-4 text-sm sm:text-base font-black ${isLight ? "text-slate-900" : "text-white"}`}>
+                              <div
+                                className={`mt-2.5 text-sm sm:text-base font-black ${
+                                  isLight ? "text-slate-900" : "text-white"
+                                }`}
+                              >
                                 {l.subjectName}
                               </div>
 
                               {attachedHw.length > 0 && (
-                                <div className={`mt-3 space-y-1.5 border-t pt-2 ${isLight ? "border-sky-200" : "border-zinc-700/60"}`}>
+                                <div
+                                  className={`mt-3 space-y-1.5 border-t pt-2 ${
+                                    isLight ? "border-slate-100" : "border-zinc-700/60"
+                                  }`}
+                                >
                                   {attachedHw.map((h) => (
                                     <div
                                       key={h.id}
-                                      className={`flex items-center justify-between gap-2 rounded-xl px-2.5 py-1 text-xs ${hwBadgeClass}`}
+                                      className={`flex items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-xs ${hwBadgeClass}`}
                                     >
                                       <div className="flex items-center gap-1.5 min-w-0">
                                         <BookOpen className="h-3.5 w-3.5 shrink-0" />
@@ -1049,7 +925,7 @@ export function AdminDashboard({
                                           e.stopPropagation();
                                           openCheckingStudio(h);
                                         }}
-                                        className="flex items-center gap-1 rounded-lg bg-blue-600 hover:bg-blue-700 px-2 py-0.5 text-[10px] font-extrabold text-white shrink-0 shadow-xs transition ml-2"
+                                        className="flex items-center gap-1 rounded-lg bg-sky-600 hover:bg-sky-700 px-2.5 py-1 text-[10px] font-extrabold text-white shrink-0 shadow-2xs transition ml-2 cursor-pointer"
                                         title="Проверить работы учеников"
                                       >
                                         <PenTool className="h-3 w-3" />
@@ -1068,110 +944,114 @@ export function AdminDashboard({
                 </div>
               </div>
             ) : (
-              <div className="glass-panel overflow-x-auto rounded-2xl shadow-sm">
+              <div className="glass-panel overflow-x-auto rounded-2xl">
                 <table className="w-full min-w-[700px] text-left text-xs">
-                  <thead className="border-b border-zinc-800 font-semibold text-zinc-400">
+                  <thead
+                    className={`border-b font-semibold ${
+                      isLight ? "border-slate-200 text-slate-500 bg-slate-50/60" : "border-zinc-800 text-zinc-400"
+                    }`}
+                  >
                     <tr>
-                      <th className="p-2 w-20">День</th>
-                      <th className="p-2 w-14 text-center">№</th>
-                      <th className="p-2 w-32">Время</th>
-                      <th className="p-2">Предмет</th>
-                      <th className="p-2 w-24">Кабинет</th>
-                      <th className="p-2">ФИО Учителя</th>
-                      <th className="p-2 w-10 text-center">X</th>
+                      <th className="p-2.5 w-20">День</th>
+                      <th className="p-2.5 w-14 text-center">№</th>
+                      <th className="p-2.5 w-32">Время</th>
+                      <th className="p-2.5">Предмет</th>
+                      <th className="p-2.5 w-24">Кабинет</th>
+                      <th className="p-2.5">ФИО Учителя</th>
+                      <th className="p-2.5 w-10 text-center">X</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-800">
+                  <tbody className={`divide-y ${isLight ? "divide-slate-200" : "divide-zinc-800"}`}>
                     {editableRows.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="p-4 text-center text-zinc-400">
+                        <td colSpan={7} className="p-4 text-center text-slate-400">
                           Строк нет. Нажмите «+ Строка» для добавления занятия.
                         </td>
                       </tr>
                     ) : (
                       editableRows.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-white/5">
-                          <td className="p-1">
+                        <tr key={idx} className={isLight ? "hover:bg-slate-50" : "hover:bg-white/5"}>
+                          <td className="p-1.5">
                             <select
                               value={row.dayOfWeek}
                               onChange={(e) => updateTableRow(idx, "dayOfWeek", Number(e.target.value))}
-                              className="w-full rounded border border-transparent bg-transparent p-1 font-semibold focus:border-zinc-400"
+                              className="w-full rounded border border-transparent bg-transparent p-1 font-semibold focus:border-sky-500"
                             >
-                              <option value={1} className="text-zinc-900">Пн</option>
-                              <option value={2} className="text-zinc-900">Вт</option>
-                              <option value={3} className="text-zinc-900">Ср</option>
-                              <option value={4} className="text-zinc-900">Чт</option>
-                              <option value={5} className="text-zinc-900">Пт</option>
-                              <option value={6} className="text-zinc-900">Сб</option>
-                              <option value={7} className="text-zinc-900">Вс</option>
+                              <option value={1}>Пн</option>
+                              <option value={2}>Вт</option>
+                              <option value={3}>Ср</option>
+                              <option value={4}>Чт</option>
+                              <option value={5}>Пт</option>
+                              <option value={6}>Сб</option>
+                              <option value={7}>Вс</option>
                             </select>
                           </td>
-                          <td className="p-1">
+                          <td className="p-1.5">
                             <input
                               type="number"
                               min={1}
                               max={8}
                               value={row.lessonNumber}
                               onChange={(e) => updateTableRow(idx, "lessonNumber", Number(e.target.value))}
-                              className="w-full rounded border border-transparent bg-transparent p-1 text-center font-mono focus:border-zinc-400"
+                              className="w-full rounded border border-transparent bg-transparent p-1 text-center font-mono focus:border-sky-500"
                             />
                           </td>
-                          <td className="p-1">
+                          <td className="p-1.5">
                             <div className="flex items-center gap-1">
                               <input
                                 type="text"
                                 value={row.startTime}
                                 onChange={(e) => updateTableRow(idx, "startTime", e.target.value)}
-                                className="w-12 rounded border border-transparent bg-transparent p-1 text-center focus:border-zinc-400"
+                                className="w-12 rounded border border-transparent bg-transparent p-1 text-center focus:border-sky-500"
                               />
                               <span>-</span>
                               <input
                                 type="text"
                                 value={row.endTime}
                                 onChange={(e) => updateTableRow(idx, "endTime", e.target.value)}
-                                className="w-12 rounded border border-transparent bg-transparent p-1 text-center focus:border-zinc-400"
+                                className="w-12 rounded border border-transparent bg-transparent p-1 text-center focus:border-sky-500"
                               />
                             </div>
                           </td>
-                          <td className="p-1">
+                          <td className="p-1.5">
                             <input
                               type="text"
                               placeholder="Предмет"
                               value={row.subjectName}
                               onChange={(e) => updateTableRow(idx, "subjectName", e.target.value)}
-                              className="w-full rounded border border-transparent bg-transparent p-1 font-medium focus:border-zinc-400"
+                              className="w-full rounded border border-transparent bg-transparent p-1 font-medium focus:border-sky-500"
                             />
                           </td>
-                          <td className="p-1">
+                          <td className="p-1.5">
                             <input
                               type="text"
                               placeholder="Каб."
                               value={row.room}
                               onChange={(e) => updateTableRow(idx, "room", e.target.value)}
-                              className="w-full rounded border border-transparent bg-transparent p-1 focus:border-zinc-400"
+                              className="w-full rounded border border-transparent bg-transparent p-1 focus:border-sky-500"
                             />
                           </td>
-                          <td className="p-1">
+                          <td className="p-1.5">
                             <select
                               value={row.teacherName}
                               onChange={(e) => updateTableRow(idx, "teacherName", e.target.value)}
-                              className="w-full rounded border border-transparent bg-transparent p-1 focus:border-zinc-400"
+                              className="w-full rounded border border-transparent bg-transparent p-1 focus:border-sky-500"
                             >
                               {teachers.map((t) => {
                                 const formatted = formatTeacherName(t.fullName);
                                 return (
-                                  <option key={t.id} value={formatted} className="text-zinc-900">
+                                  <option key={t.id} value={formatted}>
                                     {formatted}
                                   </option>
                                 );
                               })}
                             </select>
                           </td>
-                          <td className="p-1 text-center">
+                          <td className="p-1.5 text-center">
                             <button
                               type="button"
                               onClick={() => deleteTableRow(idx)}
-                              className="rounded p-1 text-red-400 hover:bg-red-950/40"
+                              className="rounded p-1 text-red-500 hover:bg-red-500/10"
                             >
                               <Trash2 className="h-3.5 w-3.5 mx-auto" />
                             </button>
@@ -1214,10 +1094,12 @@ export function AdminDashboard({
 
         {activeTab === "homeworks" && (
           <section className="space-y-4">
-            <div className="glass-panel flex items-center justify-between rounded-2xl p-4 shadow-sm">
+            <div className="glass-panel flex items-center justify-between rounded-2xl p-4">
               <div>
                 <h2 className="text-base font-bold">Выданные домашние задания</h2>
-                <p className="text-xs text-zinc-500">Редактирование доступно до момента первой сдачи учениками</p>
+                <p className={`text-xs ${isLight ? "text-slate-500" : "text-zinc-500"}`}>
+                  Редактирование доступно до момента первой сдачи учениками
+                </p>
               </div>
               <button
                 type="button"
@@ -1225,16 +1107,20 @@ export function AdminDashboard({
                   setHwPreset(null);
                   setIsHwModalOpen(true);
                 }}
-                className="theme-btn flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold"
+                className="theme-btn flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold cursor-pointer"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Создать задание</span>
               </button>
             </div>
 
-            <div className="glass-panel overflow-x-auto rounded-2xl shadow-sm">
+            <div className="glass-panel overflow-x-auto rounded-2xl">
               <table className="w-full min-w-[700px] text-left text-xs">
-                <thead className="border-b border-zinc-800 uppercase text-zinc-500">
+                <thead
+                  className={`border-b uppercase ${
+                    isLight ? "border-slate-200 text-slate-500 bg-slate-50/60" : "border-zinc-800 text-zinc-500"
+                  }`}
+                >
                   <tr>
                     <th className="p-3">Класс</th>
                     <th className="p-3">Предмет</th>
@@ -1244,22 +1130,30 @@ export function AdminDashboard({
                     <th className="p-3 text-right">Действия</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800">
+                <tbody className={`divide-y ${isLight ? "divide-slate-200" : "divide-zinc-800"}`}>
                   {sortedHomeworks.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="p-4 text-center text-zinc-400">Нет выданных заданий</td>
+                      <td colSpan={6} className="p-4 text-center text-slate-400">
+                        Нет выданных заданий
+                      </td>
                     </tr>
                   ) : (
                     sortedHomeworks.map((hw) => (
-                      <tr key={hw.id} className="hover:bg-white/5">
+                      <tr key={hw.id} className={isLight ? "hover:bg-slate-50" : "hover:bg-white/5"}>
                         <td className="p-3 font-bold">
                           <span>{hw.className}</span>
                           {hw.targetTrack && (
-                            <span className={`ml-1.5 inline-block rounded-md px-1.5 py-0.5 text-[10px] font-black uppercase ${
-                              hw.targetTrack === "Профиль"
-                                ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
-                                : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                            }`}>
+                            <span
+                              className={`ml-1.5 inline-block rounded-md px-1.5 py-0.5 text-[10px] font-black uppercase border ${
+                                hw.targetTrack === "Профиль"
+                                  ? isLight
+                                    ? "bg-purple-50 text-purple-700 border-purple-200"
+                                    : "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                                  : isLight
+                                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                                  : "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                              }`}
+                            >
                               {hw.targetTrack}
                             </span>
                           )}
@@ -1267,15 +1161,21 @@ export function AdminDashboard({
                         <td className="p-3 font-medium">{hw.subjectName}</td>
                         <td className="p-3">
                           <span className="font-semibold">{hw.title}</span>
-                          <span className="block truncate max-w-xs text-zinc-400">{hw.description}</span>
+                          <span className={`block truncate max-w-xs ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+                            {hw.description}
+                          </span>
                         </td>
                         <td className="p-3">{hw.targetDate}</td>
                         <td className="p-3">
                           <span
-                            className={`inline-block rounded px-2 py-0.5 font-semibold ${
+                            className={`inline-block rounded-md px-2 py-0.5 font-semibold border ${
                               hw.submissionsCount > 0
-                                ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
-                                : "bg-white/10 text-zinc-400"
+                                ? isLight
+                                  ? "bg-sky-50 text-sky-700 border-sky-200"
+                                  : "bg-blue-950 text-blue-300 border-blue-800"
+                                : isLight
+                                ? "bg-slate-100 text-slate-500 border-slate-200"
+                                : "bg-white/10 text-zinc-400 border-transparent"
                             }`}
                           >
                             {hw.submissionsCount}
@@ -1287,7 +1187,7 @@ export function AdminDashboard({
                               <button
                                 type="button"
                                 onClick={() => setEditingHw(hw)}
-                                className="rounded p-1 text-zinc-400 hover:text-white"
+                                className="rounded p-1 text-slate-400 hover:text-slate-800 dark:hover:text-white"
                               >
                                 <Edit2 className="h-4 w-4" />
                               </button>
@@ -1296,13 +1196,13 @@ export function AdminDashboard({
                                 onClick={async () => {
                                   if (confirm("Удалить это ДЗ?")) await deleteHomeworkAction(hw.id);
                                 }}
-                                className="rounded p-1 text-red-400 hover:bg-red-950/40"
+                                className="rounded p-1 text-red-500 hover:bg-red-500/10"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
                           ) : (
-                            <span className="text-[10px] text-zinc-400">Заблокировано</span>
+                            <span className="text-[10px] text-slate-400">Заблокировано</span>
                           )}
                         </td>
                       </tr>
@@ -1316,47 +1216,59 @@ export function AdminDashboard({
 
         {activeTab === "submissions" && (
           <section className="space-y-4">
-            <div className="glass-panel flex flex-col gap-3 rounded-2xl p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="glass-panel flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-base font-bold">Проверка сданных работ</h2>
-                <p className="text-xs text-zinc-500">Фильтрация по предметам, статусам и датам сдачи</p>
+                <p className={`text-xs ${isLight ? "text-slate-500" : "text-zinc-500"}`}>
+                  Фильтрация по предметам, статусам и датам сдачи
+                </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 <select
                   value={subSubjectFilter}
                   onChange={(e) => setSubSubjectFilter(e.target.value)}
-                  className="h-8 rounded-lg border border-zinc-700 bg-transparent px-2"
+                  className={`h-9 ${selectClass}`}
                 >
-                  <option value="ALL" className="text-zinc-900">Все предметы</option>
+                  <option value="ALL">Все предметы</option>
                   {uniqueSubjects.map((s) => (
-                    <option key={s} value={s} className="text-zinc-900">{s}</option>
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
                   ))}
                 </select>
 
                 <select
                   value={subStatusFilter}
                   onChange={(e) => setSubStatusFilter(e.target.value as any)}
-                  className="h-8 rounded-lg border border-zinc-700 bg-transparent px-2"
+                  className={`h-9 ${selectClass}`}
                 >
-                  <option value="ALL" className="text-zinc-900">Все статусы</option>
-                  <option value="PENDING" className="text-zinc-900">Ожидают проверки</option>
-                  <option value="GRADED" className="text-zinc-900">Проверено</option>
+                  <option value="ALL">Все статусы</option>
+                  <option value="PENDING">Ожидают проверки</option>
+                  <option value="GRADED">Проверено</option>
                 </select>
 
                 <button
                   type="button"
                   onClick={() => setSubSortDateOrder(subSortDateOrder === "desc" ? "asc" : "desc")}
-                  className="h-8 rounded-lg border border-zinc-700 px-2 hover:bg-white/5"
+                  className={`h-9 rounded-xl border px-3 font-semibold transition cursor-pointer ${
+                    isLight
+                      ? "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      : "border-zinc-700 hover:bg-white/5"
+                  }`}
                 >
                   Дата: {subSortDateOrder === "desc" ? "Новые сначала" : "Старые сначала"}
                 </button>
               </div>
             </div>
 
-            <div className="glass-panel overflow-x-auto rounded-2xl shadow-sm">
+            <div className="glass-panel overflow-x-auto rounded-2xl">
               <table className="w-full min-w-[650px] text-left text-sm">
-                <thead className="border-b border-zinc-800 text-xs uppercase text-zinc-400">
+                <thead
+                  className={`border-b text-xs uppercase ${
+                    isLight ? "border-slate-200 text-slate-500 bg-slate-50/60" : "border-zinc-800 text-zinc-400"
+                  }`}
+                >
                   <tr>
                     <th className="p-3">Ученик</th>
                     <th className="p-3">Предмет / Задание</th>
@@ -1365,29 +1277,45 @@ export function AdminDashboard({
                     <th className="p-3 text-right">Действие</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800">
+                <tbody className={`divide-y ${isLight ? "divide-slate-200" : "divide-zinc-800"}`}>
                   {filteredSubmissions.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="p-4 text-center text-zinc-400">Работ не найдено</td>
+                      <td colSpan={5} className="p-4 text-center text-slate-400">
+                        Работ не найдено
+                      </td>
                     </tr>
                   ) : (
                     filteredSubmissions.map((sub) => (
-                      <tr key={sub.id} className="hover:bg-white/5">
+                      <tr key={sub.id} className={isLight ? "hover:bg-slate-50" : "hover:bg-white/5"}>
                         <td className="p-3 font-medium">{sub.studentName}</td>
                         <td className="p-3">
                           <span className="font-semibold">{sub.subjectName}</span>
-                          <span className="block text-xs text-zinc-500">{sub.homeworkTitle}</span>
+                          <span className={`block text-xs ${isLight ? "text-slate-500" : "text-zinc-500"}`}>
+                            {sub.homeworkTitle}
+                          </span>
                         </td>
-                        <td className="p-3 text-xs text-zinc-500">
+                        <td className={`p-3 text-xs ${isLight ? "text-slate-500" : "text-zinc-500"}`}>
                           {new Date(sub.submittedAt).toLocaleString("ru-RU")}
                         </td>
                         <td className="p-3">
                           {sub.grade ? (
-                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500/20 text-xs font-bold text-cyan-300 border border-cyan-400/40 shadow-[0_0_10px_rgba(56,189,248,0.4)]">
+                            <span
+                              className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold border ${
+                                isLight
+                                  ? "bg-sky-50 text-sky-700 border-sky-200"
+                                  : "bg-cyan-500/20 text-cyan-300 border-cyan-400/40"
+                              }`}
+                            >
                               {sub.grade}
                             </span>
                           ) : (
-                            <span className="rounded bg-amber-500/20 px-2 py-0.5 text-xs text-amber-400 font-semibold">
+                            <span
+                              className={`rounded-md px-2 py-0.5 text-xs font-semibold border ${
+                                isLight
+                                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                                  : "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                              }`}
+                            >
                               Ожидает
                             </span>
                           )}
@@ -1396,7 +1324,7 @@ export function AdminDashboard({
                           <button
                             type="button"
                             onClick={() => setActiveModalData(sub as any)}
-                            className="theme-btn px-3 py-1.5 text-xs font-semibold"
+                            className="theme-btn px-3 py-1.5 text-xs font-bold cursor-pointer"
                           >
                             Проверить
                           </button>
@@ -1411,10 +1339,10 @@ export function AdminDashboard({
         )}
 
         {activeTab === "students" && (
-          <section className="space-y-6">
-            <div className="glass-panel rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center gap-2 font-semibold text-sm">
-                <UserPlus className="h-4 w-4" />
+          <section className="space-y-5">
+            <div className="glass-panel rounded-2xl p-4 sm:p-5">
+              <div className="flex items-center gap-2 font-bold text-sm">
+                <UserPlus className="h-4 w-4 text-sky-600 dark:text-cyan-400" />
                 <h2>Регистрация нового ученика</h2>
               </div>
               <form
@@ -1430,7 +1358,7 @@ export function AdminDashboard({
                     name="fullName"
                     required
                     placeholder="ФИО ученика (например: Артищев Иван Петрович)"
-                    className="h-9 w-full rounded-lg border border-zinc-700 bg-transparent px-3 text-xs focus:outline-none"
+                    className={`h-9 w-full ${selectClass}`}
                   />
                 </div>
                 <div>
@@ -1441,7 +1369,7 @@ export function AdminDashboard({
                     max="11"
                     required
                     placeholder="Класс (1-11)"
-                    className="h-9 w-full rounded-lg border border-zinc-700 bg-transparent px-3 text-xs focus:outline-none"
+                    className={`h-9 w-full ${selectClass}`}
                   />
                 </div>
                 <div className="flex gap-2">
@@ -1450,11 +1378,11 @@ export function AdminDashboard({
                     required
                     maxLength={1}
                     placeholder="Буква"
-                    className="h-9 w-16 rounded-lg border border-zinc-700 bg-transparent px-3 text-xs uppercase focus:outline-none"
+                    className={`h-9 w-16 uppercase ${selectClass}`}
                   />
                   <select
                     name="examTrack"
-                    className="h-9 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-xs text-zinc-300 focus:outline-none"
+                    className={`h-9 flex-1 ${selectClass}`}
                     title="Для 11 класса: выберите уровень экзамена (Профиль / База)"
                   >
                     <option value="База">11 кл: База</option>
@@ -1462,48 +1390,62 @@ export function AdminDashboard({
                   </select>
                 </div>
                 <div>
-                  <button
-                    type="submit"
-                    className="theme-btn w-full h-9 px-3 text-xs font-bold"
-                  >
+                  <button type="submit" className="theme-btn w-full h-9 px-3 text-xs font-bold cursor-pointer">
                     Создать
                   </button>
                 </div>
               </form>
             </div>
 
-            <div className="glass-panel rounded-2xl p-4 shadow-sm space-y-3">
+            <div className="glass-panel rounded-2xl p-4 space-y-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between flex-wrap">
                 <div className="flex items-center gap-3 flex-wrap">
                   <div>
                     <h3 className="font-bold text-sm">Журнал учащихся</h3>
-                    <p className="text-xs text-zinc-500">Ученики выбранного класса</p>
+                    <p className={`text-xs ${isLight ? "text-slate-500" : "text-zinc-500"}`}>
+                      Ученики выбранного класса
+                    </p>
                   </div>
                   <select
                     value={studentSelectedClassId}
                     onChange={(e) => setStudentSelectedClassId(e.target.value)}
-                    className="h-8 rounded-lg border border-zinc-700 bg-transparent px-2.5 text-xs font-bold focus:outline-none"
+                    className={`h-9 ${selectClass}`}
                   >
                     {classes.map((c) => (
-                      <option key={c.id} value={c.id} className="text-zinc-900">Класс {c.name}</option>
+                      <option key={c.id} value={c.id}>
+                        Класс {c.name}
+                      </option>
                     ))}
                   </select>
 
-                  {Boolean(classes.find((c) => c.id === studentSelectedClassId)?.grade === 11 || classes.find((c) => c.id === studentSelectedClassId)?.name.startsWith("11")) && (
-                    <div className="flex items-center gap-1.5 p-1 rounded-xl bg-zinc-800/80 border border-zinc-700 text-xs">
-                      <span className="text-[11px] text-zinc-400 px-1 font-bold">Экзамен:</span>
+                  {Boolean(
+                    classes.find((c) => c.id === studentSelectedClassId)?.grade === 11 ||
+                      classes.find((c) => c.id === studentSelectedClassId)?.name.startsWith("11")
+                  ) && (
+                    <div
+                      className={`flex items-center gap-1 p-1 rounded-xl border text-xs ${
+                        isLight ? "bg-slate-100 border-slate-200" : "bg-zinc-800/80 border-zinc-700"
+                      }`}
+                    >
+                      <span className={`text-[11px] px-1.5 font-bold ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+                        Экзамен:
+                      </span>
                       {(["ALL", "База", "Профиль"] as const).map((tr) => (
                         <button
                           key={tr}
                           type="button"
                           onClick={() => setStudentTrackFilter(tr)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
                             studentTrackFilter === tr
                               ? tr === "Профиль"
                                 ? "bg-purple-600 text-white shadow-xs"
                                 : tr === "База"
                                 ? "bg-amber-600 text-white shadow-xs"
+                                : isLight
+                                ? "bg-sky-600 text-white shadow-xs"
                                 : "bg-white/20 text-white shadow-xs"
+                              : isLight
+                              ? "text-slate-600 hover:text-slate-900"
                               : "text-zinc-400 hover:text-white"
                           }`}
                         >
@@ -1517,53 +1459,78 @@ export function AdminDashboard({
                 <button
                   type="button"
                   onClick={() => setStudentSortOrder(studentSortOrder === "asc" ? "desc" : "asc")}
-                  className="h-8 rounded border border-zinc-700 px-2 text-xs hover:bg-white/5"
+                  className={`h-9 rounded-xl border px-3 text-xs font-semibold cursor-pointer ${
+                    isLight
+                      ? "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      : "border-zinc-700 hover:bg-white/5"
+                  }`}
                 >
                   Фамилия: {studentSortOrder === "asc" ? "↑ По возрастанию" : "↓ По убыванию"}
                 </button>
               </div>
 
-              {Boolean(classes.find((c) => c.id === studentSelectedClassId)?.grade === 11 || classes.find((c) => c.id === studentSelectedClassId)?.name.startsWith("11")) && (
-                <p className="text-[11px] text-zinc-400 bg-blue-950/20 border border-blue-900/30 rounded-xl px-3 py-1.5">
-                  💡 <strong>11 класс:</strong> нажмите на кнопку в колонке <em>«Экзамен»</em>, чтобы переключить ученика между <strong>Базой</strong> и <strong>Профилем</strong>.
+              {Boolean(
+                classes.find((c) => c.id === studentSelectedClassId)?.grade === 11 ||
+                  classes.find((c) => c.id === studentSelectedClassId)?.name.startsWith("11")
+              ) && (
+                <p
+                  className={`text-[11px] border rounded-xl px-3 py-2 ${
+                    isLight
+                      ? "bg-sky-50 border-sky-200 text-sky-900"
+                      : "text-zinc-400 bg-blue-950/20 border-blue-900/30"
+                  }`}
+                >
+                  💡 <strong>11 класс:</strong> нажмите на кнопку в колонке <em>«Экзамен»</em>, чтобы переключить ученика между{" "}
+                  <strong>Базой</strong> и <strong>Профилем</strong>.
                 </p>
               )}
 
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[650px] text-left text-xs">
-                  <thead className="border-b border-zinc-800 uppercase text-zinc-500">
+                  <thead
+                    className={`border-b uppercase ${
+                      isLight ? "border-slate-200 text-slate-500 bg-slate-50/60" : "border-zinc-800 text-zinc-500"
+                    }`}
+                  >
                     <tr>
                       <th className="p-2.5 w-12 text-center">№</th>
                       <th className="p-2.5">ФИО Ученика</th>
-                      {Boolean(classes.find((c) => c.id === studentSelectedClassId)?.grade === 11 || classes.find((c) => c.id === studentSelectedClassId)?.name.startsWith("11")) && (
-                        <th className="p-2.5 text-center w-36">Экзамен (Профиль/База)</th>
-                      )}
+                      {Boolean(
+                        classes.find((c) => c.id === studentSelectedClassId)?.grade === 11 ||
+                          classes.find((c) => c.id === studentSelectedClassId)?.name.startsWith("11")
+                      ) && <th className="p-2.5 text-center w-36">Экзамен (Профиль/База)</th>}
                       <th className="p-2.5">Логин</th>
                       <th className="p-2.5">Пароль</th>
                       <th className="p-2.5 w-28 text-center">Копировать</th>
                       <th className="p-2.5 w-12 text-center">Удалить</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-800">
+                  <tbody className={`divide-y ${isLight ? "divide-slate-200" : "divide-zinc-800"}`}>
                     {currentClassStudents.length === 0 ? (
                       <tr>
                         <td
                           colSpan={
-                            Boolean(classes.find((c) => c.id === studentSelectedClassId)?.grade === 11 || classes.find((c) => c.id === studentSelectedClassId)?.name.startsWith("11"))
+                            Boolean(
+                              classes.find((c) => c.id === studentSelectedClassId)?.grade === 11 ||
+                                classes.find((c) => c.id === studentSelectedClassId)?.name.startsWith("11")
+                            )
                               ? 7
                               : 6
                           }
-                          className="p-4 text-center text-zinc-400"
+                          className="p-4 text-center text-slate-400"
                         >
                           В этом классе пока нет зарегистрированных учеников
                         </td>
                       </tr>
                     ) : (
                       currentClassStudents.map((st, idx) => {
-                        const is11 = Boolean(classes.find((c) => c.id === studentSelectedClassId)?.grade === 11 || classes.find((c) => c.id === studentSelectedClassId)?.name.startsWith("11"));
+                        const is11 = Boolean(
+                          classes.find((c) => c.id === studentSelectedClassId)?.grade === 11 ||
+                            classes.find((c) => c.id === studentSelectedClassId)?.name.startsWith("11")
+                        );
                         return (
-                          <tr key={st.id} className="hover:bg-white/5">
-                            <td className="p-2.5 text-center font-bold text-zinc-500">{idx + 1}</td>
+                          <tr key={st.id} className={isLight ? "hover:bg-slate-50" : "hover:bg-white/5"}>
+                            <td className="p-2.5 text-center font-bold text-slate-400">{idx + 1}</td>
                             <td className="p-2.5 font-semibold">{st.fullName}</td>
                             {is11 && (
                               <td className="p-2.5 text-center">
@@ -1579,10 +1546,14 @@ export function AdminDashboard({
                                       setUpdatingStudentId(null);
                                     }
                                   }}
-                                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-xl text-xs font-black uppercase transition shadow-xs active:scale-95 ${
+                                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-xl text-xs font-black uppercase border transition shadow-2xs active:scale-95 cursor-pointer ${
                                     st.examTrack === "Профиль"
-                                      ? "bg-purple-500/20 text-purple-300 border border-purple-500/40 hover:bg-purple-500/30"
-                                      : "bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30"
+                                      ? isLight
+                                        ? "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
+                                        : "bg-purple-500/20 text-purple-300 border-purple-500/40 hover:bg-purple-500/30"
+                                      : isLight
+                                      ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                                      : "bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30"
                                   }`}
                                   title="Нажмите, чтобы переключить экзамен (Профиль ↔ База)"
                                 >
@@ -1590,15 +1561,29 @@ export function AdminDashboard({
                                 </button>
                               </td>
                             )}
-                            <td className="p-2.5 font-mono text-zinc-400">{st.login}</td>
-                            <td className="p-2.5 font-mono text-zinc-400">{st.plainPassword}</td>
+                            <td className={`p-2.5 font-mono ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                              {st.login}
+                            </td>
+                            <td className={`p-2.5 font-mono ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                              {st.plainPassword}
+                            </td>
                             <td className="p-2.5 text-center">
                               <button
                                 type="button"
-                                onClick={() => copyToClipboard(`Логин: ${st.login} | Пароль: ${st.plainPassword}`, st.id)}
-                                className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-2 py-1 text-[11px] font-medium hover:bg-white/20 text-zinc-200"
+                                onClick={() =>
+                                  copyToClipboard(`Логин: ${st.login} | Пароль: ${st.plainPassword}`, st.id)
+                                }
+                                className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-medium cursor-pointer ${
+                                  isLight
+                                    ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
+                                    : "bg-white/10 border-transparent hover:bg-white/20 text-zinc-200"
+                                }`}
                               >
-                                {copiedId === st.id ? <Check className="h-3 w-3 text-cyan-400" /> : <Copy className="h-3 w-3" />}
+                                {copiedId === st.id ? (
+                                  <Check className="h-3 w-3 text-emerald-500" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
                                 <span>{copiedId === st.id ? "Скопировано" : "Копия"}</span>
                               </button>
                             </td>
@@ -1610,7 +1595,7 @@ export function AdminDashboard({
                                     await deleteStudentAction(st.id);
                                   }
                                 }}
-                                className="rounded p-1 text-red-400 hover:bg-red-950/40"
+                                className="rounded p-1 text-red-500 hover:bg-red-500/10 cursor-pointer"
                               >
                                 <Trash2 className="h-3.5 w-3.5 mx-auto" />
                               </button>
@@ -1649,10 +1634,10 @@ export function AdminDashboard({
         )}
 
         {activeTab === "teachers" && (
-          <section className="space-y-6">
-            <div className="glass-panel rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center gap-2 font-semibold text-sm">
-                <GraduationCap className="h-4 w-4" />
+          <section className="space-y-5">
+            <div className="glass-panel rounded-2xl p-4 sm:p-5">
+              <div className="flex items-center gap-2 font-bold text-sm">
+                <GraduationCap className="h-4 w-4 text-sky-600 dark:text-cyan-400" />
                 <h2>Добавить нового учителя</h2>
               </div>
               <form
@@ -1667,22 +1652,23 @@ export function AdminDashboard({
                   name="fullName"
                   required
                   placeholder="ФИО Учителя (например: Смирнова Анна Павловна)"
-                  className="h-9 flex-1 rounded-lg border border-zinc-700 bg-transparent px-3 text-xs focus:outline-none"
+                  className={`h-9 flex-1 ${selectClass}`}
                 />
-                <button
-                  type="submit"
-                  className="theme-btn px-4 py-1.5 text-xs font-bold"
-                >
+                <button type="submit" className="theme-btn px-4 py-1.5 text-xs font-bold cursor-pointer">
                   Зарегистрировать учителя
                 </button>
               </form>
             </div>
 
-            <div className="glass-panel rounded-2xl p-4 shadow-sm space-y-3">
+            <div className="glass-panel rounded-2xl p-4 space-y-3">
               <h3 className="font-bold text-sm">Список учителей и администраторов</h3>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[650px] text-left text-xs">
-                  <thead className="border-b border-zinc-800 uppercase text-zinc-500">
+                  <thead
+                    className={`border-b uppercase ${
+                      isLight ? "border-slate-200 text-slate-500 bg-slate-50/60" : "border-zinc-800 text-zinc-500"
+                    }`}
+                  >
                     <tr>
                       <th className="p-2.5 w-12 text-center">№</th>
                       <th className="p-2.5">ФИО</th>
@@ -1693,21 +1679,37 @@ export function AdminDashboard({
                       <th className="p-2.5 w-12 text-center">Удалить</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-800">
+                  <tbody className={`divide-y ${isLight ? "divide-slate-200" : "divide-zinc-800"}`}>
                     {teachers.map((t, idx) => (
-                      <tr key={t.id} className="hover:bg-white/5">
-                        <td className="p-2.5 text-center font-bold text-zinc-500">{idx + 1}</td>
+                      <tr key={t.id} className={isLight ? "hover:bg-slate-50" : "hover:bg-white/5"}>
+                        <td className="p-2.5 text-center font-bold text-slate-400">{idx + 1}</td>
                         <td className="p-2.5 font-semibold">{t.fullName}</td>
-                        <td className="p-2.5 text-zinc-400">{formatTeacherName(t.fullName)}</td>
-                        <td className="p-2.5 font-mono text-zinc-400">{t.login}</td>
-                        <td className="p-2.5 font-mono text-zinc-400">{t.plainPassword}</td>
+                        <td className={`p-2.5 ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+                          {formatTeacherName(t.fullName)}
+                        </td>
+                        <td className={`p-2.5 font-mono ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                          {t.login}
+                        </td>
+                        <td className={`p-2.5 font-mono ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                          {t.plainPassword}
+                        </td>
                         <td className="p-2.5 text-center">
                           <button
                             type="button"
-                            onClick={() => copyToClipboard(`Логин: ${t.login} | Пароль: ${t.plainPassword}`, t.id)}
-                            className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-2 py-1 text-[11px] font-medium hover:bg-white/20 text-zinc-200"
+                            onClick={() =>
+                              copyToClipboard(`Логин: ${t.login} | Пароль: ${t.plainPassword}`, t.id)
+                            }
+                            className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-medium cursor-pointer ${
+                              isLight
+                                ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
+                                : "bg-white/10 border-transparent hover:bg-white/20 text-zinc-200"
+                            }`}
                           >
-                            {copiedId === t.id ? <Check className="h-3 w-3 text-cyan-400" /> : <Copy className="h-3 w-3" />}
+                            {copiedId === t.id ? (
+                              <Check className="h-3 w-3 text-emerald-500" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
                             <span>{copiedId === t.id ? "Скопировано" : "Копия"}</span>
                           </button>
                         </td>
@@ -1723,7 +1725,7 @@ export function AdminDashboard({
                                 }
                               }
                             }}
-                            className="rounded p-1 text-red-400 hover:bg-red-950/40"
+                            className="rounded p-1 text-red-500 hover:bg-red-500/10 cursor-pointer"
                           >
                             <Trash2 className="h-3.5 w-3.5 mx-auto" />
                           </button>
@@ -1741,9 +1743,18 @@ export function AdminDashboard({
       {isAddLessonOpen && (
         <div className="fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex items-center justify-center bg-black/60 p-3 sm:p-4 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] backdrop-blur-sm">
           <div className="glass-panel w-full max-w-[min(95vw,calc(100vw-1.5rem))] sm:max-w-sm max-h-[90dvh] flex flex-col overflow-hidden rounded-3xl p-5 shadow-2xl">
-            <div className="flex items-center justify-between gap-2 border-b border-zinc-800 pb-3 shrink-0">
+            <div
+              className={`flex items-center justify-between gap-2 border-b pb-3 shrink-0 ${
+                isLight ? "border-slate-200" : "border-zinc-800"
+              }`}
+            >
               <h3 className="font-bold text-sm min-w-0 flex-1 truncate">Добавить занятие</h3>
-              <button onClick={() => setIsAddLessonOpen(false)} className="shrink-0 p-1 rounded-lg hover:bg-white/10"><X className="h-4 w-4" /></button>
+              <button
+                onClick={() => setIsAddLessonOpen(false)}
+                className="shrink-0 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
             <form
               onSubmit={async (e) => {
@@ -1766,38 +1777,57 @@ export function AdminDashboard({
               <input type="hidden" name="dayOfWeek" value={lessonDayOfWeek} />
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="text-zinc-400 font-medium">№ Урока</label>
-                  <input name="lessonNumber" type="number" min={1} max={8} defaultValue={1} required className="mt-1 h-8 w-full rounded border border-zinc-700 bg-transparent px-2" />
+                  <label className="text-slate-500 dark:text-zinc-400 font-medium">№ Урока</label>
+                  <input
+                    name="lessonNumber"
+                    type="number"
+                    min={1}
+                    max={8}
+                    defaultValue={1}
+                    required
+                    className={`mt-1 h-9 w-full ${selectClass}`}
+                  />
                 </div>
                 <div>
-                  <label className="text-zinc-400 font-medium">Начало</label>
-                  <input name="startTime" defaultValue="08:30" required className="mt-1 h-8 w-full rounded border border-zinc-700 bg-transparent px-2" />
+                  <label className="text-slate-500 dark:text-zinc-400 font-medium">Начало</label>
+                  <input
+                    name="startTime"
+                    defaultValue="08:30"
+                    required
+                    className={`mt-1 h-9 w-full ${selectClass}`}
+                  />
                 </div>
                 <div>
-                  <label className="text-zinc-400 font-medium">Конец</label>
-                  <input name="endTime" defaultValue="09:15" required className="mt-1 h-8 w-full rounded border border-zinc-700 bg-transparent px-2" />
+                  <label className="text-slate-500 dark:text-zinc-400 font-medium">Конец</label>
+                  <input
+                    name="endTime"
+                    defaultValue="09:15"
+                    required
+                    className={`mt-1 h-9 w-full ${selectClass}`}
+                  />
                 </div>
               </div>
               <div>
-                <label className="text-zinc-400 font-medium">Предмет</label>
-                <input name="subjectName" required placeholder="Алгебра" className="mt-1 h-8 w-full rounded border border-zinc-700 bg-transparent px-2" />
+                <label className="text-slate-500 dark:text-zinc-400 font-medium">Предмет</label>
+                <input
+                  name="subjectName"
+                  required
+                  placeholder="Алгебра"
+                  className={`mt-1 h-9 w-full ${selectClass}`}
+                />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-zinc-400 font-medium">Кабинет</label>
-                  <input name="room" defaultValue="101" required className="mt-1 h-8 w-full rounded border border-zinc-700 bg-transparent px-2" />
+                  <label className="text-slate-500 dark:text-zinc-400 font-medium">Кабинет</label>
+                  <input name="room" defaultValue="101" required className={`mt-1 h-9 w-full ${selectClass}`} />
                 </div>
                 <div>
-                  <label className="text-zinc-400 font-medium">Преподаватель</label>
-                  <select
-                    name="teacherName"
-                    required
-                    className="mt-1 h-8 w-full rounded border border-zinc-700 bg-transparent px-2 font-medium"
-                  >
+                  <label className="text-slate-500 dark:text-zinc-400 font-medium">Преподаватель</label>
+                  <select name="teacherName" required className={`mt-1 h-9 w-full ${selectClass}`}>
                     {teachers.map((t) => {
                       const formatted = formatTeacherName(t.fullName);
                       return (
-                        <option key={t.id} value={formatted} className="text-zinc-900">
+                        <option key={t.id} value={formatted}>
                           {formatted}
                         </option>
                       );
@@ -1805,7 +1835,7 @@ export function AdminDashboard({
                   </select>
                 </div>
               </div>
-              <button type="submit" className="theme-btn w-full py-2 font-bold mt-2">
+              <button type="submit" className="theme-btn w-full py-2 font-bold mt-2 cursor-pointer">
                 Сохранить
               </button>
             </form>
@@ -1816,9 +1846,22 @@ export function AdminDashboard({
       {isHwModalOpen && (
         <div className="fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex items-center justify-center bg-black/60 p-3 sm:p-4 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] backdrop-blur-sm">
           <div className="glass-panel w-full max-w-[min(95vw,calc(100vw-1.5rem))] sm:max-w-lg max-h-[90dvh] flex flex-col overflow-hidden rounded-3xl p-5 shadow-2xl">
-            <div className="flex items-center justify-between gap-2 border-b border-zinc-800 pb-3 shrink-0">
+            <div
+              className={`flex items-center justify-between gap-2 border-b pb-3 shrink-0 ${
+                isLight ? "border-slate-200" : "border-zinc-800"
+              }`}
+            >
               <h3 className="font-bold min-w-0 flex-1 truncate">Выдать домашнее задание</h3>
-              <button onClick={() => { setIsHwModalOpen(false); setHwPreset(null); setHwFiles([]); }} className="shrink-0 p-1 rounded-lg hover:bg-white/10"><X className="h-4 w-4" /></button>
+              <button
+                onClick={() => {
+                  setIsHwModalOpen(false);
+                  setHwPreset(null);
+                  setHwFiles([]);
+                }}
+                className="shrink-0 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
             <form
               onSubmit={async (e) => {
@@ -1841,8 +1884,13 @@ export function AdminDashboard({
                     targetDate: fd.get("targetDate") as string,
                     title: fd.get("title") as string,
                     description: fd.get("description") as string,
-                    targetTrack: Boolean(classes.find((c) => c.id === selectedClassId)?.grade === 11 || classes.find((c) => c.id === selectedClassId)?.name.startsWith("11"))
-                      ? (modalTargetTrack === "ALL" ? null : modalTargetTrack)
+                    targetTrack: Boolean(
+                      classes.find((c) => c.id === selectedClassId)?.grade === 11 ||
+                        classes.find((c) => c.id === selectedClassId)?.name.startsWith("11")
+                    )
+                      ? modalTargetTrack === "ALL"
+                        ? null
+                        : modalTargetTrack
                       : null,
                     attachments,
                   });
@@ -1857,22 +1905,29 @@ export function AdminDashboard({
               }}
               className="mt-4 space-y-3 text-xs flex-1 min-h-0 overflow-y-auto pr-1"
             >
-              {Boolean(classes.find((c) => c.id === selectedClassId)?.grade === 11 || classes.find((c) => c.id === selectedClassId)?.name.startsWith("11")) && (
+              {Boolean(
+                classes.find((c) => c.id === selectedClassId)?.grade === 11 ||
+                  classes.find((c) => c.id === selectedClassId)?.name.startsWith("11")
+              ) && (
                 <div>
-                  <label className="font-medium text-zinc-400 block mb-1">Кому выдать ДЗ (11 класс)</label>
+                  <label className="font-medium text-slate-500 dark:text-zinc-400 block mb-1">
+                    Кому выдать ДЗ (11 класс)
+                  </label>
                   <div className="grid grid-cols-3 gap-2">
                     {(["ALL", "База", "Профиль"] as const).map((tr) => (
                       <button
                         key={tr}
                         type="button"
                         onClick={() => setModalTargetTrack(tr)}
-                        className={`h-8 rounded-lg border text-xs font-bold transition flex items-center justify-center ${
+                        className={`h-8 rounded-lg border text-xs font-bold transition flex items-center justify-center cursor-pointer ${
                           modalTargetTrack === tr
                             ? tr === "Профиль"
                               ? "bg-purple-600 text-white border-purple-600 shadow-xs"
                               : tr === "База"
                               ? "bg-amber-600 text-white border-amber-600 shadow-xs"
-                              : "bg-blue-600 text-white border-blue-600 shadow-xs"
+                              : "bg-sky-600 text-white border-sky-600 shadow-xs"
+                            : isLight
+                            ? "border-slate-200 bg-slate-100 text-slate-600 hover:text-slate-900"
                             : "border-zinc-700 text-zinc-400 hover:text-white"
                         }`}
                       >
@@ -1885,38 +1940,54 @@ export function AdminDashboard({
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="font-medium text-zinc-400">Предмет</label>
+                  <label className="font-medium text-slate-500 dark:text-zinc-400">Предмет</label>
                   <input
                     name="subjectName"
                     defaultValue={hwPreset?.subjectName || ""}
                     required
-                    className="mt-1 h-8 w-full rounded border border-zinc-700 bg-transparent px-2"
+                    className={`mt-1 h-9 w-full ${selectClass}`}
                   />
                 </div>
                 <div>
-                  <label className="font-medium text-zinc-400">Срок сдачи</label>
+                  <label className="font-medium text-slate-500 dark:text-zinc-400">Срок сдачи</label>
                   <input
                     name="targetDate"
                     type="date"
                     defaultValue={hwPreset?.targetDate || ""}
                     required
-                    className="mt-1 h-8 w-full rounded border border-zinc-700 bg-transparent px-2"
+                    className={`mt-1 h-9 w-full ${selectClass}`}
                   />
                 </div>
               </div>
               <div>
-                <label className="font-medium text-zinc-400">Тема задания</label>
-                <input name="title" required placeholder="Параграф 5, упр. 12" className="mt-1 h-8 w-full rounded border border-zinc-700 bg-transparent px-2" />
+                <label className="font-medium text-slate-500 dark:text-zinc-400">Тема задания</label>
+                <input
+                  name="title"
+                  required
+                  placeholder="Параграф 5, упр. 12"
+                  className={`mt-1 h-9 w-full ${selectClass}`}
+                />
               </div>
               <div>
-                <label className="font-medium text-zinc-400">Описание задания</label>
-                <textarea name="description" rows={3} placeholder="Инструкции..." className="mt-1 w-full rounded border border-zinc-700 bg-transparent p-2" />
+                <label className="font-medium text-slate-500 dark:text-zinc-400">Описание задания</label>
+                <textarea
+                  name="description"
+                  rows={3}
+                  placeholder="Инструкции..."
+                  className={`mt-1 w-full p-2.5 ${selectClass}`}
+                />
               </div>
 
               <div>
-                <label className="font-medium text-zinc-400">Файлы</label>
+                <label className="font-medium text-slate-500 dark:text-zinc-400">Файлы</label>
                 <div className="mt-1 flex items-center gap-2">
-                  <label className="flex cursor-pointer items-center gap-1 rounded border border-zinc-700 px-2.5 py-1 text-xs hover:bg-white/5">
+                  <label
+                    className={`flex cursor-pointer items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs ${
+                      isLight
+                        ? "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
+                        : "border-zinc-700 hover:bg-white/5"
+                    }`}
+                  >
                     <Paperclip className="h-3.5 w-3.5" />
                     <span>Выбрать файлы</span>
                     <input
@@ -1937,13 +2008,15 @@ export function AdminDashboard({
                     {hwFiles.map((file, idx) => (
                       <span
                         key={idx}
-                        className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-2.5 py-1 text-[11px] font-medium"
+                        className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-medium ${
+                          isLight ? "bg-slate-100 text-slate-700" : "bg-white/10"
+                        }`}
                       >
                         <span className="max-w-[150px] truncate">{file.name}</span>
                         <button
                           type="button"
                           onClick={() => setHwFiles((prev) => prev.filter((_, i) => i !== idx))}
-                          className="rounded p-0.5 text-zinc-400 hover:text-red-400"
+                          className="rounded p-0.5 text-slate-400 hover:text-red-500"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -1956,7 +2029,7 @@ export function AdminDashboard({
               <button
                 type="submit"
                 disabled={hwLoading}
-                className="theme-btn w-full py-2 font-bold disabled:opacity-50 mt-2"
+                className="theme-btn w-full py-2 font-bold disabled:opacity-50 mt-2 cursor-pointer"
               >
                 {hwLoading ? "Сохранение..." : "Опубликовать"}
               </button>
@@ -1968,9 +2041,18 @@ export function AdminDashboard({
       {editingHw && (
         <div className="fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex items-center justify-center bg-black/60 p-3 sm:p-4 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] backdrop-blur-sm">
           <div className="glass-panel w-full max-w-[min(95vw,calc(100vw-1.5rem))] sm:max-w-lg max-h-[90dvh] flex flex-col overflow-hidden rounded-3xl p-5 shadow-2xl">
-            <div className="flex items-center justify-between gap-2 border-b border-zinc-800 pb-3 shrink-0">
+            <div
+              className={`flex items-center justify-between gap-2 border-b pb-3 shrink-0 ${
+                isLight ? "border-slate-200" : "border-zinc-800"
+              }`}
+            >
               <h3 className="font-bold min-w-0 flex-1 truncate">Редактирование ДЗ</h3>
-              <button onClick={() => setEditingHw(null)} className="shrink-0 p-1 rounded-lg hover:bg-white/10"><X className="h-4 w-4" /></button>
+              <button
+                onClick={() => setEditingHw(null)}
+                className="shrink-0 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
             <form
               onSubmit={async (e) => {
@@ -1989,55 +2071,54 @@ export function AdminDashboard({
             >
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="font-medium text-zinc-400">Предмет</label>
+                  <label className="font-medium text-slate-500 dark:text-zinc-400">Предмет</label>
                   <input
                     name="subjectName"
                     defaultValue={editingHw.subjectName}
                     required
-                    className="mt-1 h-8 w-full rounded border border-zinc-700 bg-transparent px-2"
+                    className={`mt-1 h-9 w-full ${selectClass}`}
                   />
                 </div>
                 <div>
-                  <label className="font-medium text-zinc-400">Срок сдачи</label>
+                  <label className="font-medium text-slate-500 dark:text-zinc-400">Срок сдачи</label>
                   <input
                     name="targetDate"
                     type="date"
                     defaultValue={editingHw.targetDate}
                     required
-                    className="mt-1 h-8 w-full rounded border border-zinc-700 bg-transparent px-2"
+                    className={`mt-1 h-9 w-full ${selectClass}`}
                   />
                 </div>
               </div>
               <div>
-                <label className="font-medium text-zinc-400">Тема</label>
+                <label className="font-medium text-slate-500 dark:text-zinc-400">Тема</label>
                 <input
                   name="title"
                   defaultValue={editingHw.title}
                   required
-                  className="mt-1 h-8 w-full rounded border border-zinc-700 bg-transparent px-2"
+                  className={`mt-1 h-9 w-full ${selectClass}`}
                 />
               </div>
               <div>
-                <label className="font-medium text-zinc-400">Инструкция</label>
+                <label className="font-medium text-slate-500 dark:text-zinc-400">Инструкция</label>
                 <textarea
                   name="description"
                   defaultValue={editingHw.description}
                   rows={3}
-                  className="mt-1 w-full rounded border border-zinc-700 bg-transparent p-2"
+                  className={`mt-1 w-full p-2.5 ${selectClass}`}
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setEditingHw(null)}
-                  className="rounded px-3 py-1.5 hover:bg-white/10"
+                  className={`rounded-xl px-3.5 py-1.5 font-medium ${
+                    isLight ? "hover:bg-slate-100 text-slate-600" : "hover:bg-white/10"
+                  }`}
                 >
                   Отмена
                 </button>
-                <button
-                  type="submit"
-                  className="theme-btn px-4 py-1.5 font-bold"
-                >
+                <button type="submit" className="theme-btn px-4 py-1.5 font-bold cursor-pointer">
                   Сохранить
                 </button>
               </div>

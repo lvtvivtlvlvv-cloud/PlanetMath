@@ -4,73 +4,82 @@
 
 /* ==========================================================================
    1. ТЕМА «PLANET» — ТЁМНЫЙ РЕЖИМ (DARK MODE)
-   Глубокий космический фон и неоновые небесно-циановые акценты
+   Глубокий чистый тёмный фон (#0B0F19) и аккуратные небесно-циановые акценты
    ========================================================================== */
 :root,
 html[data-mode="dark"] {
-  --bg-main: #06080D;
-  --bg-card: rgba(12, 17, 26, 0.78);
-  --bg-surface: rgba(18, 25, 40, 0.86);
+  --bg-main: #0B0F19;
+  --bg-card: rgba(15, 23, 42, 0.78);
+  --bg-surface: rgba(17, 24, 39, 0.88);
   --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
-  --border-color: rgba(56, 189, 248, 0.22);
+  --border-color: rgba(56, 189, 248, 0.18);
   --accent-color: #38BDF8;
   --accent-hover: #22D3EE;
-  --accent-glow: rgba(34, 211, 238, 0.45);
+  --accent-glow: rgba(34, 211, 238, 0.35);
   --btn-primary-bg: rgba(14, 165, 233, 0.16);
   --btn-primary-text: #38BDF8;
-  --btn-primary-hover: rgba(14, 165, 233, 0.32);
+  --btn-primary-hover: rgba(14, 165, 233, 0.3);
   --btn-radius: 0.85rem;
   --glass-blur: blur(16px);
 }
 
 /* ==========================================================================
    2. ТЕМА «PLANET» — СВЕТЛЫЙ РЕЖИМ (LIGHT MODE)
-   Светлая небесная палитра с кристально чистыми стеклянными панелями
+   Чистая светлая палитра с белыми карточками и контрастной типографикой
    ========================================================================== */
 html[data-mode="light"] {
-  --bg-main: #F0F7FF;
-  --bg-card: rgba(255, 255, 255, 0.88);
-  --bg-surface: rgba(240, 249, 255, 0.94);
+  --bg-main: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --bg-surface: #FFFFFF;
   --text-primary: #0F172A;
   --text-secondary: #475569;
-  --border-color: rgba(14, 165, 233, 0.25);
+  --border-color: #E2E8F0;
   --accent-color: #0284C7;
   --accent-hover: #0369A1;
-  --accent-glow: rgba(14, 165, 233, 0.25);
+  --accent-glow: rgba(14, 165, 233, 0.15);
   --btn-primary-bg: #0284C7;
   --btn-primary-text: #FFFFFF;
   --btn-primary-hover: #0369A1;
   --btn-radius: 0.85rem;
-  --glass-blur: blur(16px);
+  --glass-blur: none;
+}
+
+/* Скрытие полосы прокрутки для горизонтальных списков вкладок */
+.no-scrollbar,
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 /* Амбиент-фон темы Planet (Тёмный и Светлый) */
 .planet-ambient-bg {
-  background-color: #06080D;
+  background-color: #0B0F19;
   background-image:
-    radial-gradient(ellipse 900px 480px at 50% -12%, rgba(34, 211, 238, 0.13) 0%, transparent 70%),
-    radial-gradient(circle 600px at 100% 50%, rgba(14, 165, 233, 0.09) 0%, transparent 70%),
-    radial-gradient(circle 600px at 0% 100%, rgba(56, 189, 248, 0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 900px 450px at 50% -15%, rgba(34, 211, 238, 0.1) 0%, transparent 70%),
+    radial-gradient(circle 600px at 100% 50%, rgba(14, 165, 233, 0.06) 0%, transparent 70%),
     linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 44px 44px, 44px 44px;
+  background-size: 100% 100%, 100% 100%, 44px 44px, 44px 44px;
 }
 
 html[data-mode="light"] .planet-ambient-bg {
-  background-color: #F0F7FF;
+  background-color: #F8FAFC;
   background-image:
-    radial-gradient(ellipse 900px 480px at 50% -12%, rgba(56, 189, 248, 0.22) 0%, transparent 70%),
-    radial-gradient(circle 600px at 100% 50%, rgba(14, 165, 233, 0.12) 0%, transparent 70%),
-    radial-gradient(circle 600px at 0% 100%, rgba(2, 132, 199, 0.1) 0%, transparent 70%),
-    linear-gradient(rgba(14, 165, 233, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(14, 165, 233, 0.06) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 44px 44px, 44px 44px;
+    radial-gradient(ellipse 900px 420px at 50% -15%, rgba(224, 242, 254, 0.65) 0%, transparent 70%),
+    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 100% 100%, 44px 44px, 44px 44px;
 }
 
 /* Кнопки выбора дня в стандартном режиме расписания Planet */
 .planet-date-btn {
-  background: rgba(14, 165, 233, 0.05);
+  background: rgba(15, 23, 42, 0.7);
   border: 1px solid rgba(56, 189, 248, 0.16);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -88,31 +97,32 @@ html[data-mode="light"] .planet-ambient-bg {
   background: #38BDF8;
   border-color: #7DD3FC;
   color: #082F49;
-  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.45);
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3);
   font-weight: 800;
 }
 
 html[data-mode="light"] .planet-date-btn {
-  background: rgba(240, 249, 255, 0.8);
-  border: 1px solid rgba(14, 165, 233, 0.22);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
   color: #475569;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
 }
 
 html[data-mode="light"] .planet-date-btn:hover {
-  border-color: rgba(2, 132, 199, 0.5);
-  background: rgba(224, 242, 254, 0.9);
+  border-color: #CBD5E1;
+  background: #F1F5F9;
   color: #0F172A;
 }
 
 html[data-mode="light"] .planet-date-btn.selected-date {
   background: #0284C7;
-  border-color: #0369A1;
+  border-color: #0284C7;
   color: #FFFFFF;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
   font-weight: 800;
 }
 
-/* Основные кнопки и стеклянные панели Planet */
+/* Основные кнопки и панели Planet */
 .theme-btn {
   background: rgba(14, 165, 233, 0.18);
   color: #38BDF8;
@@ -120,15 +130,15 @@ html[data-mode="light"] .planet-date-btn.selected-date {
   border-radius: var(--btn-radius);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 0 16px rgba(56, 189, 248, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.15);
   transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
 .theme-btn:hover {
-  background: rgba(14, 165, 233, 0.32);
-  border-color: rgba(56, 189, 248, 0.7);
+  background: rgba(14, 165, 233, 0.3);
+  border-color: rgba(56, 189, 248, 0.65);
   color: #FFFFFF;
-  box-shadow: 0 0 24px rgba(56, 189, 248, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
   transform: translate3d(0, -1px, 0);
 }
 
@@ -139,15 +149,15 @@ html[data-mode="light"] .planet-date-btn.selected-date {
 html[data-mode="light"] .theme-btn {
   background: #0284C7 !important;
   color: #FFFFFF !important;
-  border: 1px solid #0369A1 !important;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25) !important;
+  border: 1px solid #0284C7 !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.2) !important;
 }
 
 html[data-mode="light"] .theme-btn:hover {
   background: #0369A1 !important;
-  border-color: #075985 !important;
+  border-color: #0369A1 !important;
   color: #FFFFFF !important;
-  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.35) !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.28) !important;
 }
 
 .glass-panel {
@@ -158,11 +168,13 @@ html[data-mode="light"] .theme-btn:hover {
 }
 
 html[data-mode="dark"] .glass-panel {
-  box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.45), inset 0 1px 1px 0 rgba(255, 255, 255, 0.07);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 html[data-mode="light"] .glass-panel {
-  box-shadow: 0 6px 24px -4px rgba(14, 165, 233, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02);
 }
 
 .glass-interactive {
@@ -170,17 +182,17 @@ html[data-mode="light"] .glass-panel {
 }
 
 html[data-mode="dark"] .glass-interactive:hover {
-  background: rgba(18, 28, 48, 0.95) !important;
-  border-color: rgba(34, 211, 238, 0.75) !important;
-  box-shadow: 0 0 24px -2px rgba(34, 211, 238, 0.35), inset 0 1px 2px rgba(56, 189, 248, 0.25) !important;
-  transform: translate3d(0, -2px, 0);
+  background: rgba(18, 28, 48, 0.92) !important;
+  border-color: rgba(34, 211, 238, 0.55) !important;
+  box-shadow: 0 4px 20px -2px rgba(34, 211, 238, 0.2) !important;
+  transform: translate3d(0, -1px, 0);
 }
 
 html[data-mode="light"] .glass-interactive:hover {
-  background: rgba(255, 255, 255, 0.98) !important;
-  border-color: rgba(2, 132, 199, 0.6) !important;
-  box-shadow: 0 10px 28px -4px rgba(14, 165, 233, 0.2) !important;
-  transform: translate3d(0, -2px, 0);
+  background: #FFFFFF !important;
+  border-color: #BAE6FD !important;
+  box-shadow: 0 6px 16px -4px rgba(15, 23, 42, 0.07) !important;
+  transform: translate3d(0, -1px, 0);
 }
 
 .theme-hw-chip {
@@ -190,14 +202,13 @@ html[data-mode="light"] .glass-interactive:hover {
 }
 
 html[data-mode="light"] .theme-hw-chip {
-  background-color: rgba(224, 242, 254, 0.9) !important;
+  background-color: #F0F9FF !important;
   color: #0369A1 !important;
-  border: 1px solid rgba(14, 165, 233, 0.35) !important;
+  border: 1px solid #BAE6FD !important;
 }
 
 .theme-room-text {
   color: #38BDF8 !important;
-  text-shadow: 0 0 8px rgba(56, 189, 248, 0.45);
 }
 
 html[data-mode="light"] .theme-room-text {
@@ -206,8 +217,12 @@ html[data-mode="light"] .theme-room-text {
 }
 
 /* ==========================================================================
-   3. АДАПТАЦИЯ ВНУТРЕННИХ ЭЛЕМЕНТОВ ДЛЯ СВЕТЛОЙ ТЕМЫ PLANET
+   3. ЧИСТКА КОНТРАСТОВ И ПАЛИТРЫ ДЛЯ СВЕТЛОЙ ТЕМЫ (LIGHT MODE)
    ========================================================================== */
+html[data-mode="light"] .text-white:not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-blue-600 *):not(.bg-emerald-600 *):not(.bg-purple-600 *):not(.bg-amber-600 *):not(.bg-rose-500 *):not(.bg-slate-900 *):not(button.bg-sky-500):not(button.bg-sky-600):not(button.bg-blue-600):not(button.bg-emerald-600):not(button.bg-purple-600):not(button.bg-amber-600):not(button.bg-slate-900):not(.theme-btn) {
+  color: #0F172A;
+}
+
 html[data-mode="light"] .text-zinc-100,
 html[data-mode="light"] .text-zinc-200 {
   color: #0F172A;
@@ -223,10 +238,7 @@ html[data-mode="light"] .text-zinc-500 {
 }
 
 html[data-mode="light"] .text-cyan-300,
-html[data-mode="light"] .text-cyan-400 {
-  color: #0284C7;
-}
-
+html[data-mode="light"] .text-cyan-400,
 html[data-mode="light"] .text-sky-300,
 html[data-mode="light"] .text-sky-400 {
   color: #0284C7;
@@ -236,23 +248,41 @@ html[data-mode="light"] .border-zinc-800,
 html[data-mode="light"] .border-zinc-800\/80,
 html[data-mode="light"] .border-zinc-700,
 html[data-mode="light"] .border-zinc-700\/60,
-html[data-mode="light"] .border-zinc-700\/80 {
-  border-color: rgba(14, 165, 233, 0.22);
+html[data-mode="light"] .border-zinc-700\/80,
+html[data-mode="light"] .border-white\/5,
+html[data-mode="light"] .border-white\/10 {
+  border-color: #E2E8F0;
 }
 
 html[data-mode="light"] .divide-zinc-800 > :not([hidden]) ~ :not([hidden]) {
-  border-color: rgba(14, 165, 233, 0.16);
+  border-color: #E2E8F0;
 }
 
 html[data-mode="light"] .bg-zinc-900:not(button),
 html[data-mode="light"] .bg-zinc-800\/80,
 html[data-mode="light"] .bg-zinc-800\/60,
+html[data-mode="light"] .bg-slate-900\/80,
+html[data-mode="light"] .bg-slate-900\/70,
+html[data-mode="light"] .bg-slate-900\/60,
+html[data-mode="light"] .bg-slate-900\/40,
 html[data-mode="light"] .bg-black\/20,
 html[data-mode="light"] .bg-black\/30,
+html[data-mode="light"] .bg-black\/40,
 html[data-mode="light"] .bg-white\/5,
 html[data-mode="light"] .bg-white\/10 {
-  background-color: rgba(224, 242, 254, 0.65);
-  color: #0F172A;
+  background-color: #F1F5F9;
+  color: #1E293B;
+}
+
+html[data-mode="light"] input.bg-slate-900\/80,
+html[data-mode="light"] textarea.bg-slate-900\/80,
+html[data-mode="light"] select.bg-zinc-900,
+html[data-mode="light"] select.bg-transparent,
+html[data-mode="light"] input.bg-black\/20,
+html[data-mode="light"] input.bg-black\/40 {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
 }
 
 html[data-mode="light"] .glass-panel h1,

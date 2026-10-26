@@ -34,12 +34,12 @@ const EarthSphereGraphic = React.memo(function EarthSphereGraphic({ isLight }: {
     <div
       className={`relative h-full w-full rounded-full overflow-hidden ${
         isLight
-          ? "border border-sky-400/50 shadow-[inset_0_20px_60px_rgba(2,132,199,0.22)]"
-          : "border border-cyan-500/30 shadow-[inset_0_20px_70px_rgba(15,23,42,0.95)]"
+          ? "border border-sky-300/60 shadow-[inset_0_16px_48px_rgba(2,132,199,0.14)]"
+          : "border border-cyan-500/25 shadow-[inset_0_20px_70px_rgba(15,23,42,0.95)]"
       }`}
       style={{
         background: isLight
-          ? "radial-gradient(circle at 50% 25%, #f0f9ff 0%, #bae6fd 48%, #7dd3fc 90%)"
+          ? "radial-gradient(circle at 50% 25%, #f8fafc 0%, #e0f2fe 52%, #bae6fd 92%)"
           : "radial-gradient(circle at 50% 25%, #0e2038 0%, #081424 45%, #02060d 85%)",
         WebkitMaskImage: "-webkit-radial-gradient(white, black)",
       }}
@@ -52,8 +52,8 @@ const EarthSphereGraphic = React.memo(function EarthSphereGraphic({ isLight }: {
         >
           <defs>
             <linearGradient id="softLandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={isLight ? "#0284c7" : "#0ea5e9"} stopOpacity={isLight ? "0.28" : "0.36"} />
-              <stop offset="100%" stopColor={isLight ? "#0369a1" : "#0284c7"} stopOpacity={isLight ? "0.18" : "0.24"} />
+              <stop offset="0%" stopColor={isLight ? "#0284c7" : "#0ea5e9"} stopOpacity={isLight ? "0.2" : "0.34"} />
+              <stop offset="100%" stopColor={isLight ? "#0369a1" : "#0284c7"} stopOpacity={isLight ? "0.12" : "0.22"} />
             </linearGradient>
 
             {/* Строгая круговая маска — исключает любые синие шлейфы за пределами шара */}
@@ -64,7 +64,7 @@ const EarthSphereGraphic = React.memo(function EarthSphereGraphic({ isLight }: {
 
           <g clipPath="url(#earthSphereClip)">
             {/* Координатная сетка параллелей и меридианов */}
-            <g stroke={isLight ? "rgba(2, 132, 199, 0.22)" : "rgba(56, 189, 248, 0.16)"} strokeWidth="1" fill="none">
+            <g stroke={isLight ? "rgba(2, 132, 199, 0.16)" : "rgba(56, 189, 248, 0.14)"} strokeWidth="1" fill="none">
               <circle cx="270" cy="270" r="225" strokeDasharray="3 5" />
               <circle cx="270" cy="270" r="160" strokeDasharray="3 5" />
               <circle cx="270" cy="270" r="90" strokeDasharray="3 5" />
@@ -72,15 +72,15 @@ const EarthSphereGraphic = React.memo(function EarthSphereGraphic({ isLight }: {
               <ellipse cx="270" cy="270" rx="268" ry="195" />
               <ellipse cx="270" cy="270" rx="115" ry="268" />
               <ellipse cx="270" cy="270" rx="195" ry="268" />
-              <line x1="270" y1="2" x2="270" y2="538" stroke={isLight ? "rgba(2, 132, 199, 0.3)" : "rgba(56, 189, 248, 0.22)"} />
-              <line x1="2" y1="270" x2="538" y2="270" stroke={isLight ? "rgba(2, 132, 199, 0.3)" : "rgba(56, 189, 248, 0.22)"} />
+              <line x1="270" y1="2" x2="270" y2="538" stroke={isLight ? "rgba(2, 132, 199, 0.22)" : "rgba(56, 189, 248, 0.2)"} />
+              <line x1="2" y1="270" x2="538" y2="270" stroke={isLight ? "rgba(2, 132, 199, 0.22)" : "rgba(56, 189, 248, 0.2)"} />
             </g>
 
             {/* Очертания материков Земли (строго обрезаны внутри сферы) */}
             <g
               transform="translate(270 270) scale(1.35) translate(-270 -270)"
               fill="url(#softLandGrad)"
-              stroke={isLight ? "rgba(2, 132, 199, 0.65)" : "rgba(56, 189, 248, 0.65)"}
+              stroke={isLight ? "rgba(2, 132, 199, 0.45)" : "rgba(56, 189, 248, 0.6)"}
               strokeWidth="0.85"
             >
               <path d="M 235,130 Q 250,105 275,90 Q 320,78 375,78 Q 430,82 465,100 Q 475,125 460,150 Q 445,175 425,195 Q 410,215 395,245 Q 380,250 375,230 Q 365,260 355,245 Q 348,225 342,230 Q 332,225 328,195 Q 322,180 305,168 Q 285,165 270,160 Q 245,165 235,165 Q 225,150 235,130 Z" />
@@ -200,7 +200,7 @@ export function ClockDial({
     [onSelectDate, onScrubDay, onSelectDay]
   );
 
-  // Быстрая, адаптивная и плавная пружина (независима от частоты кадров 60/120/144 Гц)
+  // Быстрая, адаптивная и плавная пружина
   const startSnapSpring = useCallback(
     (targetOffset: number) => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
@@ -220,7 +220,6 @@ export function ClockDial({
           return;
         }
 
-        // Четкая и шелковистая пружинная доводка с компенсацией VSync
         const stepFactor = 1 - Math.pow(1 - 0.22, timeFactor);
         floatOffsetRef.current += diff * stepFactor;
         setFloatOffset(floatOffsetRef.current);
@@ -243,7 +242,7 @@ export function ClockDial({
     [commitSelection]
   );
 
-  // Естественное и плавное инерционное вращение с компенсацией дельты времени
+  // Естественное и плавное инерционное вращение
   const startInertia = useCallback(
     (initialVelocity: number) => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
@@ -283,7 +282,6 @@ export function ClockDial({
     [startSnapSpring]
   );
 
-  // Клик по числу в 1 тап
   const handleDayTap = useCallback(
     (targetK: number) => {
       if (isDraggingRef.current || hasMovedRef.current) return;
@@ -293,7 +291,6 @@ export function ClockDial({
     [startSnapSpring]
   );
 
-  // Колесико мыши
   const handleWheel = useCallback(
     (e: WheelEvent) => {
       e.preventDefault();
@@ -313,7 +310,6 @@ export function ClockDial({
     return () => el.removeEventListener("wheel", handleWheel);
   }, [handleWheel]);
 
-  // НАДЕЖНЫЙ ПЕРЕХВАТЧИК ТАЧ-СОБЫТИЙ: МУЛЬТИСКРОЛЛИНГ И МГНОВЕННЫЙ ОТКЛИК
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -371,7 +367,6 @@ export function ClockDial({
 
       floatOffsetRef.current = nextOffset;
 
-      // Аппаратное сглаживание: обновление состояния строго раз в кадр дисплея (VSync 60/120 Гц)
       if (touchMoveRafRef.current === null) {
         touchMoveRafRef.current = requestAnimationFrame(() => {
           setFloatOffset(floatOffsetRef.current);
@@ -403,7 +398,6 @@ export function ClockDial({
       }
       setFloatOffset(floatOffsetRef.current);
 
-      // ЛЕГКАЯ ОСТАНОВКА: при тапе по вращающемуся циферблату моментально тормозим и фиксируем ближайший день
       if (!hasMovedRef.current) {
         if (wasSpinning) {
           currentVelocityRef.current = 0;
@@ -522,7 +516,6 @@ export function ClockDial({
 
   const centerK = Math.round(floatOffset);
 
-  // Текущая отображаемая дата в верхнем левом углу (пересчитывается только при смене целого дня)
   const focusedDate = useMemo(() => {
     return addDays(dragAnchorDateRef.current, centerK);
   }, [centerK]);
@@ -536,10 +529,10 @@ export function ClockDial({
     return isSameDay(focusedDate, today);
   }, [focusedDate, serverToday]);
 
-  const earthSize = Math.max(620, Math.min(containerWidth * 1.15, 1100));
+  const earthSize = Math.max(580, Math.min(containerWidth * 1.1, 1040));
   const R = earthSize * 0.52;
   const ANGLE_STEP = 13.5;
-  const horizonTopY = 82;
+  const horizonTopY = 66;
 
   // Вращение глобуса синхронно с направлением движения расписания
   const earthRotationAngle = useMemo(() => {
@@ -578,21 +571,19 @@ export function ClockDial({
           startSnapSpring(Math.round(floatOffsetRef.current));
         }
       }}
-      className={`relative flex h-56 w-full select-none flex-col items-center justify-center overflow-hidden rounded-3xl border cursor-ew-resize transition-colors ${
+      className={`relative flex h-44 sm:h-48 w-full select-none flex-col items-center justify-center overflow-hidden rounded-3xl border cursor-ew-resize transition-colors ${
         isLight
-          ? "border-sky-300/80 bg-gradient-to-b from-[#E0F2FE] via-[#F0F9FF] to-[#E0F2FE] shadow-[0_12px_32px_-8px_rgba(14,165,233,0.18)]"
-          : "border-cyan-500/20 bg-[#06080D] shadow-2xl"
+          ? "border-slate-200 bg-gradient-to-b from-sky-50/70 via-white to-white shadow-sm"
+          : "border-cyan-500/20 bg-[#0B0F19] shadow-xl"
       }`}
     >
       {/* ЧИСЛО И МЕСЯЦ В ЛЕВОМ ВЕРХНЕМ УГЛУ */}
-      <div className="absolute top-4 left-6 z-30 flex items-center gap-2.5 pointer-events-none">
+      <div className="absolute top-3.5 left-5 z-30 flex items-center gap-2 pointer-events-none">
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
             <span
-              className={`font-mono text-xl sm:text-2xl font-black tracking-widest ${
-                isLight
-                  ? "text-sky-700 drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)]"
-                  : "text-cyan-400 drop-shadow-[0_0_12px_rgba(56,189,248,0.75)]"
+              className={`font-mono text-base sm:text-lg font-extrabold tracking-wider ${
+                isLight ? "text-slate-800" : "text-cyan-400"
               }`}
             >
               {focusedDateText}
@@ -601,7 +592,7 @@ export function ClockDial({
           {isFocusedToday && (
             <span
               className={`text-[10px] font-bold uppercase tracking-wider -mt-0.5 ${
-                isLight ? "text-emerald-600" : "text-emerald-400"
+                isLight ? "text-sky-600" : "text-emerald-400"
               }`}
             >
               Сегодня
@@ -616,16 +607,16 @@ export function ClockDial({
         <div
           className="absolute left-1/2 -translate-x-1/2 rounded-full pointer-events-none"
           style={{
-            width: `${earthSize + 16}px`,
-            height: `${earthSize + 16}px`,
-            top: `${horizonTopY - 8}px`,
+            width: `${earthSize + 12}px`,
+            height: `${earthSize + 12}px`,
+            top: `${horizonTopY - 6}px`,
             background: isLight
-              ? "radial-gradient(circle, rgba(14, 165, 233, 0.22) 0%, rgba(14, 165, 233, 0.05) 52%, transparent 70%)"
-              : "radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, rgba(14, 165, 233, 0.03) 52%, transparent 70%)",
+              ? "radial-gradient(circle, rgba(14, 165, 233, 0.1) 0%, rgba(14, 165, 233, 0.02) 52%, transparent 70%)"
+              : "radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, rgba(14, 165, 233, 0.02) 52%, transparent 70%)",
           }}
         />
 
-        {/* Сфера Земли: внешний контейнер строго центрирован (left-1/2 -translate-x-1/2), внутренний вращается на GPU */}
+        {/* Сфера Земли */}
         <div
           className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
           style={{
@@ -660,43 +651,43 @@ export function ClockDial({
           <svg className="h-full w-full" viewBox="0 0 540 540">
             <defs>
               <linearGradient id="orbitDarkDim" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={isLight ? "#E0F2FE" : "#06080D"} stopOpacity="0.92" />
-                <stop offset="35%" stopColor={isLight ? "#F0F9FF" : "#06080D"} stopOpacity="0.78" />
-                <stop offset="65%" stopColor={isLight ? "#F0F9FF" : "#06080D"} stopOpacity="0.32" />
-                <stop offset="100%" stopColor={isLight ? "#F0F9FF" : "#06080D"} stopOpacity="0" />
+                <stop offset="0%" stopColor={isLight ? "#FFFFFF" : "#0B0F19"} stopOpacity="0.92" />
+                <stop offset="35%" stopColor={isLight ? "#FFFFFF" : "#0B0F19"} stopOpacity="0.78" />
+                <stop offset="65%" stopColor={isLight ? "#FFFFFF" : "#0B0F19"} stopOpacity="0.32" />
+                <stop offset="100%" stopColor={isLight ? "#FFFFFF" : "#0B0F19"} stopOpacity="0" />
               </linearGradient>
             </defs>
             <rect x="0" y="0" width="540" height="250" fill="url(#orbitDarkDim)" />
           </svg>
         </div>
 
-        {/* Неоновый контур горизонта Земли */}
+        {/* Контур горизонта Земли */}
         <div
-          className={`absolute left-1/2 -translate-x-1/2 rounded-full border-t-2 pointer-events-none ${
-            isLight ? "border-sky-500/80" : "border-cyan-400/80"
+          className={`absolute left-1/2 -translate-x-1/2 rounded-full border-t pointer-events-none ${
+            isLight ? "border-sky-300/80" : "border-cyan-400/60"
           }`}
           style={{
             width: `${earthSize + 2}px`,
             height: `${earthSize + 2}px`,
             top: `${horizonTopY - 1}px`,
             boxShadow: isLight
-              ? "0 -2px 10px rgba(14,165,233,0.35)"
-              : "0 -2px 10px rgba(34,211,238,0.5)",
+              ? "0 -1px 6px rgba(14,165,233,0.16)"
+              : "0 -2px 8px rgba(34,211,238,0.35)",
           }}
         />
       </div>
 
       {/* 3D СТРЕЛКА КОМПАСА */}
-      <div className="pointer-events-none absolute top-3.5 z-30 flex flex-col items-center">
+      <div className="pointer-events-none absolute top-2.5 z-30 flex flex-col items-center">
         <svg
-          width="28"
-          height="32"
+          width="24"
+          height="28"
           viewBox="0 0 28 32"
           fill="none"
           className={
             isLight
-              ? "drop-shadow-[0_2px_10px_rgba(2,132,199,0.55)]"
-              : "drop-shadow-[0_0_14px_rgba(34,211,238,0.95)]"
+              ? "drop-shadow-[0_2px_6px_rgba(2,132,199,0.3)]"
+              : "drop-shadow-[0_0_10px_rgba(34,211,238,0.7)]"
           }
         >
           <defs>
@@ -733,8 +724,8 @@ export function ClockDial({
         </svg>
       </div>
 
-      {/* ЧИСЛА ДАТ (120 Гц аппаратная интерполяция) */}
-      <div className="relative h-28 w-full mt-1 z-30 pointer-events-auto">
+      {/* ЧИСЛА ДАТ */}
+      <div className="relative h-24 w-full mt-1 z-30 pointer-events-auto">
         {visibleDays.map((item) => {
           const relativeOffset = item.k - floatOffset;
           const isCentered = Math.abs(relativeOffset) < 0.45;
@@ -743,9 +734,9 @@ export function ClockDial({
           const angleRad = (angleDeg * Math.PI) / 180;
 
           const x = R * Math.sin(angleRad);
-          const y = horizonTopY + R - R * Math.cos(angleRad) - 34;
+          const y = horizonTopY + R - R * Math.cos(angleRad) - 42;
 
-          const scale = Math.max(0.72, 1.25 - Math.abs(relativeOffset) * 0.12);
+          const scale = Math.max(0.76, 1.15 - Math.abs(relativeOffset) * 0.1);
           const opacity = Math.max(0, 1.0 - Math.abs(relativeOffset) * 0.22);
 
           return (
@@ -755,7 +746,7 @@ export function ClockDial({
                 e.stopPropagation();
                 handleDayTap(item.k);
               }}
-              className="absolute left-1/2 cursor-pointer p-2"
+              className="absolute left-1/2 cursor-pointer p-1.5"
               style={{
                 top: `${y}px`,
                 transform: `translate(calc(-50% + ${x}px), 0) rotate(${angleDeg}deg) scale(${scale})`,
@@ -766,28 +757,28 @@ export function ClockDial({
             >
               <div className="flex flex-col items-center justify-center">
                 <span
-                  className={`font-mono text-2xl sm:text-3xl font-black leading-none ${
+                  className={`font-mono text-xl sm:text-2xl font-black leading-none ${
                     isLight
                       ? isCentered
-                        ? "text-slate-950 drop-shadow-[0_2px_10px_rgba(255,255,255,0.95)]"
-                        : "text-slate-500 hover:text-slate-900 drop-shadow-[0_1px_4px_rgba(255,255,255,0.8)]"
+                        ? "text-slate-900"
+                        : "text-slate-400 hover:text-slate-700"
                       : isCentered
-                      ? "text-white drop-shadow-[0_0_18px_rgba(255,255,255,0.95)]"
-                      : "text-zinc-400 hover:text-white drop-shadow-[0_4px_10px_rgba(0,0,0,0.95)]"
+                      ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
+                      : "text-zinc-400 hover:text-white"
                   }`}
                 >
                   {item.dateNumber < 10 ? `0${item.dateNumber}` : item.dateNumber}
                 </span>
 
                 <span
-                  className={`text-[10px] font-extrabold uppercase tracking-wider mt-1 ${
+                  className={`text-[10px] font-extrabold uppercase tracking-wider mt-0.5 ${
                     isLight
                       ? isCentered
-                        ? "text-sky-700"
-                        : "text-slate-500"
+                        ? "text-sky-600"
+                        : "text-slate-400"
                       : isCentered
-                      ? "text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.7)]"
-                      : "text-zinc-500 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]"
+                      ? "text-cyan-400"
+                      : "text-zinc-500"
                   }`}
                 >
                   {item.short}
@@ -797,8 +788,8 @@ export function ClockDial({
                   <span
                     className={`mt-1 h-1.5 w-1.5 rounded-full ${
                       isLight
-                        ? "bg-sky-600 ring-2 ring-sky-400/50 shadow-[0_0_6px_#0284C7]"
-                        : "bg-cyan-400 ring-2 ring-cyan-400/40 shadow-[0_0_8px_#22D3EE]"
+                        ? "bg-sky-600 ring-2 ring-sky-200"
+                        : "bg-cyan-400 ring-2 ring-cyan-400/30"
                     }`}
                   />
                 )}

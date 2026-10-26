@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   Layers,
   Sparkles,
-  Filter,
   Search,
   Users,
   User,
@@ -27,7 +26,6 @@ import {
   Check,
   X,
   RefreshCw,
-  HelpCircle,
 } from "lucide-react";
 import {
   createEgeTaskAction,
@@ -94,7 +92,7 @@ interface EgeTaskBankViewProps {
 }
 
 /**
- * Custom glassmorphism select dropdown
+ * Custom adaptive select dropdown (Light & Dark modes)
  */
 function CustomSelect<T extends string | number>({
   value,
@@ -111,6 +109,8 @@ function CustomSelect<T extends string | number>({
   className?: string;
   icon?: React.ReactNode;
 }) {
+  const { colorMode } = useAppTheme();
+  const isLight = colorMode === "light";
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -138,26 +138,42 @@ function CustomSelect<T extends string | number>({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full h-10 px-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-900 border border-cyan-500/30 hover:border-cyan-400/60 focus:border-cyan-400 text-xs text-zinc-100 flex items-center justify-between gap-2 shadow-sm backdrop-blur-xl transition-all cursor-pointer group outline-none"
+        className={`w-full h-10 px-3.5 rounded-xl border text-xs flex items-center justify-between gap-2 transition-all cursor-pointer group outline-none ${
+          isLight
+            ? "bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 focus:border-sky-500 text-slate-800 shadow-2xs"
+            : "bg-slate-900/80 hover:bg-slate-900 border-cyan-500/30 hover:border-cyan-400/60 focus:border-cyan-400 text-zinc-100 shadow-sm backdrop-blur-xl"
+        }`}
       >
         <div className="flex items-center gap-2 truncate">
-          {icon && <span className="text-cyan-400 shrink-0">{icon}</span>}
+          {icon && <span className={isLight ? "text-sky-600 shrink-0" : "text-cyan-400 shrink-0"}>{icon}</span>}
           <span className="truncate font-semibold">{selectedOpt ? selectedOpt.label : placeholder}</span>
           {selectedOpt?.badge && (
-            <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+            <span
+              className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md border ${
+                isLight
+                  ? "bg-sky-50 text-sky-700 border-sky-200"
+                  : "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
+              }`}
+            >
               {selectedOpt.badge}
             </span>
           )}
         </div>
         <ChevronDown
-          className={`h-4 w-4 text-cyan-400/80 transition-transform duration-200 shrink-0 ${
-            isOpen ? "rotate-180 text-cyan-300" : ""
-          }`}
+          className={`h-4 w-4 transition-transform duration-200 shrink-0 ${
+            isLight ? "text-slate-400" : "text-cyan-400/80"
+          } ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl bg-slate-950/95 backdrop-blur-2xl border border-cyan-500/30 shadow-[0_10px_40px_rgba(0,0,0,0.8)] p-1.5 max-h-60 overflow-y-auto scrollbar-thin animate-in fade-in zoom-in-95 duration-150">
+        <div
+          className={`absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border p-1.5 max-h-60 overflow-y-auto scrollbar-thin animate-in fade-in zoom-in-95 duration-150 ${
+            isLight
+              ? "bg-white border-slate-200 shadow-xl"
+              : "bg-slate-950/95 backdrop-blur-2xl border-cyan-500/30 shadow-[0_10px_40px_rgba(0,0,0,0.8)]"
+          }`}
+        >
           {options.map((opt) => {
             const isSelected = opt.value === value;
             return (
@@ -169,21 +185,37 @@ function CustomSelect<T extends string | number>({
                 }}
                 className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
                   isSelected
-                    ? "bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30"
+                    ? isLight
+                      ? "bg-sky-50 text-sky-700 font-bold border border-sky-200"
+                      : "bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30"
+                    : isLight
+                    ? "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                     : "text-zinc-300 hover:bg-cyan-500/10 hover:text-cyan-200"
                 }`}
               >
                 <div className="flex items-center gap-2 truncate">
                   <span className="truncate">{opt.label}</span>
-                  {opt.sublabel && <span className="text-[10px] text-zinc-500">({opt.sublabel})</span>}
+                  {opt.sublabel && (
+                    <span className={`text-[10px] ${isLight ? "text-slate-400" : "text-zinc-500"}`}>
+                      ({opt.sublabel})
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {opt.badge && (
-                    <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-white/5 text-zinc-400 border border-white/10">
+                    <span
+                      className={`px-1.5 py-0.5 text-[9px] font-bold rounded border ${
+                        isLight
+                          ? "bg-slate-100 text-slate-600 border-slate-200"
+                          : "bg-white/5 text-zinc-400 border-white/10"
+                      }`}
+                    >
                       {opt.badge}
                     </span>
                   )}
-                  {isSelected && <Check className="h-3.5 w-3.5 text-cyan-400" />}
+                  {isSelected && (
+                    <Check className={`h-3.5 w-3.5 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
+                  )}
                 </div>
               </div>
             );
@@ -200,6 +232,8 @@ export function EgeTaskBankView({
   students = [],
   classes = [],
 }: EgeTaskBankViewProps) {
+  const { colorMode } = useAppTheme();
+  const isLight = colorMode === "light";
 
   const [activeSubTab, setActiveSubTab] = useState<"constructor" | "bank" | "history">("constructor");
   const [isPending, startTransition] = useTransition();
@@ -318,18 +352,18 @@ export function EgeTaskBankView({
       setWorkTitle("Пробный вариант ЕГЭ: Часть 1 (№1–12)");
       showToast("info", "Применен шаблон: Вся 1-я часть (№1–12 по 1 задаче)");
     } else if (preset === "geometry") {
-      next[1] = 2; // планиметрия
-      next[3] = 2; // стереометрия
-      next[14] = 1; // стереометрия часть 2
-      next[17] = 1; // планиметрия часть 2
+      next[1] = 2;
+      next[3] = 2;
+      next[14] = 1;
+      next[17] = 1;
       setWorkTitle("Тематическая работа: Геометрия ЕГЭ (№1, 3, 14, 17)");
       showToast("info", "Применен шаблон: Геометрия");
     } else if (preset === "algebra") {
-      next[6] = 2; // уравнения
-      next[7] = 2; // вычисления
-      next[12] = 2; // экстремумы
-      next[13] = 1; // уравнения с отбором
-      next[15] = 1; // неравенства
+      next[6] = 2;
+      next[7] = 2;
+      next[12] = 2;
+      next[13] = 1;
+      next[15] = 1;
       setWorkTitle("Тренировка: Уравнения, функции и неравенства");
       showToast("info", "Применен шаблон: Алгебра и уравнения");
     } else if (preset === "part2") {
@@ -477,7 +511,7 @@ export function EgeTaskBankView({
     setConfirmModal({
       isOpen: true,
       title: "Восстановление эталонного банка ФИПИ",
-      message: "Загрузить стандартный эталонный банк задач ФИПИ со всеми 19 номерами заданий?",
+      message: "Загрузить стандартный эталонный банк ФИПИ со всеми 19 номерами заданий?",
       onConfirm: () => {
         setConfirmModal(null);
         startTransition(async () => {
@@ -537,32 +571,42 @@ export function EgeTaskBankView({
     setVisibleAnswers((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const inputClass = isLight
+    ? "w-full h-10 rounded-xl bg-white border border-slate-200 px-3.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 transition shadow-2xs"
+    : "w-full h-10 rounded-xl bg-slate-900/80 border border-cyan-500/30 px-3.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-cyan-400 transition";
+
   return (
     <div className="space-y-6 relative">
       {/* СТИЛИЗОВАННОЕ ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ (TOAST) */}
       {toast && (
         <div className="fixed top-5 right-5 z-50 animate-in fade-in slide-in-from-top-4 duration-200 max-w-sm">
           <div
-            className={`p-4 rounded-2xl shadow-2xl backdrop-blur-2xl border flex items-start gap-3 ${
-              toast.type === "success"
-                ? "bg-slate-950/90 border-emerald-500/40 text-emerald-300 shadow-[0_0_25px_rgba(16,185,129,0.25)]"
+            className={`p-4 rounded-2xl shadow-xl backdrop-blur-2xl border flex items-start gap-3 ${
+              isLight
+                ? toast.type === "success"
+                  ? "bg-white border-emerald-200 text-slate-800"
+                  : toast.type === "error"
+                  ? "bg-white border-rose-200 text-slate-800"
+                  : "bg-white border-sky-200 text-slate-800"
+                : toast.type === "success"
+                ? "bg-slate-950/90 border-emerald-500/40 text-emerald-300"
                 : toast.type === "error"
-                ? "bg-slate-950/90 border-rose-500/40 text-rose-300 shadow-[0_0_25px_rgba(244,63,94,0.25)]"
-                : "bg-slate-950/90 border-cyan-500/40 text-cyan-300 shadow-[0_0_25px_rgba(56,189,248,0.25)]"
+                ? "bg-slate-950/90 border-rose-500/40 text-rose-300"
+                : "bg-slate-950/90 border-cyan-500/40 text-cyan-300"
             }`}
           >
             {toast.type === "success" ? (
-              <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
             ) : toast.type === "error" ? (
-              <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-rose-500 shrink-0 mt-0.5" />
             ) : (
-              <Sparkles className="h-5 w-5 text-cyan-400 shrink-0 mt-0.5" />
+              <Sparkles className="h-5 w-5 text-sky-500 shrink-0 mt-0.5" />
             )}
-            <div className="flex-1 text-xs font-semibold leading-relaxed text-zinc-100">{toast.message}</div>
+            <div className="flex-1 text-xs font-semibold leading-relaxed">{toast.message}</div>
             <button
               type="button"
               onClick={() => setToast(null)}
-              className="p-1 rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white transition"
+              className="p-1 rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-400 hover:text-slate-700 dark:hover:text-white transition"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -572,25 +616,35 @@ export function EgeTaskBankView({
 
       {/* КАСТОМНОЕ МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ (CONFIRM) */}
       {confirmModal && confirmModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md animate-fade-in">
-          <div className="glass-panel w-full max-w-md rounded-3xl p-6 shadow-2xl border border-cyan-500/30 bg-[#0C121D]/95 backdrop-blur-2xl space-y-4">
-            <div className="flex items-center gap-2.5 text-cyan-300 font-black text-sm">
-              <AlertCircle className="h-5 w-5 text-cyan-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
+          <div
+            className={`glass-panel w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4 ${
+              isLight ? "bg-white border-slate-200" : "bg-[#0C121D]/95 border-cyan-500/30"
+            }`}
+          >
+            <div className={`flex items-center gap-2.5 font-black text-sm ${isLight ? "text-slate-900" : "text-cyan-300"}`}>
+              <AlertCircle className={`h-5 w-5 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
               <span>{confirmModal.title}</span>
             </div>
-            <p className="text-xs text-zinc-300 leading-relaxed">{confirmModal.message}</p>
+            <p className={`text-xs leading-relaxed ${isLight ? "text-slate-600" : "text-zinc-300"}`}>
+              {confirmModal.message}
+            </p>
             <div className="flex items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => setConfirmModal(null)}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-zinc-300 border border-white/10 transition"
+                className={`px-4 py-2 rounded-xl text-xs font-bold border transition ${
+                  isLight
+                    ? "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+                    : "bg-white/5 hover:bg-white/10 text-zinc-300 border-white/10"
+                }`}
               >
                 Отмена
               </button>
               <button
                 type="button"
                 onClick={confirmModal.onConfirm}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-zinc-950 shadow-lg shadow-cyan-500/20 transition cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm transition cursor-pointer"
               >
                 Подтвердить
               </button>
@@ -600,28 +654,44 @@ export function EgeTaskBankView({
       )}
 
       {/* ВЕРХНЯЯ ШАПКА РАЗДЕЛА */}
-      <div className="glass-panel p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-xs">
-              <GraduationCap className="h-6 w-6" />
-            </div>
-            <div>
-              <h2 className="text-xl font-black tracking-tight text-zinc-100 flex items-center gap-2">
-                Банк заданий ЕГЭ (Профиль)
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-xs">
-                  {tasks.length} заданий в базе
-                </span>
-              </h2>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                Конструктор выдачи вариантов, открытый банк ФИПИ и управление базой задач
-              </p>
-            </div>
+      <div className="glass-panel p-4 sm:p-5 rounded-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className={`p-2.5 rounded-xl border shrink-0 ${
+              isLight
+                ? "bg-sky-50 text-sky-600 border-sky-200/80"
+                : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+            }`}
+          >
+            <GraduationCap className="h-6 w-6" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-black tracking-tight flex flex-wrap items-center gap-2">
+              <span>Банк заданий ЕГЭ (Профиль)</span>
+              <span
+                className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                  isLight
+                    ? "bg-sky-50 text-sky-700 border-sky-200"
+                    : "bg-cyan-500/20 text-cyan-300 border-cyan-400/40"
+                }`}
+              >
+                {tasks.length} заданий в базе
+              </span>
+            </h2>
+            <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+              Конструктор выдачи вариантов, открытый банк ФИПИ и управление базой задач
+            </p>
           </div>
         </div>
 
-        {/* НАВИГАЦИОННЫЙ ПЕРЕКЛЮЧАТЕЛЬ ПОДВКЛАДОК */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-white/5 backdrop-blur-md self-start md:self-auto">
+        {/* АДАПТИВНЫЙ СЕГМЕНТИРОВАННЫЙ ПЕРЕКЛЮЧАТЕЛЬ ПОДВКЛАДОК */}
+        <div
+          className={`flex flex-wrap sm:flex-nowrap items-center gap-1 p-1 rounded-xl border w-full lg:w-auto ${
+            isLight
+              ? "bg-slate-100 border-slate-200/80"
+              : "bg-black/40 border-white/10 backdrop-blur-md"
+          }`}
+        >
           {[
             { id: "constructor", label: "Конструктор выдачи", icon: Sparkles },
             { id: "bank", label: "Банк задач", icon: BookOpen },
@@ -634,13 +704,17 @@ export function EgeTaskBankView({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveSubTab(tab.id as any)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                className={`flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all whitespace-nowrap flex-1 sm:flex-initial cursor-pointer ${
                   isActive
-                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 shadow-xs"
+                    ? isLight
+                      ? "bg-sky-600 text-white shadow-xs"
+                      : "bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 shadow-xs"
+                    : isLight
+                    ? "text-slate-600 hover:text-slate-900 hover:bg-white/70"
                     : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
                 }`}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className="h-3.5 w-3.5 shrink-0" />
                 <span>{tab.label}</span>
               </button>
             );
@@ -652,39 +726,53 @@ export function EgeTaskBankView({
       {activeSubTab === "constructor" && (
         <div className="space-y-6">
           {/* СЕКЦИЯ 1: ПАРАМЕТРЫ РАБОТЫ И ВЫБОР ПОЛУЧАТЕЛЕЙ */}
-          <div className="glass-panel p-5 rounded-2xl space-y-4">
-            <h3 className="text-sm font-black uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-              <Users className="h-4 w-4 text-cyan-400" />
+          <div className="glass-panel p-4 sm:p-5 rounded-2xl space-y-4">
+            <h3
+              className={`text-sm font-black uppercase tracking-wider flex items-center gap-2 ${
+                isLight ? "text-slate-800" : "text-zinc-300"
+              }`}
+            >
+              <Users className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
               1. Кому и как выдать работу
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Формат выдачи */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-zinc-400">Формат выдачи:</label>
+                <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                  Формат выдачи:
+                </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setTargetType("class")}
-                    className={`h-10 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition ${
+                    className={`h-10 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition cursor-pointer ${
                       targetType === "class"
-                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-xs"
+                        ? isLight
+                          ? "bg-sky-600 text-white border-sky-600 shadow-xs"
+                          : "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-xs"
+                        : isLight
+                        ? "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/70 hover:text-slate-900"
                         : "bg-slate-900/60 text-zinc-400 border-white/5 hover:bg-white/5"
                     }`}
                   >
-                    <Users className="h-3.5 w-3.5" />
+                    <Users className="h-3.5 w-3.5 shrink-0" />
                     <span>Целому классу</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setTargetType("student")}
-                    className={`h-10 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition ${
+                    className={`h-10 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition cursor-pointer ${
                       targetType === "student"
-                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-xs"
+                        ? isLight
+                          ? "bg-sky-600 text-white border-sky-600 shadow-xs"
+                          : "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-xs"
+                        : isLight
+                        ? "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/70 hover:text-slate-900"
                         : "bg-slate-900/60 text-zinc-400 border-white/5 hover:bg-white/5"
                     }`}
                   >
-                    <User className="h-3.5 w-3.5" />
+                    <User className="h-3.5 w-3.5 shrink-0" />
                     <span>Ученику</span>
                   </button>
                 </div>
@@ -694,7 +782,9 @@ export function EgeTaskBankView({
               {targetType === "class" ? (
                 <>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-zinc-400">Выберите класс:</label>
+                    <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                      Выберите класс:
+                    </label>
                     <CustomSelect
                       value={selectedClassId}
                       onChange={(val) => setSelectedClassId(String(val))}
@@ -708,7 +798,9 @@ export function EgeTaskBankView({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-zinc-400">По профилю ЕГЭ (11 класс):</label>
+                    <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                      По профилю ЕГЭ (11 класс):
+                    </label>
                     <CustomSelect
                       value={selectedTrackFilter}
                       onChange={(val) => setSelectedTrackFilter(val as any)}
@@ -722,7 +814,9 @@ export function EgeTaskBankView({
                 </>
               ) : (
                 <div className="md:col-span-2 space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-400">Выберите конкретного ученика:</label>
+                  <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                    Выберите конкретного ученика:
+                  </label>
                   <CustomSelect
                     value={selectedStudentId}
                     onChange={(val) => setSelectedStudentId(String(val))}
@@ -739,53 +833,69 @@ export function EgeTaskBankView({
             </div>
 
             {/* Название работы и дедлайн */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-white/5">
+            <div
+              className={`grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t ${
+                isLight ? "border-slate-100" : "border-white/5"
+              }`}
+            >
               <div className="md:col-span-2 space-y-1.5">
-                <label className="text-xs font-semibold text-zinc-400">Название тренировочной работы:</label>
+                <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                  Название тренировочной работы:
+                </label>
                 <input
                   type="text"
                   value={workTitle}
                   onChange={(e) => setWorkTitle(e.target.value)}
                   placeholder="Например: Тренировочная работа №1 по планиметрии и уравнениям"
-                  className="w-full h-10 rounded-xl bg-slate-900/80 border border-cyan-500/30 px-3.5 text-xs text-zinc-100 focus:outline-none focus:border-cyan-400 transition"
+                  className={inputClass}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-zinc-400 flex items-center gap-1.5">
-                  <Calendar className="h-3 w-3 text-cyan-400" />
+                <label
+                  className={`text-xs font-semibold flex items-center gap-1.5 ${
+                    isLight ? "text-slate-600" : "text-zinc-400"
+                  }`}
+                >
+                  <Calendar className={`h-3 w-3 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
                   Срок сдачи (дедлайн):
                 </label>
                 <input
                   type="date"
                   value={workDeadline}
                   onChange={(e) => setWorkDeadline(e.target.value)}
-                  className="w-full h-10 rounded-xl bg-slate-900/80 border border-cyan-500/30 px-3.5 text-xs text-zinc-100 focus:outline-none focus:border-cyan-400 transition"
+                  className={inputClass}
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-zinc-400">Комментарий / инструкция учителя (опционально):</label>
+              <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                Комментарий / инструкция учителя (опционально):
+              </label>
               <input
                 type="text"
                 value={teacherComment}
                 onChange={(e) => setTeacherComment(e.target.value)}
                 placeholder="Например: Задания 1-12 проверяются автоматически, ход решений запишите в тетрадь"
-                className="w-full h-10 rounded-xl bg-slate-900/80 border border-cyan-500/30 px-3.5 text-xs text-zinc-100 focus:outline-none focus:border-cyan-400 transition"
+                className={inputClass}
               />
             </div>
           </div>
 
           {/* СЕКЦИЯ 2: БЫСТРЫЕ ШАБЛОНЫ И МАТРИЦА ЗАДАНИЙ 1-19 */}
-          <div className="glass-panel p-5 rounded-2xl space-y-4">
+          <div className="glass-panel p-4 sm:p-5 rounded-2xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-cyan-400" />
+                <h3
+                  className={`text-sm font-black uppercase tracking-wider flex items-center gap-2 ${
+                    isLight ? "text-slate-800" : "text-zinc-300"
+                  }`}
+                >
+                  <Layers className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
                   2. Выберите количество заданий по номерам ЕГЭ (1–19)
                 </h3>
-                <p className="text-xs text-zinc-400 mt-0.5">
+                <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
                   Укажите, сколько задач каждого типа нужно автоматически подобрать и прикрепить
                 </p>
               </div>
@@ -795,42 +905,62 @@ export function EgeTaskBankView({
                 <button
                   type="button"
                   onClick={() => applyPreset("part1")}
-                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/25 transition cursor-pointer"
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                    isLight
+                      ? "bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100"
+                      : "bg-cyan-500/15 text-cyan-300 border-cyan-500/30 hover:bg-cyan-500/25"
+                  }`}
                 >
                   ⚡ Вся Часть 1 (№1–12)
                 </button>
                 <button
                   type="button"
                   onClick={() => applyPreset("geometry")}
-                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition cursor-pointer"
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                    isLight
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                      : "bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25"
+                  }`}
                 >
                   📐 Геометрия
                 </button>
                 <button
                   type="button"
                   onClick={() => applyPreset("algebra")}
-                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/25 transition cursor-pointer"
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                    isLight
+                      ? "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
+                      : "bg-indigo-500/15 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/25"
+                  }`}
                 >
                   ∑ Алгебра
                 </button>
                 <button
                   type="button"
                   onClick={() => applyPreset("part2")}
-                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition cursor-pointer"
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                    isLight
+                      ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                      : "bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25"
+                  }`}
                 >
                   🔥 Часть 2 (№13–19)
                 </button>
                 <button
                   type="button"
                   onClick={() => applyPreset("clear")}
-                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 transition cursor-pointer"
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                    isLight
+                      ? "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+                      : "bg-rose-500/15 text-rose-300 border-rose-500/30 hover:bg-rose-500/25"
+                  }`}
                 >
                   Сброс
                 </button>
               </div>
             </div>
 
-            {/* МАТРИЦА КАРТОЧЕК 1..19 С УЛУЧШЕННОЙ ЧИТАЕМОСТЬЮ */}
+            {/* МАТРИЦА КАРТОЧЕК 1..19 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pt-2">
               {Array.from({ length: 19 }, (_, i) => i + 1).map((num) => {
                 const count = taskCounts[num] || 0;
@@ -844,27 +974,38 @@ export function EgeTaskBankView({
                     key={num}
                     className={`p-3.5 rounded-2xl border transition-all h-full flex flex-col justify-between ${
                       isSelected
-                        ? "bg-cyan-950/30 border-cyan-400/50 shadow-[0_0_15px_rgba(56,189,248,0.15)] ring-1 ring-cyan-500/40"
+                        ? isLight
+                          ? "bg-sky-50/70 border-sky-300 ring-1 ring-sky-200 shadow-xs"
+                          : "bg-cyan-950/30 border-cyan-400/50 shadow-[0_0_15px_rgba(56,189,248,0.15)] ring-1 ring-cyan-500/40"
+                        : isLight
+                        ? "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
                         : "bg-slate-900/60 border-white/10 hover:border-cyan-500/30"
                     }`}
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2">
                         <span
-                          className={`flex items-center justify-center w-8 h-8 rounded-xl text-xs font-black shrink-0 ${
+                          className={`flex items-center justify-center w-8 h-8 rounded-xl text-xs font-black border shrink-0 ${
                             isPart2
-                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                              : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                              ? isLight
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                              : isLight
+                              ? "bg-sky-50 text-sky-700 border-sky-200"
+                              : "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
                           }`}
                         >
                           №{num}
                         </span>
 
-                        {/* Бейдж наличия в банке с контрастными цветами */}
                         <span
                           className={`px-2 py-0.5 rounded-md text-[10px] font-bold border shrink-0 ${
                             inBank > 0
-                              ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                              ? isLight
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                              : isLight
+                              ? "bg-rose-50 text-rose-700 border-rose-200"
                               : "bg-rose-500/15 text-rose-300 border-rose-500/30"
                           }`}
                         >
@@ -872,9 +1013,10 @@ export function EgeTaskBankView({
                         </span>
                       </div>
 
-                      {/* Полное название темы без обрезки в 1 строку */}
                       <p
-                        className="mt-2 text-xs font-bold text-zinc-100 line-clamp-2 min-h-[2.5rem] leading-snug"
+                        className={`mt-2 text-xs font-bold line-clamp-2 min-h-[2.5rem] leading-snug ${
+                          isLight ? "text-slate-800" : "text-zinc-100"
+                        }`}
                         title={meta.topic}
                       >
                         {meta.topic}
@@ -882,20 +1024,36 @@ export function EgeTaskBankView({
                     </div>
 
                     {/* СЧЕТЧИК ЗАДАНИЙ */}
-                    <div className="mt-3 flex items-center justify-between gap-2 pt-2.5 border-t border-white/5">
-                      <span className="text-[11px] font-medium text-zinc-400">Выдать в работу:</span>
+                    <div
+                      className={`mt-3 flex items-center justify-between gap-2 pt-2.5 border-t ${
+                        isLight ? "border-slate-100" : "border-white/5"
+                      }`}
+                    >
+                      <span className={`text-[11px] font-medium ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+                        Выдать в работу:
+                      </span>
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => handleCountChange(num, -1)}
                           disabled={count <= 0}
-                          className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 hover:border-cyan-500/40 hover:text-cyan-300 active:scale-90 flex items-center justify-center text-xs font-bold text-zinc-300 transition cursor-pointer disabled:opacity-25 disabled:pointer-events-none"
+                          className={`w-7 h-7 rounded-lg border flex items-center justify-center text-xs font-bold transition cursor-pointer disabled:opacity-30 disabled:pointer-events-none ${
+                            isLight
+                              ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
+                              : "bg-white/5 border-white/10 text-zinc-300 hover:border-cyan-500/40 hover:text-cyan-300"
+                          }`}
                         >
                           -
                         </button>
                         <span
                           className={`w-7 text-center text-xs font-black ${
-                            count > 0 ? "text-cyan-300 scale-105" : "text-zinc-500"
+                            count > 0
+                              ? isLight
+                                ? "text-sky-600 scale-105"
+                                : "text-cyan-300 scale-105"
+                              : isLight
+                              ? "text-slate-400"
+                              : "text-zinc-500"
                           }`}
                         >
                           {count}
@@ -903,7 +1061,11 @@ export function EgeTaskBankView({
                         <button
                           type="button"
                           onClick={() => handleCountChange(num, 1)}
-                          className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 hover:border-cyan-500/40 hover:text-cyan-300 active:scale-90 flex items-center justify-center text-xs font-bold text-zinc-300 transition cursor-pointer"
+                          className={`w-7 h-7 rounded-lg border flex items-center justify-center text-xs font-bold transition cursor-pointer ${
+                            isLight
+                              ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
+                              : "bg-white/5 border-white/10 text-zinc-300 hover:border-cyan-500/40 hover:text-cyan-300"
+                          }`}
                         >
                           +
                         </button>
@@ -915,16 +1077,28 @@ export function EgeTaskBankView({
             </div>
 
             {/* ИТОГОВАЯ ПАНЕЛЬ И КНОПКА ВЫДАЧИ */}
-            <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-blue-950/20 to-black/40 border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div
+              className={`mt-4 p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                isLight
+                  ? "bg-sky-50/70 border-sky-200"
+                  : "bg-gradient-to-r from-cyan-950/40 via-blue-950/20 to-black/40 border-cyan-500/30"
+              }`}
+            >
               <div>
                 <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-cyan-400" />
-                  <p className="text-xs font-bold text-zinc-200">
-                    Итого выбрано: <span className="text-cyan-300 font-black text-sm">{totalTasksSelected} заданий</span>
+                  <Sparkles className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
+                  <p className={`text-xs font-bold ${isLight ? "text-slate-800" : "text-zinc-200"}`}>
+                    Итого выбрано:{" "}
+                    <span className={`font-black text-sm ${isLight ? "text-sky-700" : "text-cyan-300"}`}>
+                      {totalTasksSelected} заданий
+                    </span>
                   </p>
                 </div>
-                <p className="text-[11px] text-zinc-400 mt-0.5">
-                  Получатели: <span className="text-zinc-200 font-medium">{recipientSummary}</span>
+                <p className={`text-[11px] mt-0.5 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                  Получатели:{" "}
+                  <span className={`font-semibold ${isLight ? "text-slate-900" : "text-zinc-200"}`}>
+                    {recipientSummary}
+                  </span>
                 </p>
               </div>
 
@@ -932,7 +1106,11 @@ export function EgeTaskBankView({
                 type="button"
                 onClick={handleCreateAssignment}
                 disabled={isPending || totalTasksSelected === 0}
-                className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs sm:text-sm text-zinc-950 bg-gradient-to-r from-cyan-400 to-sky-400 hover:brightness-110 active:scale-95 disabled:opacity-40 shadow-lg shadow-cyan-500/25 transition-all cursor-pointer"
+                className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-40 ${
+                  isLight
+                    ? "bg-sky-600 hover:bg-sky-700 text-white shadow-sm"
+                    : "text-zinc-950 bg-gradient-to-r from-cyan-400 to-sky-400 hover:brightness-110 shadow-lg shadow-cyan-500/25"
+                }`}
               >
                 <Send className="h-4 w-4" />
                 <span>{isPending ? "Формирование варианта..." : "Сформировать и выдать работу"}</span>
@@ -946,15 +1124,23 @@ export function EgeTaskBankView({
       {activeSubTab === "bank" && (
         <div className="space-y-6">
           {/* БАННЕР СИНХРОНИЗАЦИИ И ИМПОРТА */}
-          <div className="glass-panel p-5 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="glass-panel p-4 sm:p-5 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Кнопка 1: Синхронизация из локального PDF ФИПИ */}
-            <div className="p-4 rounded-xl bg-cyan-950/30 border border-cyan-500/30 space-y-2.5 flex flex-col justify-between">
+            <div
+              className={`p-4 rounded-xl border space-y-2.5 flex flex-col justify-between ${
+                isLight ? "bg-sky-50/70 border-sky-200" : "bg-cyan-950/30 border-cyan-500/30"
+              }`}
+            >
               <div>
-                <div className="flex items-center gap-2 text-cyan-300 font-bold text-xs">
-                  <FileText className="h-4 w-4 text-cyan-400" />
+                <div
+                  className={`flex items-center gap-2 font-bold text-xs ${
+                    isLight ? "text-sky-800" : "text-cyan-300"
+                  }`}
+                >
+                  <FileText className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
                   <span>Локальный PDF ФИПИ в корне</span>
                 </div>
-                <p className="text-[11px] text-zinc-400 leading-relaxed mt-1">
+                <p className={`text-[11px] leading-relaxed mt-1 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
                   Файл «Открытый банк задач ФИПИ. ЕГЭ по профильной математике.pdf» (611 стр.) уже доступен в проекте.
                 </p>
               </div>
@@ -963,7 +1149,11 @@ export function EgeTaskBankView({
                 type="button"
                 onClick={handleSyncFromLocalPdf}
                 disabled={syncingLocalPdf || isPending}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 text-zinc-950 font-black text-xs hover:brightness-110 shadow-md shadow-cyan-500/20 transition cursor-pointer"
+                className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-black text-xs transition cursor-pointer ${
+                  isLight
+                    ? "bg-sky-600 hover:bg-sky-700 text-white shadow-xs"
+                    : "bg-gradient-to-r from-cyan-500 to-sky-500 text-zinc-950 hover:brightness-110 shadow-md shadow-cyan-500/20"
+                }`}
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${syncingLocalPdf ? "animate-spin" : ""}`} />
                 <span>{syncingLocalPdf ? "Синхронизация..." : "Синхронизировать из локального PDF"}</span>
@@ -971,18 +1161,32 @@ export function EgeTaskBankView({
             </div>
 
             {/* Кнопка 2: Загрузка стороннего PDF */}
-            <div className="p-4 rounded-xl bg-slate-900/40 border border-white/10 space-y-2.5 flex flex-col justify-between">
+            <div
+              className={`p-4 rounded-xl border space-y-2.5 flex flex-col justify-between ${
+                isLight ? "bg-slate-50 border-slate-200" : "bg-slate-900/40 border-white/10"
+              }`}
+            >
               <div>
-                <div className="flex items-center gap-2 text-zinc-200 font-bold text-xs">
-                  <Upload className="h-4 w-4 text-cyan-400" />
+                <div
+                  className={`flex items-center gap-2 font-bold text-xs ${
+                    isLight ? "text-slate-800" : "text-zinc-200"
+                  }`}
+                >
+                  <Upload className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
                   <span>Загрузить другой PDF-файл</span>
                 </div>
-                <p className="text-[11px] text-zinc-400 leading-relaxed mt-1">
+                <p className={`text-[11px] leading-relaxed mt-1 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
                   Загрузите любой другой сборник задач в формате PDF для распознавания формулировок и ответов.
                 </p>
               </div>
 
-              <label className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-zinc-200 font-bold text-xs border border-white/10 transition cursor-pointer">
+              <label
+                className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-bold text-xs border transition cursor-pointer ${
+                  isLight
+                    ? "bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-2xs"
+                    : "bg-white/10 hover:bg-white/15 text-zinc-200 border-white/10"
+                }`}
+              >
                 <Upload className="h-3.5 w-3.5" />
                 <span>{uploadingPdf ? "Обработка..." : "Выбрать и распарсить PDF"}</span>
                 <input type="file" accept=".pdf" onChange={handlePdfUpload} disabled={uploadingPdf} className="hidden" />
@@ -990,13 +1194,21 @@ export function EgeTaskBankView({
             </div>
 
             {/* Кнопка 3: Эталонный банк ФИПИ */}
-            <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/20 space-y-2.5 flex flex-col justify-between">
+            <div
+              className={`p-4 rounded-xl border space-y-2.5 flex flex-col justify-between ${
+                isLight ? "bg-emerald-50/70 border-emerald-200" : "bg-emerald-950/20 border-emerald-500/20"
+              }`}
+            >
               <div>
-                <div className="flex items-center gap-2 text-emerald-300 font-bold text-xs">
-                  <RotateCcw className="h-4 w-4 text-emerald-400" />
+                <div
+                  className={`flex items-center gap-2 font-bold text-xs ${
+                    isLight ? "text-emerald-800" : "text-emerald-300"
+                  }`}
+                >
+                  <RotateCcw className={`h-4 w-4 ${isLight ? "text-emerald-600" : "text-emerald-400"}`} />
                   <span>Эталонный банк ФИПИ</span>
                 </div>
-                <p className="text-[11px] text-zinc-400 leading-relaxed mt-1">
+                <p className={`text-[11px] leading-relaxed mt-1 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
                   Быстро дополнить банк эталонными заданиями по всем 19 номерам с подробными решениями.
                 </p>
               </div>
@@ -1005,7 +1217,11 @@ export function EgeTaskBankView({
                 type="button"
                 onClick={handleReseed}
                 disabled={isPending}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-bold text-xs transition cursor-pointer"
+                className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl border font-bold text-xs transition cursor-pointer ${
+                  isLight
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-xs"
+                    : "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/30"
+                }`}
               >
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 <span>Загрузить эталонный банк</span>
@@ -1014,17 +1230,22 @@ export function EgeTaskBankView({
           </div>
 
           {/* ФОРМА РУЧНОГО ДОБАВЛЕНИЯ ЗАДАНИЯ В БАНК */}
-          <div className="glass-panel p-5 rounded-2xl space-y-4">
-            <h3 className="text-sm font-black uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-              <Plus className="h-4 w-4 text-cyan-400" />
+          <div className="glass-panel p-4 sm:p-5 rounded-2xl space-y-4">
+            <h3
+              className={`text-sm font-black uppercase tracking-wider flex items-center gap-2 ${
+                isLight ? "text-slate-800" : "text-zinc-300"
+              }`}
+            >
+              <Plus className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
               Добавить новое задание вручную
             </h3>
 
             <form onSubmit={handleCreateTask} className="space-y-3.5">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {/* Номер задания ЕГЭ - Кастомный селект */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-400">Номер задания ЕГЭ:</label>
+                  <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                    Номер задания ЕГЭ:
+                  </label>
                   <CustomSelect
                     value={newTaskNumber}
                     onChange={(val) => {
@@ -1044,21 +1265,23 @@ export function EgeTaskBankView({
                   />
                 </div>
 
-                {/* Тема */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-400">Тема (подраздел):</label>
+                  <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                    Тема (подраздел):
+                  </label>
                   <input
                     type="text"
                     value={newTaskTopic}
                     onChange={(e) => setNewTaskTopic(e.target.value)}
                     placeholder="Например: Векторы на координатной плоскости"
-                    className="w-full h-10 rounded-xl bg-slate-900/80 border border-cyan-500/30 px-3.5 text-xs text-zinc-100 focus:outline-none focus:border-cyan-400 transition"
+                    className={inputClass}
                   />
                 </div>
 
-                {/* Уровень сложности - Кастомный селект */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-400">Сложность:</label>
+                  <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                    Сложность:
+                  </label>
                   <CustomSelect
                     value={newTaskDifficulty}
                     onChange={(val) => setNewTaskDifficulty(String(val))}
@@ -1071,54 +1294,62 @@ export function EgeTaskBankView({
                 </div>
               </div>
 
-              {/* Название */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-zinc-400">Краткий заголовок задания:</label>
+                <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                  Краткий заголовок задания:
+                </label>
                 <input
                   type="text"
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
                   placeholder="Например: Скалярное произведение векторов при заданных координатах"
-                  className="w-full h-10 rounded-xl bg-slate-900/80 border border-cyan-500/30 px-3.5 text-xs text-zinc-100 focus:outline-none focus:border-cyan-400 transition"
+                  className={inputClass}
                   required
                 />
               </div>
 
-              {/* Условие задачи */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-zinc-400">Текст и условие задачи:</label>
+                <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                  Текст и условие задачи:
+                </label>
                 <textarea
                   rows={4}
                   value={newTaskContent}
                   onChange={(e) => setNewTaskContent(e.target.value)}
                   placeholder="Введите полное условие задачи, формулы, числовые данные..."
-                  className="w-full rounded-xl bg-slate-900/80 border border-cyan-500/30 p-3.5 text-xs text-zinc-100 focus:outline-none focus:border-cyan-400 transition font-sans"
+                  className={`w-full rounded-xl p-3.5 text-xs focus:outline-none transition font-sans border ${
+                    isLight
+                      ? "bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-sky-500 shadow-2xs"
+                      : "bg-slate-900/80 border-cyan-500/30 text-zinc-100 placeholder-zinc-500 focus:border-cyan-400"
+                  }`}
                   required
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Ответ */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-400">Правильный ответ (для автопроверки):</label>
+                  <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                    Правильный ответ (для автопроверки):
+                  </label>
                   <input
                     type="text"
                     value={newTaskAnswer}
                     onChange={(e) => setNewTaskAnswer(e.target.value)}
                     placeholder="Например: 12 или 0.75"
-                    className="w-full h-10 rounded-xl bg-slate-900/80 border border-cyan-500/30 px-3.5 text-xs text-zinc-100 focus:outline-none focus:border-cyan-400 transition"
+                    className={inputClass}
                   />
                 </div>
 
-                {/* Решение */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-400">Пояснение / решение (опционально):</label>
+                  <label className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                    Пояснение / решение (опционально):
+                  </label>
                   <input
                     type="text"
                     value={newTaskSolution}
                     onChange={(e) => setNewTaskSolution(e.target.value)}
                     placeholder="Краткий ход решения или критерии"
-                    className="w-full h-10 rounded-xl bg-slate-900/80 border border-cyan-500/30 px-3.5 text-xs text-zinc-100 focus:outline-none focus:border-cyan-400 transition"
+                    className={inputClass}
                   />
                 </div>
               </div>
@@ -1126,7 +1357,11 @@ export function EgeTaskBankView({
               <button
                 type="submit"
                 disabled={isPending}
-                className="px-5 py-2.5 rounded-xl bg-cyan-500 text-zinc-950 font-black text-xs hover:bg-cyan-400 shadow-md shadow-cyan-500/20 transition cursor-pointer"
+                className={`px-5 py-2.5 rounded-xl font-black text-xs transition cursor-pointer ${
+                  isLight
+                    ? "bg-sky-600 hover:bg-sky-700 text-white shadow-xs"
+                    : "bg-cyan-500 text-zinc-950 hover:bg-cyan-400 shadow-md shadow-cyan-500/20"
+                }`}
               >
                 + Добавить задание в базу
               </button>
@@ -1134,35 +1369,51 @@ export function EgeTaskBankView({
           </div>
 
           {/* СПИСОК И ФИЛЬТРАЦИЯ ЗАДАНИЙ В БАНКЕ */}
-          <div className="glass-panel p-5 rounded-2xl space-y-4">
+          <div className="glass-panel p-4 sm:p-5 rounded-2xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h3 className="text-sm font-black uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-cyan-400" />
+              <h3
+                className={`text-sm font-black uppercase tracking-wider flex items-center gap-2 ${
+                  isLight ? "text-slate-800" : "text-zinc-300"
+                }`}
+              >
+                <BookOpen className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
                 Все задания в банке ({filteredTasks.length} из {tasks.length})
               </h3>
 
               <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Search className="h-3.5 w-3.5 absolute left-3 top-3 text-zinc-400" />
+                <div className="relative w-full sm:w-64">
+                  <Search
+                    className={`h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${
+                      isLight ? "text-slate-400" : "text-zinc-400"
+                    }`}
+                  />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Поиск по условию..."
-                    className="h-9 pl-9 pr-3 rounded-xl bg-slate-900/80 border border-cyan-500/30 text-xs text-zinc-100 focus:outline-none focus:border-cyan-400 w-48 sm:w-64 transition"
+                    className={`h-9 pl-9 pr-3 rounded-xl border text-xs w-full focus:outline-none transition ${
+                      isLight
+                        ? "bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-sky-500"
+                        : "bg-slate-900/80 border-cyan-500/30 text-zinc-100 placeholder-zinc-500 focus:border-cyan-400"
+                    }`}
                   />
                 </div>
               </div>
             </div>
 
             {/* ФИЛЬТРЫ ПО НОМЕРАМ 1..19 */}
-            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
               <button
                 type="button"
                 onClick={() => setSelectedTaskNumberFilter("ALL")}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 border transition cursor-pointer ${
                   selectedTaskNumberFilter === "ALL"
-                    ? "bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-xs"
+                    ? isLight
+                      ? "bg-sky-600 text-white border-sky-600 shadow-xs"
+                      : "bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-xs"
+                    : isLight
+                    ? "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/70 hover:text-slate-900"
                     : "bg-slate-900/60 text-zinc-400 border-white/5 hover:bg-white/5"
                 }`}
               >
@@ -1170,14 +1421,19 @@ export function EgeTaskBankView({
               </button>
               {Array.from({ length: 19 }, (_, i) => i + 1).map((n) => {
                 const count = tasksCountByNumber[n] || 0;
+                const isActive = selectedTaskNumberFilter === n;
                 return (
                   <button
                     key={n}
                     type="button"
                     onClick={() => setSelectedTaskNumberFilter(n)}
                     className={`px-2.5 py-1.5 rounded-xl text-xs font-bold shrink-0 border flex items-center gap-1.5 transition cursor-pointer ${
-                      selectedTaskNumberFilter === n
-                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-xs"
+                      isActive
+                        ? isLight
+                          ? "bg-sky-600 text-white border-sky-600 shadow-xs"
+                          : "bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-xs"
+                        : isLight
+                        ? "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/70 hover:text-slate-900"
                         : "bg-slate-900/60 text-zinc-400 border-white/5 hover:bg-white/5"
                     }`}
                   >
@@ -1191,7 +1447,7 @@ export function EgeTaskBankView({
             {/* СПИСОК КАРТОЧЕК */}
             <div className="space-y-3 pt-2">
               {filteredTasks.length === 0 ? (
-                <div className="text-center py-12 text-zinc-500 text-xs">
+                <div className={`text-center py-10 text-xs ${isLight ? "text-slate-500" : "text-zinc-500"}`}>
                   Заданий по выбранным фильтрам не найдено.
                 </div>
               ) : (
@@ -1202,22 +1458,38 @@ export function EgeTaskBankView({
                   return (
                     <div
                       key={t.id}
-                      className="p-2.5 sm:p-4 rounded-2xl bg-slate-900/70 border border-white/5 hover:border-cyan-500/30 transition-all space-y-2 shadow-sm"
+                      className={`p-3 sm:p-4 rounded-2xl border transition-all space-y-2.5 ${
+                        isLight
+                          ? "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
+                          : "bg-slate-900/70 border-white/5 hover:border-cyan-500/30 shadow-sm"
+                      }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center flex-wrap gap-2">
                           <span
-                            className={`px-2.5 py-1 rounded-lg text-xs font-black shadow-sm ${
+                            className={`px-2.5 py-1 rounded-lg text-xs font-black border ${
                               isPart2
-                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                                : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                                ? isLight
+                                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                                  : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                : isLight
+                                ? "bg-sky-50 text-sky-700 border-sky-200"
+                                : "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
                             }`}
                           >
                             Задание №{t.taskNumber}
                           </span>
-                          <span className="text-xs font-bold text-zinc-100">{t.topic}</span>
+                          <span className={`text-xs font-bold ${isLight ? "text-slate-800" : "text-zinc-100"}`}>
+                            {t.topic}
+                          </span>
                           {t.taskCode && (
-                            <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+                            <span
+                              className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold border ${
+                                isLight
+                                  ? "bg-slate-100 text-slate-600 border-slate-200"
+                                  : "bg-cyan-500/10 text-cyan-300 border-cyan-500/30"
+                              }`}
+                            >
                               Прототип #{t.taskCode}
                             </span>
                           )}
@@ -1228,7 +1500,11 @@ export function EgeTaskBankView({
                             <button
                               type="button"
                               onClick={() => toggleAnswer(t.id)}
-                              className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-white/5 text-zinc-300 hover:text-white border border-white/10 flex items-center gap-1 transition cursor-pointer"
+                              className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg border flex items-center gap-1 transition cursor-pointer ${
+                                isLight
+                                  ? "bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200"
+                                  : "bg-white/5 text-zinc-300 hover:text-white border-white/10"
+                              }`}
                             >
                               {showAnswer ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                               <span>{showAnswer ? "Скрыть ответ" : "Показать ответ"}</span>
@@ -1237,7 +1513,7 @@ export function EgeTaskBankView({
                           <button
                             type="button"
                             onClick={() => handleDeleteTask(t.id)}
-                            className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"
                             title="Удалить задание"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -1245,7 +1521,6 @@ export function EgeTaskBankView({
                         </div>
                       </div>
 
-                      {/* Картинка задания из PDF во всю ширину карточки (фоллбэк на MathText только для ручных задач) */}
                       <div className="w-full">
                         {(() => {
                           const pdfMeta = resolvePdfTaskMeta(t);
@@ -1260,17 +1535,31 @@ export function EgeTaskBankView({
                               />
                             );
                           }
-                          return <MathText text={t.content} className="text-xs sm:text-sm text-zinc-200" />;
+                          return (
+                            <MathText
+                              text={t.content}
+                              className={`text-xs sm:text-sm ${isLight ? "text-slate-800" : "text-zinc-200"}`}
+                            />
+                          );
                         })()}
                       </div>
 
-                      {/* Блок с ответом */}
                       {showAnswer && t.answer && (
-                        <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-xs space-y-1">
-                          <p className="text-emerald-300 font-bold">
-                            Ответ: <span className="font-mono text-white text-sm ml-1">{t.answer}</span>
+                        <div
+                          className={`p-3 rounded-xl border text-xs space-y-1 ${
+                            isLight
+                              ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                              : "bg-emerald-950/40 border-emerald-500/30 text-emerald-300"
+                          }`}
+                        >
+                          <p className="font-bold">
+                            Ответ: <span className="font-mono text-sm ml-1">{t.answer}</span>
                           </p>
-                          {t.solution && <p className="text-[11px] text-zinc-400 mt-1">Решение: {t.solution}</p>}
+                          {t.solution && (
+                            <p className={`text-[11px] mt-1 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                              Решение: {t.solution}
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1278,7 +1567,7 @@ export function EgeTaskBankView({
                 })
               )}
               {filteredTasks.length > 50 && (
-                <p className="text-center text-[11px] text-zinc-500 pt-2">
+                <p className="text-center text-[11px] text-slate-500 pt-2">
                   Показано 50 из {filteredTasks.length} заданий. Используйте фильтр по номеру для точного выбора.
                 </p>
               )}
@@ -1289,14 +1578,18 @@ export function EgeTaskBankView({
 
       {/* ===================== ВКЛАДКА 3: ИСТОРИЯ ВЫДАННЫХ РАБОТ ===================== */}
       {activeSubTab === "history" && (
-        <div className="glass-panel p-5 rounded-2xl space-y-4">
-          <h3 className="text-sm font-black uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-            <Clock className="h-4 w-4 text-cyan-400" />
+        <div className="glass-panel p-4 sm:p-5 rounded-2xl space-y-4">
+          <h3
+            className={`text-sm font-black uppercase tracking-wider flex items-center gap-2 ${
+              isLight ? "text-slate-800" : "text-zinc-300"
+            }`}
+          >
+            <Clock className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-cyan-400"}`} />
             Выданные тренировочные работы ЕГЭ ({assignments.length})
           </h3>
 
           {assignments.length === 0 ? (
-            <div className="text-center py-12 text-zinc-500 text-xs">
+            <div className={`text-center py-10 text-xs ${isLight ? "text-slate-500" : "text-zinc-500"}`}>
               Вы еще не выдавали работ из банка ЕГЭ. Перейдите во вкладку «Конструктор выдачи», чтобы создать первую работу.
             </div>
           ) : (
@@ -1304,30 +1597,58 @@ export function EgeTaskBankView({
               {assignments.map((a) => (
                 <div
                   key={a.id}
-                  className="p-4 rounded-2xl bg-slate-900/70 border border-white/10 hover:border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition"
+                  className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition ${
+                    isLight
+                      ? "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
+                      : "bg-slate-900/70 border-white/10 hover:border-cyan-500/30"
+                  }`}
                 >
                   <div className="space-y-1">
                     <div className="flex items-center flex-wrap gap-2">
-                      <span className="text-sm font-bold text-zinc-100">{a.title}</span>
+                      <span className={`text-sm font-bold ${isLight ? "text-slate-900" : "text-zinc-100"}`}>
+                        {a.title}
+                      </span>
                       {a.studentName ? (
-                        <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border ${
+                            isLight
+                              ? "bg-sky-50 text-sky-700 border-sky-200"
+                              : "bg-blue-500/20 text-blue-300 border-blue-500/30"
+                          }`}
+                        >
                           {a.studentName}
                         </span>
                       ) : (
-                        <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border ${
+                            isLight
+                              ? "bg-purple-50 text-purple-700 border-purple-200"
+                              : "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                          }`}
+                        >
                           Всему классу
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center flex-wrap gap-3 text-xs text-zinc-400">
-                      <span>Заданий в работе: <b className="text-zinc-200">{a.itemsCount}</b></span>
-                      <span>Выполнено: <b className="text-emerald-400">{a.completedCount}</b></span>
-                      {a.deadline && <span>Срок: <b className="text-amber-400">{a.deadline}</b></span>}
+                    <div className={`flex items-center flex-wrap gap-3 text-xs ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+                      <span>
+                        Заданий в работе: <b className={isLight ? "text-slate-800" : "text-zinc-200"}>{a.itemsCount}</b>
+                      </span>
+                      <span>
+                        Выполнено: <b className={isLight ? "text-emerald-600" : "text-emerald-400"}>{a.completedCount}</b>
+                      </span>
+                      {a.deadline && (
+                        <span>
+                          Срок: <b className={isLight ? "text-amber-600" : "text-amber-400"}>{a.deadline}</b>
+                        </span>
+                      )}
                     </div>
 
                     {a.teacherComment && (
-                      <p className="text-[11px] text-zinc-400 italic mt-0.5">«{a.teacherComment}»</p>
+                      <p className={`text-[11px] italic mt-0.5 ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+                        «{a.teacherComment}»
+                      </p>
                     )}
                   </div>
 
@@ -1335,7 +1656,7 @@ export function EgeTaskBankView({
                     <button
                       type="button"
                       onClick={() => handleDeleteAssignment(a.id)}
-                      className="p-2 rounded-xl text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                      className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"
                       title="Удалить работу"
                     >
                       <Trash2 className="h-4 w-4" />
