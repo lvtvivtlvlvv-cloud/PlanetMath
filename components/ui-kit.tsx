@@ -35,7 +35,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const { isLight } = useAppTheme();
 
     const baseClasses =
-      'rounded-xl inline-flex items-center justify-center gap-1.5 font-medium transition-all duration-200 ease-out select-none cursor-pointer shrink-0 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40';
+      'rounded-xl inline-flex items-center justify-center gap-1.5 font-medium transition-colors duration-150 ease-out select-none cursor-pointer shrink-0 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40';
 
     const variantClasses: Record<ButtonVariant, string> = {
       primary:

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useTransition, useEffect } from "react";
+import React, { useState, useMemo, useTransition, useEffect, useRef, useCallback } from "react";
 import { useAppTheme } from "./theme-context";
 import {
   BookOpen,
@@ -24,6 +24,8 @@ import {
   Send,
   X,
   RefreshCw,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   createEgeTaskAction,
@@ -183,6 +185,55 @@ export function EgeTaskBankView({
       return true;
     });
   }, [tasks, selectedTaskNumberFilter, searchQuery]);
+
+  // ---------------------------------------------------------------------------
+  // Постраничный вывод + горизонтальная прокрутка фильтров стрелками (ПК)
+  // ---------------------------------------------------------------------------
+  const PAGE_SIZE = 10;
+
+  const [page, setPage] = useState(0);
+  const pageCount = Math.max(1, Math.ceil(filteredTasks.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount - 1);
+  const pageTasks = filteredTasks.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
+
+  // При смене фильтра/поиска возвращаемся на первую страницу.
+  useEffect(() => {
+    setPage(0);
+  }, [selectedTaskNumberFilter, searchQuery]);
+
+  const listTopRef = useRef<HTMLDivElement | null>(null);
+  const goToPage = (next: number) => {
+    const clamped = Math.max(0, Math.min(pageCount - 1, next));
+    setPage(clamped);
+    listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const chipsScrollRef = useRef<HTMLDivElement | null>(null);
+  const [chipsScroll, setChipsScroll] = useState({ left: false, right: false });
+
+  const updateChipsScroll = useCallback(() => {
+    const el = chipsScrollRef.current;
+    if (!el) return;
+    setChipsScroll({
+      left: el.scrollLeft > 4,
+      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
+    });
+  }, []);
+
+  useEffect(() => {
+    updateChipsScroll();
+    window.addEventListener("resize", updateChipsScroll);
+    return () => window.removeEventListener("resize", updateChipsScroll);
+  }, [updateChipsScroll]);
+
+  const scrollChips = (direction: -1 | 1) => {
+    const el = chipsScrollRef.current;
+    if (!el) return;
+    el.scrollBy({
+      left: direction * Math.max(200, el.clientWidth * 0.7),
+      behavior: "smooth",
+    });
+  };
 
   const totalTasksSelected = useMemo(() => {
     return Object.values(taskCounts).reduce((acc, c) => acc + (c || 0), 0);
@@ -1088,30 +1139,68 @@ export function EgeTaskBankView({
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-              <Button
-                variant={selectedTaskNumberFilter === "ALL" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() => setSelectedTaskNumberFilter("ALL")}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => scrollChips(-1)}
+                disabled={!chipsScroll.left}
+                aria-label="Прокрутить фильтры влево"
+                title="Прокрутить влево"
+                className={`hidden sm:flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                  isLight
+                    ? "border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                    : "border-slate-700 bg-slate-800/70 text-slate-300 hover:bg-slate-700"
+                }`}
               >
-                Все типы ({tasks.length})
-              </Button>
-              {Array.from({ length: 19 }, (_, i) => i + 1).map((n) => {
-                const count = tasksCountByNumber[n] || 0;
-                const isActive = selectedTaskNumberFilter === n;
-                return (
-                  <Button
-                    key={n}
-                    variant={isActive ? "primary" : "secondary"}
-                    size="sm"
-                    onClick={() => setSelectedTaskNumberFilter(n)}
-                  >
-                    <span>№{n}</span>
-                    <span className="text-[10px] opacity-75">({count})</span>
-                  </Button>
-                );
-              })}
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+
+              <div
+                ref={chipsScrollRef}
+                onScroll={updateChipsScroll}
+                className="flex flex-1 items-center gap-1.5 overflow-x-auto no-scrollbar py-1 scroll-smooth"
+              >
+                <Button
+                  variant={selectedTaskNumberFilter === "ALL" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => setSelectedTaskNumberFilter("ALL")}
+                >
+                  Все типы ({tasks.length})
+                </Button>
+                {Array.from({ length: 19 }, (_, i) => i + 1).map((n) => {
+                  const count = tasksCountByNumber[n] || 0;
+                  const isActive = selectedTaskNumberFilter === n;
+                  return (
+                    <Button
+                      key={n}
+                      variant={isActive ? "primary" : "secondary"}
+                      size="sm"
+                      onClick={() => setSelectedTaskNumberFilter(n)}
+                    >
+                      <span>№{n}</span>
+                      <span className="text-[10px] opacity-75">({count})</span>
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => scrollChips(1)}
+                disabled={!chipsScroll.right}
+                aria-label="Прокрутить фильтры вправо"
+                title="Прокрутить вправо"
+                className={`hidden sm:flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                  isLight
+                    ? "border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                    : "border-slate-700 bg-slate-800/70 text-slate-300 hover:bg-slate-700"
+                }`}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
             </div>
+
+            <div ref={listTopRef} className="scroll-mt-24" />
 
             <div className="space-y-3 pt-2">
               {filteredTasks.length === 0 ? (
@@ -1119,7 +1208,7 @@ export function EgeTaskBankView({
                   Заданий по выбранным фильтрам не найдено.
                 </div>
               ) : (
-                filteredTasks.slice(0, 50).map((t) => {
+                pageTasks.map((t) => {
                   const showAnswer = visibleAnswers[t.id];
                   const isPart2 = t.taskNumber >= 13;
 
@@ -1230,10 +1319,41 @@ export function EgeTaskBankView({
                   );
                 })
               )}
-              {filteredTasks.length > 50 && (
-                <p className="text-center text-[11px] text-slate-500 pt-2">
-                  Показано 50 из {filteredTasks.length} заданий. Используйте фильтр по номеру для точного выбора.
-                </p>
+              {filteredTasks.length > PAGE_SIZE && (
+                <div
+                  className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 mt-2 ${
+                    isLight ? "border-slate-200 bg-slate-50/70" : "border-slate-700/70 bg-slate-800/40"
+                  }`}
+                >
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => goToPage(safePage - 1)}
+                    disabled={safePage === 0}
+                    aria-label="Предыдущая страница заданий"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    <span>Назад</span>
+                  </Button>
+
+                  <span className={`text-[11px] font-semibold ${isLight ? "text-slate-600" : "text-slate-300"}`}>
+                    Страница {safePage + 1} из {pageCount}
+                    <span className={`ml-1.5 font-normal ${isLight ? "text-slate-400" : "text-slate-500"}`}>
+                      · {pageTasks.length} из {filteredTasks.length}
+                    </span>
+                  </span>
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => goToPage(safePage + 1)}
+                    disabled={safePage >= pageCount - 1}
+                    aria-label="Следующая страница заданий"
+                  >
+                    <span>Вперёд</span>
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               )}
             </div>
           </Card>

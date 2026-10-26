@@ -392,3 +392,36 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ==========================================================================
+   ФОКУС И КНОПКИ
+   Убираем белый системный «след» (outline) после клика мышью — он оставался
+   на кнопках-оверлеях и выглядел как светящаяся полоса. Кольцо фокуса
+   показываем только при навигации с клавиатуры (:focus-visible).
+   ========================================================================== */
+button,
+a,
+[role="button"],
+summary {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus,
+a:focus,
+[role="button"]:focus,
+summary:focus {
+  outline: none;
+}
+
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+summary:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.55);
+  outline-offset: 2px;
+}
+
+/* Кнопки дизайн-системы рисуют собственное кольцо — дублировать не нужно. */
+button.focus-visible\:ring-2:focus-visible {
+  outline: none;
+}
+
