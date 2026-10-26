@@ -11,13 +11,19 @@ export const metadata = {
   },
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru" suppressHydrationWarning>
+    <html lang="ru" suppressHydrationWarning className="max-w-full overflow-x-hidden">
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -33,7 +39,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body suppressHydrationWarning className="relative min-h-screen overflow-x-hidden selection:bg-cyan-500/30 selection:text-cyan-200">
+      <body suppressHydrationWarning className="relative min-h-screen w-full max-w-full overflow-x-hidden selection:bg-cyan-500/30 selection:text-cyan-200">
         {/* АМБИЕНТ-ФОН БЕЗ ТЯЖЕЛЫХ BLUR-СЛОЕВ ДЛЯ ИСКЛЮЧЕНИЯ ПЕРЕГРУЗКИ GPU НА IOS SAFARI */}
         <div
           className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#06080D]"
@@ -50,7 +56,7 @@ export default function RootLayout({
         />
 
         {/* ОСНОВНОЙ КОНТЕНТ */}
-        <div className="relative z-10" suppressHydrationWarning>
+        <div className="relative z-10 w-full max-w-full overflow-x-hidden" suppressHydrationWarning>
           <ThemeProviderWrapper>{children}</ThemeProviderWrapper>
         </div>
       </body>

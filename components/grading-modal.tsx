@@ -58,25 +58,25 @@ export function GradingModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="glass-panel w-full max-w-lg rounded-3xl p-6 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-          <div>
-            <h3 className="font-bold text-base text-white">Проверка работы</h3>
-            <p className="text-xs text-zinc-400">
+    <div className="fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex items-center justify-center bg-black/70 p-3 sm:p-4 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] backdrop-blur-sm">
+      <div className="glass-panel w-full max-w-[min(95vw,calc(100vw-1.5rem))] sm:max-w-lg max-h-[90dvh] flex flex-col overflow-hidden rounded-3xl p-4 sm:p-6 shadow-2xl">
+        <div className="flex items-center justify-between gap-2 border-b border-zinc-800 pb-3 shrink-0">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-bold text-base text-white truncate">Проверка работы</h3>
+            <p className="text-xs text-zinc-400 truncate">
               {submission.studentName} • {submission.subjectName}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1 text-zinc-400 hover:text-white"
+            className="shrink-0 rounded-lg p-1 text-zinc-400 hover:text-white"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4 text-xs flex-1 min-h-0 overflow-y-auto pr-1">
           <div>
             <label className="font-medium text-zinc-400">Задание:</label>
             <div className="mt-1 rounded-xl bg-white/5 p-3 text-sm font-semibold text-white">

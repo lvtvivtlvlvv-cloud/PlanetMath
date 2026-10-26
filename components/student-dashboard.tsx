@@ -421,7 +421,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
   }, [homeworks]);
 
   return (
-    <div className="min-h-screen space-y-4 sm:space-y-6 p-3 sm:p-6 lg:p-8 max-w-5xl mx-auto pr-[max(0.75rem,env(safe-area-inset-right))] pl-[max(0.75rem,env(safe-area-inset-left))] pb-24 sm:pb-8">
+    <div className="min-h-screen w-full max-w-5xl mx-auto overflow-x-hidden space-y-4 sm:space-y-6 p-3 sm:p-6 lg:p-8 pr-[max(0.75rem,env(safe-area-inset-right))] pl-[max(0.75rem,env(safe-area-inset-left))] pb-24 sm:pb-8">
       <header className="flex flex-col gap-3 sm:gap-4 border-b border-zinc-200/40 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Электронный Дневник</h1>
@@ -732,7 +732,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
                       </div>
 
                       <div
-                        className={`group flex-1 p-4 sm:p-5 shadow-sm transition-all duration-200 ${
+                        className={`group flex-1 min-w-0 p-3.5 sm:p-5 shadow-sm transition-all duration-200 ${
                           isGarden
                             ? "bg-[#FEC868] text-[#2C2114] border border-[#DEAC4E] shadow-[0_4px_16px_rgba(254,200,104,0.25)] hover:bg-[#FFD782] hover:border-[#F2C063] hover:shadow-[0_8px_24px_rgba(254,200,104,0.4)] hover:-translate-y-0.5 rounded-[28px] sm:rounded-[36px]"
                             : "glass-panel glass-interactive rounded-2xl sm:rounded-3xl"
@@ -1297,23 +1297,27 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
 
       {/* Модальное окно сдачи ДЗ */}
       {activeHwModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="glass-panel w-full max-w-lg rounded-3xl p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <div>
-                <h3 className="font-bold text-base">Сдача домашнего задания</h3>
-                <p className="text-xs text-zinc-400">{activeHwModal.subjectName}: {activeHwModal.title}</p>
+        <div className="fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex items-center justify-center bg-black/60 p-2 sm:p-4 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] backdrop-blur-sm overflow-hidden">
+          <div className="glass-panel w-full max-w-[min(95vw,calc(100vw-1.5rem))] sm:max-w-lg max-h-[90dvh] flex flex-col overflow-hidden rounded-3xl p-4 sm:p-6 shadow-2xl">
+            <div className="flex items-center justify-between gap-2 border-b border-zinc-800 pb-3 shrink-0">
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <h3 className="font-bold text-sm sm:text-base truncate">Сдача домашнего задания</h3>
+                <p className="text-xs text-zinc-400 truncate">{activeHwModal.subjectName}: {activeHwModal.title}</p>
               </div>
-              <button onClick={() => setActiveHwModal(null)}>
+              <button
+                type="button"
+                onClick={() => setActiveHwModal(null)}
+                className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition shrink-0"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmitSolution} className="mt-4 space-y-4 text-xs">
+            <form onSubmit={handleSubmitSolution} className="mt-3 space-y-3.5 text-xs overflow-y-auto flex-1 min-h-0 pr-0.5">
               <div>
                 <label className="font-medium text-zinc-400">Ваш ответ или комментарий:</label>
                 <textarea
-                  rows={4}
+                  rows={3}
                   required
                   value={submitText}
                   onChange={(e) => setSubmitText(e.target.value)}
@@ -1386,86 +1390,88 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
 
       {/* Модальное окно просмотра проверенной работы с пометками учителя */}
       {viewCheckedHwModal && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-zinc-950/90 p-2 sm:p-4 backdrop-blur-md overflow-hidden text-zinc-100 font-sans">
-          {/* Header */}
-          <div className={`flex h-14 w-full items-center justify-between rounded-t-3xl px-4 sm:px-6 border-b shadow-sm shrink-0 ${
-            isPlanet
-              ? "bg-[#090D18]/95 border-sky-500/25 text-zinc-100 backdrop-blur-xl"
-              : isGarden
-              ? "bg-[#141C16]/95 border-[#FEC868]/25 text-zinc-100 backdrop-blur-xl"
-              : "bg-[#0C121A]/95 border-emerald-500/25 text-zinc-100 backdrop-blur-xl"
-          }`}>
-            <div className="flex items-center gap-3 min-w-0">
-              <span className={`flex h-8 w-8 items-center justify-center rounded-xl font-bold text-xs shrink-0 ${
-                isPlanet
-                  ? "bg-sky-500/20 text-sky-300 border border-sky-500/30"
-                  : isGarden
-                  ? "bg-[#FEC868]/20 text-[#FEC868] border border-[#FEC868]/30"
-                  : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-              }`}>
-                ДЗ
-              </span>
-              <div className="min-w-0">
-                <h3 className="text-sm sm:text-base font-extrabold text-zinc-100 truncate">
-                  {viewCheckedHwModal.title}
-                </h3>
-                <p className="text-[11px] font-semibold text-zinc-400">
-                  {viewCheckedHwModal.subjectName} • Проверено учителем
-                </p>
+        <div className="fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex items-center justify-center bg-zinc-950/90 p-2 sm:p-4 pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md overflow-hidden text-zinc-100 font-sans">
+          <div className="w-full max-w-[min(95vw,calc(100vw-1rem))] lg:max-w-6xl h-full max-h-[90dvh] flex flex-col rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+            {/* Header */}
+            <div className={`flex h-12 sm:h-14 w-full items-center justify-between gap-2 px-3 sm:px-5 border-b shadow-sm shrink-0 overflow-hidden ${
+              isPlanet
+                ? "bg-[#090D18]/95 border-sky-500/25 text-zinc-100 backdrop-blur-xl"
+                : isGarden
+                ? "bg-[#141C16]/95 border-[#FEC868]/25 text-zinc-100 backdrop-blur-xl"
+                : "bg-[#0C121A]/95 border-emerald-500/25 text-zinc-100 backdrop-blur-xl"
+            }`}>
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
+                <span className={`flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-xl font-bold text-xs shrink-0 ${
+                  isPlanet
+                    ? "bg-sky-500/20 text-sky-300 border border-sky-500/30"
+                    : isGarden
+                    ? "bg-[#FEC868]/20 text-[#FEC868] border border-[#FEC868]/30"
+                    : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                }`}>
+                  ДЗ
+                </span>
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <h3 className="text-xs sm:text-base font-extrabold text-zinc-100 truncate">
+                    {viewCheckedHwModal.title}
+                  </h3>
+                  <p className="text-[10px] sm:text-[11px] font-semibold text-zinc-400 truncate">
+                    {viewCheckedHwModal.subjectName} • Проверено учителем
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setCheckedPageRotation((prev) => (prev + 90) % 360)}
+                  className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white transition shrink-0"
+                  title="Повернуть лист на 90°"
+                >
+                  <RotateCw className="h-4 w-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCheckedZoom((prev) => (prev === 1 ? 1.25 : prev === 1.25 ? 1.5 : 1))}
+                  className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white transition shrink-0"
+                  title="Масштаб"
+                >
+                  {checkedZoom > 1 ? <ZoomOut className="h-4 w-4" /> : <ZoomIn className="h-4 w-4" />}
+                </button>
+
+                {parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment).modifiedImageUrl ? (
+                  <a
+                    href={parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment).modifiedImageUrl}
+                    download={`Проверенное_ДЗ_${viewCheckedHwModal.subjectName}.jpg`}
+                    className="hidden sm:flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-zinc-200 hover:bg-white/15 shadow-xs shrink-0"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Скачать с пометками</span>
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="hidden sm:flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-zinc-200 hover:bg-white/15 shadow-xs shrink-0"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Печать / PDF</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setViewCheckedHwModal(null)}
+                  className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border border-red-500/30 bg-red-950/40 text-red-300 hover:bg-red-900/70 hover:text-white transition shrink-0"
+                  title="Закрыть"
+                >
+                  <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                </button>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCheckedPageRotation((prev) => (prev + 90) % 360)}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white transition"
-                title="Повернуть лист на 90°"
-              >
-                <RotateCw className="h-4 w-4" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setCheckedZoom((prev) => (prev === 1 ? 1.25 : prev === 1.25 ? 1.5 : 1))}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white transition"
-                title="Масштаб"
-              >
-                {checkedZoom > 1 ? <ZoomOut className="h-4 w-4" /> : <ZoomIn className="h-4 w-4" />}
-              </button>
-
-              {parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment).modifiedImageUrl ? (
-                <a
-                  href={parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment).modifiedImageUrl}
-                  download={`Проверенное_ДЗ_${viewCheckedHwModal.subjectName}.jpg`}
-                  className="hidden sm:flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-zinc-200 hover:bg-white/15 shadow-xs"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>Скачать с пометками</span>
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="hidden sm:flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-zinc-200 hover:bg-white/15 shadow-xs"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>Печать / PDF</span>
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={() => setViewCheckedHwModal(null)}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white transition"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Body: Center Viewport + Right Grading Sidebar */}
-          <div className="flex flex-1 overflow-hidden rounded-b-3xl bg-[#05070A] flex-col md:flex-row">
+            {/* Body: Center Viewport + Right Grading Sidebar */}
+            <div className="flex flex-1 min-h-0 overflow-hidden bg-[#05070A] flex-col md:flex-row">
             {/* Center: Actual checked homework with teacher's annotations or modified image */}
             {(() => {
               const feedback = parseTeacherFeedback(viewCheckedHwModal.submission?.teacherComment);
@@ -1709,6 +1715,7 @@ export function StudentDashboard({ user, scheduleItems, homeworks, egeItems = []
                 </aside>
               );
             })()}
+          </div>
           </div>
         </div>
       )}

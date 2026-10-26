@@ -749,7 +749,7 @@ export function AdminDashboard({
   };
 
   return (
-    <div className="min-h-screen space-y-6 p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))]">
+    <div className="min-h-screen w-full max-w-5xl mx-auto overflow-x-hidden space-y-6 p-4 sm:p-6 lg:p-8 pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))]">
       <header className="flex flex-col gap-3 sm:gap-4 border-b border-zinc-200/40 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Панель Учителя</h1>
@@ -1023,7 +1023,7 @@ export function AdminDashboard({
                             </div>
 
                             <div
-                              className={`group flex-1 p-4 sm:p-5 shadow-sm transition-all duration-200 ${
+                              className={`group flex-1 min-w-0 p-4 sm:p-5 shadow-sm transition-all duration-200 ${
                                 isGarden
                                   ? "bg-[#FEC868] text-[#2C2114] border border-[#DEAC4E] shadow-[0_4px_16px_rgba(254,200,104,0.25)] hover:bg-[#FFD782] hover:border-[#F2C063] hover:shadow-[0_8px_24px_rgba(254,200,104,0.4)] hover:-translate-y-0.5 rounded-[28px] sm:rounded-[36px]"
                                   : "glass-panel glass-interactive rounded-2xl sm:rounded-3xl"
@@ -1786,11 +1786,11 @@ export function AdminDashboard({
       </div>
 
       {isAddLessonOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="glass-panel w-full max-w-sm rounded-3xl p-5 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="font-bold text-sm">Добавить занятие</h3>
-              <button onClick={() => setIsAddLessonOpen(false)}><X className="h-4 w-4" /></button>
+        <div className="fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex items-center justify-center bg-black/60 p-3 sm:p-4 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] backdrop-blur-sm">
+          <div className="glass-panel w-full max-w-[min(95vw,calc(100vw-1.5rem))] sm:max-w-sm max-h-[90dvh] flex flex-col overflow-hidden rounded-3xl p-5 shadow-2xl">
+            <div className="flex items-center justify-between gap-2 border-b border-zinc-800 pb-3 shrink-0">
+              <h3 className="font-bold text-sm min-w-0 flex-1 truncate">Добавить занятие</h3>
+              <button onClick={() => setIsAddLessonOpen(false)} className="shrink-0 p-1 rounded-lg hover:bg-white/10"><X className="h-4 w-4" /></button>
             </div>
             <form
               onSubmit={async (e) => {
@@ -1808,7 +1808,7 @@ export function AdminDashboard({
                 });
                 setIsAddLessonOpen(false);
               }}
-              className="mt-4 space-y-3 text-xs"
+              className="mt-4 space-y-3 text-xs flex-1 min-h-0 overflow-y-auto pr-1"
             >
               <input type="hidden" name="dayOfWeek" value={lessonDayOfWeek} />
               <div className="grid grid-cols-3 gap-2">
@@ -1861,11 +1861,11 @@ export function AdminDashboard({
       )}
 
       {isHwModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="glass-panel w-full max-w-lg rounded-3xl p-5 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="font-bold">Выдать домашнее задание</h3>
-              <button onClick={() => { setIsHwModalOpen(false); setHwPreset(null); setHwFiles([]); }}><X className="h-4 w-4" /></button>
+        <div className="fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex items-center justify-center bg-black/60 p-3 sm:p-4 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] backdrop-blur-sm">
+          <div className="glass-panel w-full max-w-[min(95vw,calc(100vw-1.5rem))] sm:max-w-lg max-h-[90dvh] flex flex-col overflow-hidden rounded-3xl p-5 shadow-2xl">
+            <div className="flex items-center justify-between gap-2 border-b border-zinc-800 pb-3 shrink-0">
+              <h3 className="font-bold min-w-0 flex-1 truncate">Выдать домашнее задание</h3>
+              <button onClick={() => { setIsHwModalOpen(false); setHwPreset(null); setHwFiles([]); }} className="shrink-0 p-1 rounded-lg hover:bg-white/10"><X className="h-4 w-4" /></button>
             </div>
             <form
               onSubmit={async (e) => {
@@ -1902,7 +1902,7 @@ export function AdminDashboard({
                   setHwLoading(false);
                 }
               }}
-              className="mt-4 space-y-3 text-xs"
+              className="mt-4 space-y-3 text-xs flex-1 min-h-0 overflow-y-auto pr-1"
             >
               {Boolean(classes.find((c) => c.id === selectedClassId)?.grade === 11 || classes.find((c) => c.id === selectedClassId)?.name.startsWith("11")) && (
                 <div>
@@ -2013,11 +2013,11 @@ export function AdminDashboard({
       )}
 
       {editingHw && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="glass-panel w-full max-w-lg rounded-3xl p-5 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="font-bold">Редактирование ДЗ</h3>
-              <button onClick={() => setEditingHw(null)}><X className="h-4 w-4" /></button>
+        <div className="fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex items-center justify-center bg-black/60 p-3 sm:p-4 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] backdrop-blur-sm">
+          <div className="glass-panel w-full max-w-[min(95vw,calc(100vw-1.5rem))] sm:max-w-lg max-h-[90dvh] flex flex-col overflow-hidden rounded-3xl p-5 shadow-2xl">
+            <div className="flex items-center justify-between gap-2 border-b border-zinc-800 pb-3 shrink-0">
+              <h3 className="font-bold min-w-0 flex-1 truncate">Редактирование ДЗ</h3>
+              <button onClick={() => setEditingHw(null)} className="shrink-0 p-1 rounded-lg hover:bg-white/10"><X className="h-4 w-4" /></button>
             </div>
             <form
               onSubmit={async (e) => {
@@ -2032,7 +2032,7 @@ export function AdminDashboard({
                 });
                 setEditingHw(null);
               }}
-              className="mt-4 space-y-3 text-xs"
+              className="mt-4 space-y-3 text-xs flex-1 min-h-0 overflow-y-auto pr-1"
             >
               <div className="grid grid-cols-2 gap-2">
                 <div>

@@ -442,50 +442,50 @@ export function PdfTaskCrop({
         createPortal(
           <div
             onClick={() => setIsLightboxOpen(false)}
-            className="fixed inset-0 z-[9999] w-screen h-[100dvh] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-150"
+            className="fixed inset-0 z-[9999] w-full max-w-[100vw] h-[100dvh] flex items-center justify-center p-2 sm:p-4 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-slate-950/85 backdrop-blur-md overflow-hidden animate-in fade-in duration-150"
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-4xl h-fit max-h-[85dvh] flex flex-col rounded-2xl border border-cyan-500/30 bg-slate-900/95 shadow-2xl overflow-hidden"
+              className="relative w-full max-w-[min(95vw,calc(100vw-1.5rem))] lg:max-w-4xl max-h-[90dvh] flex flex-col rounded-2xl border border-cyan-500/30 bg-slate-900/95 shadow-2xl overflow-hidden"
             >
-              {/* Compact Modal Header */}
-              <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-cyan-500/20 bg-slate-950/80 shrink-0">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="px-2 py-0.5 text-xs font-mono font-bold rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shrink-0">
+              {/* Fixed Modal Header */}
+              <div className="flex items-center justify-between gap-2 px-2.5 sm:px-3.5 py-2 border-b border-cyan-500/20 bg-slate-950/90 shrink-0 w-full overflow-hidden">
+                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 overflow-hidden">
+                  <span className="px-2 py-0.5 text-[11px] sm:text-xs font-mono font-bold rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shrink-0">
                     {taskNumber ? `Задание №${taskNumber}` : "ЕГЭ"}
                   </span>
-                  <span className="text-xs sm:text-sm font-semibold text-slate-100 truncate">
+                  <span className="text-xs sm:text-sm font-semibold text-slate-100 min-w-0 flex-1 truncate">
                     {taskCode ? `Прототип #${taskCode}` : "Фрагмент сборника ФИПИ"}
                   </span>
                 </div>
 
-                {/* Controls */}
-                <div className="flex items-center gap-1.5 shrink-0">
+                {/* Right Controls — strictly shrink-0 so buttons and close X never get clipped */}
+                <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsDarkMode((prev) => !prev)}
-                    className="p-1.5 rounded-lg border border-cyan-500/30 bg-slate-800/80 text-cyan-300 hover:bg-slate-700 transition cursor-pointer"
+                    className="p-1.5 rounded-lg border border-cyan-500/30 bg-slate-800/80 text-cyan-300 hover:bg-slate-700 transition cursor-pointer shrink-0"
                     title="Переключить тему фона"
                   >
                     {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                   </button>
 
-                  <div className="flex items-center border border-cyan-500/30 rounded-lg bg-slate-800/80 overflow-hidden">
+                  <div className="flex items-center border border-cyan-500/30 rounded-lg bg-slate-800/80 overflow-hidden shrink-0">
                     <button
                       type="button"
                       onClick={() => setLightboxZoom((z) => Math.max(1, Number((z - 0.25).toFixed(2))))}
-                      className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 transition cursor-pointer"
+                      className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 transition cursor-pointer shrink-0"
                       title="Уменьшить"
                     >
                       <ZoomOut className="w-4 h-4" />
                     </button>
-                    <span className="px-1.5 text-xs font-mono text-cyan-300">
+                    <span className="px-1.5 text-[11px] sm:text-xs font-mono text-cyan-300 shrink-0">
                       {Math.round(lightboxZoom * 100)}%
                     </span>
                     <button
                       type="button"
                       onClick={() => setLightboxZoom((z) => Math.min(2.5, Number((z + 0.25).toFixed(2))))}
-                      className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 transition cursor-pointer"
+                      className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 transition cursor-pointer shrink-0"
                       title="Увеличить"
                     >
                       <ZoomIn className="w-4 h-4" />
@@ -493,7 +493,7 @@ export function PdfTaskCrop({
                     <button
                       type="button"
                       onClick={() => setLightboxZoom(1)}
-                      className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-slate-700 transition border-l border-cyan-500/20 cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-slate-700 transition border-l border-cyan-500/20 cursor-pointer shrink-0"
                       title="Сбросить масштаб"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
@@ -503,7 +503,7 @@ export function PdfTaskCrop({
                   <button
                     type="button"
                     onClick={() => setIsLightboxOpen(false)}
-                    className="p-1.5 rounded-lg border border-red-500/30 bg-red-950/40 text-red-300 hover:bg-red-900/60 hover:text-white transition cursor-pointer"
+                    className="p-1.5 rounded-lg border border-red-500/40 bg-red-950/60 text-red-300 hover:bg-red-900/80 hover:text-white transition cursor-pointer shrink-0"
                     title="Закрыть"
                   >
                     <X className="w-4 h-4" />
@@ -511,9 +511,9 @@ export function PdfTaskCrop({
                 </div>
               </div>
 
-              {/* Compact Modal Body — hugs image height (h-fit) without giant top/bottom blank space */}
+              {/* Scrollable Modal Body (overflow-auto flex-1) */}
               <div
-                className={`w-full h-fit max-h-[calc(85dvh-48px)] overflow-auto p-1.5 sm:p-3 transition-colors ${
+                className={`w-full flex-1 min-h-0 overflow-auto p-1.5 sm:p-3 transition-colors ${
                   isDarkMode ? "bg-slate-950" : "bg-white"
                 }`}
               >

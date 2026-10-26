@@ -752,10 +752,10 @@ export function HomeworkCheckingStudio({
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col select-none overflow-hidden font-sans ${themeTokens.sidebarBg}`}>
+    <div className={`fixed inset-0 z-50 w-full max-w-[100vw] h-[100dvh] flex flex-col select-none overflow-hidden font-sans pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] ${themeTokens.sidebarBg}`}>
       {/* ПЛАВАЮЩИЙ ХАД-ТУЛБАР В РЕЖИМЕ "ТОЛЬКО ФОТО" (СВЕРНУТО ВСЁ, КРОМЕ КАРТИНКИ ФАЙЛА) */}
       {isFocusMode && (
-        <div className={`absolute top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-2xl shadow-2xl max-w-[96vw] overflow-x-auto scrollbar-none animate-in fade-in zoom-in-95 duration-200 border ${themeTokens.headerBg}`}>
+        <div className={`absolute top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-2xl shadow-2xl max-w-[min(95vw,calc(100vw-1.5rem))] overflow-x-auto scrollbar-none animate-in fade-in zoom-in-95 duration-200 border ${themeTokens.headerBg}`}>
           <button
             type="button"
             onClick={() => setIsFocusMode(false)}
@@ -928,28 +928,28 @@ export function HomeworkCheckingStudio({
 
       {/* 1. TOP HEADER TOOLBAR — адаптирован под выбранную тему */}
       {!isFocusMode && (
-        <header className={`flex h-14 w-full shrink-0 items-center justify-between border-b px-4 shadow-xs ${themeTokens.headerBg}`}>
+        <header className={`flex h-14 w-full shrink-0 items-center justify-between gap-2 border-b px-2.5 sm:px-4 shadow-xs ${themeTokens.headerBg}`}>
           {/* Left Section: Back, Title, Mode */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
             <button
               type="button"
               onClick={onClose}
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white transition"
+              className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white transition"
               title="Вернуться назад"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
 
-            <div>
-              <h1 className="text-sm sm:text-base font-extrabold tracking-tight text-zinc-100 leading-tight">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xs sm:text-base font-extrabold tracking-tight text-zinc-100 leading-tight truncate">
                 Проверка домашней работы
               </h1>
-              <p className="text-[11px] font-semibold text-zinc-400 leading-none mt-0.5">
+              <p className="text-[10px] sm:text-[11px] font-semibold text-zinc-400 leading-none mt-0.5 truncate">
                 {homework.title} • {homework.subjectName}
               </p>
             </div>
 
-            <div className="hidden md:flex items-center ml-4 pl-4 border-l border-white/15 gap-1 bg-white/5 p-0.5 rounded-xl text-xs font-semibold border border-white/10">
+            <div className="hidden md:flex items-center ml-2 pl-2 border-l border-white/15 gap-1 bg-white/5 p-0.5 rounded-xl text-xs font-semibold border border-white/10 shrink-0">
               <button
                 type="button"
                 onClick={() => setViewMode("single")}
@@ -978,22 +978,22 @@ export function HomeworkCheckingStudio({
             <button
               type="button"
               onClick={() => setIsFocusMode(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black shadow-xs hover:shadow-md transition active:scale-95 shrink-0 ml-2 ${themeTokens.focusBtn}`}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-black shadow-xs hover:shadow-md transition active:scale-95 shrink-0 ${themeTokens.focusBtn}`}
               title="Свернуть всё, кроме картинки файла [Клавиша F]"
             >
               <Maximize2 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Свернуть всё, кроме фото</span>
+              <span className="hidden lg:inline">Свернуть всё, кроме фото</span>
             </button>
           </div>
 
           {/* Center / Right: Drawing Tools (Pen, Text, Eraser, Colors, Thickness, Undo/Redo) */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {/* Main Drawing Tools */}
-            <div className="flex items-center rounded-xl bg-white/5 p-1 border border-white/10">
+            <div className="flex items-center rounded-xl bg-white/5 p-0.5 sm:p-1 border border-white/10 shrink-0">
               <button
                 type="button"
                 onClick={() => setActiveTool("pen")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition ${
                   activeTool === "pen"
                     ? `${themeTokens.activeToolBtn} shadow-xs`
                     : "text-zinc-400 hover:text-white hover:bg-white/10"
@@ -1001,13 +1001,13 @@ export function HomeworkCheckingStudio({
                 title="Ручка (свободное рисование)"
               >
                 <PenTool className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Ручка</span>
+                <span className="hidden lg:inline">Ручка</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTool("text")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition ${
                   activeTool === "text"
                     ? `${themeTokens.activeToolBtn} shadow-xs`
                     : "text-zinc-400 hover:text-white hover:bg-white/10"
@@ -1015,13 +1015,13 @@ export function HomeworkCheckingStudio({
                 title="Текст (кликните на фото, чтобы оставить комментарий)"
               >
                 <Type className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Текст</span>
+                <span className="hidden lg:inline">Текст</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTool("eraser")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition ${
                   activeTool === "eraser"
                     ? `${themeTokens.activeToolBtn} shadow-xs`
                     : "text-zinc-400 hover:text-white hover:bg-white/10"
@@ -1029,18 +1029,18 @@ export function HomeworkCheckingStudio({
                 title="Ластик (удаляет штрихи и текстовые пометки)"
               >
                 <Eraser className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Ластик</span>
+                <span className="hidden lg:inline">Ластик</span>
               </button>
             </div>
 
             {/* Color Picker */}
-            <div className="hidden sm:flex items-center gap-1.5 px-2 border-l border-r border-white/15">
+            <div className="hidden md:flex items-center gap-1.5 px-2 border-l border-r border-white/15 shrink-0">
               {PALETTE.map((c) => (
                 <button
                   key={c.hex}
                   type="button"
                   onClick={() => setPenColor(c.hex)}
-                  className={`h-6 w-6 rounded-full transition-transform ${
+                  className={`h-5 w-5 sm:h-6 sm:w-6 rounded-full transition-transform ${
                     penColor === c.hex ? "scale-115 ring-2 ring-white ring-offset-2 ring-offset-black" : "hover:scale-105"
                   }`}
                   style={{ backgroundColor: c.hex }}
@@ -1050,7 +1050,7 @@ export function HomeworkCheckingStudio({
             </div>
 
             {/* Stroke Width Selector */}
-            <div className="hidden md:flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg p-1">
+            <div className="hidden lg:flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg p-1 shrink-0">
               {[2, 4, 8].map((w) => (
                 <button
                   key={w}
@@ -1070,7 +1070,7 @@ export function HomeworkCheckingStudio({
             </div>
 
             {/* Undo / Redo */}
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-0.5 shrink-0">
               <button
                 type="button"
                 onClick={handleUndo}
@@ -1092,7 +1092,7 @@ export function HomeworkCheckingStudio({
               <button
                 type="button"
                 onClick={handleClearPage}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-red-500/20 hover:text-red-400 transition"
+                className="hidden sm:flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-red-500/20 hover:text-red-400 transition"
                 title="Очистить все пометки"
               >
                 <Trash2 className="h-4 w-4" />
@@ -1100,11 +1100,11 @@ export function HomeworkCheckingStudio({
             </div>
 
             {/* Rotate & Download Actions */}
-            <div className="flex items-center gap-1 pl-1">
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 type="button"
                 onClick={handleRotate}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10"
                 title="Повернуть фото на 90°"
               >
                 <RotateCw className="h-4 w-4" />
@@ -1113,7 +1113,7 @@ export function HomeworkCheckingStudio({
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="hidden lg:flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-zinc-200 hover:bg-white/15 shadow-xs"
+                className="hidden lg:flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-zinc-200 hover:bg-white/15 shadow-xs shrink-0"
                 title="Скачать или распечатать с пометками"
               >
                 <Download className="h-3.5 w-3.5" />
@@ -1128,7 +1128,7 @@ export function HomeworkCheckingStudio({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white transition"
+                className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white transition"
               >
                 <X className="h-5 w-5" />
               </button>
