@@ -490,13 +490,15 @@ export function SegmentedControl<T extends string = string>({
     >
       {options.map((opt) => {
         const isActive = opt.value === value;
+        // Важно: активное состояние меняет только цвета. Жирность шрифта,
+        // рамки и паддинги одинаковы — иначе кнопки «прыгают» при переключении.
         const activeClasses = isActive
           ? isLight
-            ? 'bg-white text-sky-600 shadow-xs border border-slate-200/80 font-semibold'
-            : 'bg-sky-600 text-white shadow-xs border border-sky-500/40 font-semibold'
+            ? 'bg-white text-sky-600 shadow-xs border-slate-200/80'
+            : 'bg-sky-600 text-white shadow-xs border-sky-500/40'
           : isLight
-          ? 'text-slate-600 hover:text-slate-900 hover:bg-white/50 border border-transparent font-medium'
-          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent font-medium';
+          ? 'text-slate-600 hover:text-slate-900 hover:bg-white/50 border-transparent'
+          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border-transparent';
 
         return (
           <button
@@ -509,7 +511,7 @@ export function SegmentedControl<T extends string = string>({
             onClick={() => onChange(opt.value)}
             className={`${
               fullWidth ? 'flex-1 basis-0 min-w-0' : 'shrink-0'
-            } ${buttonSizeMap[size]} flex items-center justify-center gap-1.5 transition-all duration-200 ease-out select-none cursor-pointer disabled:opacity-40 disabled:pointer-events-none ${activeClasses}`}
+            } ${buttonSizeMap[size]} border font-semibold flex items-center justify-center gap-1.5 transition-colors duration-150 ease-out select-none cursor-pointer disabled:opacity-40 disabled:pointer-events-none ${activeClasses}`}
           >
             {opt.icon && <span className="shrink-0 flex items-center">{opt.icon}</span>}
             <span className="truncate">{opt.label}</span>
@@ -547,7 +549,7 @@ export interface ModalProps {
   icon?: React.ReactNode;
   headerActions?: React.ReactNode;
   footer?: React.ReactNode;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | 'screen';
   bodyClassName?: string;
   contentClassName?: string;
   hideHeader?: boolean;
@@ -564,6 +566,7 @@ const maxWidthClasses: Record<NonNullable<ModalProps['maxWidth']>, string> = {
   '4xl': 'max-w-4xl',
   '5xl': 'max-w-5xl',
   '6xl': 'max-w-6xl',
+  screen: 'max-w-[97vw]',
 };
 
 export function Modal({

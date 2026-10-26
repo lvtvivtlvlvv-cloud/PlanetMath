@@ -121,7 +121,7 @@ export function AttachmentBadge({ file }: { file?: AttachmentItem | null }) {
       <Modal
         isOpen={isLightboxOpen}
         onClose={() => setIsLightboxOpen(false)}
-        maxWidth="4xl"
+        maxWidth="screen"
         title={file.fileName || "Просмотр изображения"}
         icon={<ImageIcon className="w-4 h-4" />}
         bodyClassName={`w-full flex-1 min-h-0 overflow-auto p-3 sm:p-5 flex items-center justify-center ${
@@ -188,9 +188,11 @@ export function AttachmentBadge({ file }: { file?: AttachmentItem | null }) {
           style={{
             width: `${Math.round(zoom * 100)}%`,
             maxWidth: zoom > 1 ? "none" : "100%",
+            height: zoom > 1 ? "auto" : "80dvh",
+            objectFit: "contain",
             filter: "none",
           }}
-          className="h-auto object-contain block mx-auto rounded-lg shadow-md bg-white"
+          className="block mx-auto rounded-lg shadow-md bg-white"
         />
       </Modal>
     </>
