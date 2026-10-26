@@ -39,7 +39,8 @@ import {
 } from "@/app/admin/actions";
 import { EGE_TASK_TOPICS } from "@/lib/ege-constants";
 import { MathText } from "./math-text";
-import { EgeGeometryDiagram } from "./ege-geometry-diagram";
+import { PdfTaskCrop } from "./pdf-task-crop";
+import { hasPdfDrawing } from "@/lib/ege-math-cleaner";
 
 export interface EgeTaskItem {
   id: string;
@@ -1251,12 +1252,20 @@ export function EgeTaskBankView({
                         </div>
                       </div>
 
-                      {/* Условие задания с KaTeX рендером формул и векторным чертежом */}
+                      {/* Условие задания с KaTeX рендером формул и оригинальным чертежом из PDF при наличии */}
                       <div className="flex flex-col lg:flex-row gap-4 items-start justify-between py-1">
                         <div className="flex-1 min-w-0">
                           <MathText text={t.content} className="text-xs sm:text-sm text-zinc-200" />
                         </div>
-                        <EgeGeometryDiagram taskNumber={t.taskNumber} text={t.content} />
+                        {hasPdfDrawing(t) && t.pdfPage && (
+                          <div className="shrink-0 w-full sm:w-[280px] lg:w-[320px]">
+                            <PdfTaskCrop
+                              pdfPage={t.pdfPage}
+                              taskCode={t.taskCode}
+                              taskNumber={t.taskNumber}
+                            />
+                          </div>
+                        )}
                       </div>
 
                       {/* Блок с ответом */}

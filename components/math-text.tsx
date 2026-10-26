@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import katex from "katex";
-import { cleanBrokenPdfMathText, parseMathSegments, MathSegment } from "@/lib/ege-math-cleaner";
+import { cleanBrokenPdfMathText, parseMathSegments } from "@/lib/ege-math-cleaner";
 
 interface MathTextProps {
   text: string;
@@ -61,7 +61,7 @@ export function MathText({ text, className = "", blockClassName = "" }: MathText
           return (
             <div
               key={seg.id}
-              className={`my-3 p-3 overflow-x-auto text-center rounded-xl bg-slate-950/40 border border-white/5 text-cyan-200 shadow-inner ${blockClassName}`}
+              className={`my-3 py-1.5 px-3 overflow-x-auto text-center text-cyan-200 text-sm sm:text-base ${blockClassName}`}
               dangerouslySetInnerHTML={{ __html: seg.html }}
             />
           );
@@ -71,7 +71,7 @@ export function MathText({ text, className = "", blockClassName = "" }: MathText
           return (
             <span
               key={seg.id}
-              className="inline-block mx-0.5 px-1 py-0.5 rounded text-cyan-200 font-serif"
+              className="inline align-baseline mx-0.5 text-cyan-200"
               dangerouslySetInnerHTML={{ __html: seg.html }}
             />
           );

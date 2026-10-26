@@ -1,169 +1,124 @@
 import fs from "fs";
 import path from "path";
-import { db } from "./db";
+import { db as prisma } from "./db";
 import { INITIAL_FIPI_TASKS, ParsedEgeTask } from "./ege-constants";
 import { parseLocalFipiPdf } from "./ege-parser";
 import { cleanBrokenPdfMathText } from "./ege-math-cleaner";
 
-/**
- * In-place cleanup of existing EgeTask records in SQLite without breaking IDs
- */
-export async function runInPlaceEgeCleanupMigration(): Promise<number> {
-  try {
-    const allExisting = await db.egeTask.findMany();
-    let updatedCount = 0;
+let isInitializing = false;
+let hasCleanedExistingTasks = false;
 
-    for (const task of allExisting) {
-      const cleanedContent = cleanBrokenPdfMathText(task.content);
-      const cleanedTitle = (task.title || "").replace(/[♦◆]/g, "°").trim();
-
-      if (cleanedContent !== task.content || cleanedTitle !== task.title) {
-        await db.egeTask.update({
-          where: { id: task.id },
-          data: {
-            content: cleanedContent,
-            title: cleanedTitle,
-          },
-        });
-        updatedCount++;
-      }
-    }
-
-    if (updatedCount > 0) {
-      console.log(`[EGE Init] In-place очистка текста выполнена для ${updatedCount} заданий в БД`);
-    }
-    return updatedCount;
-  } catch (err) {
-    console.error("[EGE Init] Ошибка in-place миграции EgeTask:", err);
-    return 0;
-  }
-}
-
-/**
- * Ensures that the EgeTask table in SQLite is populated and cleaned.
- * Preserves all student assignments and foreign key relationships.
- */
 export async function ensureEgeTasksInitialized(): Promise<number> {
+  if (isInitializing) {
+    return await prisma.egeTask.count();
+  }
   try {
-    // 1. Всегда запускаем in-place очистку формул и символов у уже существующих заданий
-    await runInPlaceEgeCleanupMigration();
+    isInitializing = true;
+    const count = await prisma.egeTask.count();
 
-    const existingCount = await db.egeTask.count();
-    if (existingCount >= 19) {
-      // Проверяем, представлены ли все номера 1..19
-      const existingNumbers = await db.egeTask.findMany({
-        select: { taskNumber: true },
-        distinct: ["taskNumber"],
-      });
-      const numbersSet = new Set(existingNumbers.map((n) => n.taskNumber));
-      const hasAllNumbers = Array.from({ length: 19 }, (_, i) => i + 1).every((num) => numbersSet.has(num));
+    if (count === 0) {
+      let tasksToInsert: ParsedEgeTask[] = [];
 
-      if (hasAllNumbers) {
-        return existingCount;
-      }
-    }
-
-    console.log("[EGE Init] Требуется дополнение или первичная инициализация банка заданий...");
-
-    const tasksToInsert: ParsedEgeTask[] = [];
-
-    // 2. Парсим локальный PDF в корне напрямую
-    try {
-      const fromPdf = await parseLocalFipiPdf();
-      if (fromPdf.length > 0) {
-        console.log(`[EGE Init] Из локального PDF извлечено ${fromPdf.length} заданий`);
-        tasksToInsert.push(...fromPdf);
-      }
-    } catch (e) {
-      console.warn("[EGE Init] Ошибка парсинга локального PDF:", e);
-    }
-
-    // 3. Если PDF дал мало задач, дополняем из data/ege-tasks.json
-    if (tasksToInsert.length < 50) {
+      // 1. Try pre-parsed JSON first (instant, 500+ real FIPI tasks + answers)
       const jsonPath = path.join(process.cwd(), "data", "ege-tasks.json");
       if (fs.existsSync(jsonPath)) {
         try {
           const rawJson = fs.readFileSync(jsonPath, "utf-8");
-          const parsed = JSON.parse(rawJson);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            tasksToInsert.push(...parsed);
+          tasksToInsert = JSON.parse(rawJson) as ParsedEgeTask[];
+        } catch (err) {
+          console.error("Failed to read data/ege-tasks.json:", err);
+        }
+      }
+
+      // 2. Fallback to runtime PDF parsing
+      if (tasksToInsert.length === 0) {
+        tasksToInsert = await parseLocalFipiPdf();
+      }
+
+      // 3. Fallback to built-in seed tasks
+      if (tasksToInsert.length === 0) {
+        tasksToInsert = INITIAL_FIPI_TASKS;
+      }
+
+      await prisma.egeTask.createMany({
+        data: tasksToInsert.map((t) => ({
+          taskNumber: t.taskNumber,
+          topic: (t.topic || "").toWellFormed(),
+          title: (t.title || "").toWellFormed(),
+          content: cleanBrokenPdfMathText((t.content || "").toWellFormed()),
+          answer: t.answer ? t.answer.toWellFormed() : null,
+          solution: t.solution ? t.solution.toWellFormed() : null,
+          difficulty: t.difficulty || "BASE",
+          source: t.source || "FIPI_PDF",
+          pdfPage: t.pdfPage || null,
+          taskCode: t.taskCode || null,
+        })),
+      });
+      hasCleanedExistingTasks = true;
+      return tasksToInsert.length;
+    }
+
+    // Auto-clean and sync pdfPage/taskCode for existing tasks in SQLite once per server boot
+    if (!hasCleanedExistingTasks) {
+      hasCleanedExistingTasks = true;
+      const existingTasks = await prisma.egeTask.findMany({
+        select: { id: true, title: true, content: true, pdfPage: true, taskCode: true },
+      });
+
+      const jsonPath = path.join(process.cwd(), "data", "ege-tasks.json");
+      const jsonLookup = new Map<string, { pdfPage?: number; taskCode?: string }>();
+      if (fs.existsSync(jsonPath)) {
+        try {
+          const parsed = JSON.parse(fs.readFileSync(jsonPath, "utf-8")) as ParsedEgeTask[];
+          for (const item of parsed) {
+            if (item.title) {
+              jsonLookup.set(item.title.trim(), { pdfPage: item.pdfPage, taskCode: item.taskCode });
+            }
           }
-        } catch (e) {
-          console.warn("[EGE Init] Ошибка чтения ege-tasks.json:", e);
+        } catch {
+          // ignore
+        }
+      }
+
+      const updates = [];
+      for (const t of existingTasks) {
+        const cleaned = cleanBrokenPdfMathText(t.content);
+        const matchMeta = jsonLookup.get((t.title || "").trim());
+        let nextTaskCode = t.taskCode ?? matchMeta?.taskCode ?? null;
+        if (!nextTaskCode && t.title) {
+          const m = t.title.match(/Задача\s*(\d{1,2}\.\d+(?:\.\d+)?)/i);
+          if (m) nextTaskCode = m[1];
+        }
+        const nextPdfPage = t.pdfPage ?? matchMeta?.pdfPage ?? null;
+
+        if (cleaned !== t.content || nextPdfPage !== t.pdfPage || nextTaskCode !== t.taskCode) {
+          updates.push(
+            prisma.egeTask.update({
+              where: { id: t.id },
+              data: {
+                content: cleaned,
+                pdfPage: nextPdfPage,
+                taskCode: nextTaskCode,
+              },
+            })
+          );
+        }
+      }
+
+      if (updates.length > 0) {
+        for (let i = 0; i < updates.length; i += 50) {
+          await prisma.$transaction(updates.slice(i, i + 50));
         }
       }
     }
 
-    // 4. Дополняем эталонным банком по всем 19 номерам
-    for (const item of INITIAL_FIPI_TASKS) {
-      if (!tasksToInsert.some((t) => t.taskNumber === item.taskNumber && t.title === item.title)) {
-        tasksToInsert.push(item);
-      }
-    }
-
-    // 5. Пакетная запись / обновление в SQLite
-    const uniqueKeys = new Set<string>();
-    for (const item of tasksToInsert) {
-      const key = `${item.taskNumber}_${item.taskCode || item.title.trim().slice(0, 80)}`;
-      if (uniqueKeys.has(key)) continue;
-      uniqueKeys.add(key);
-
-      const cleanedContent = cleanBrokenPdfMathText(item.content);
-      const cleanedTitle = (item.title || "").replace(/[♦◆]/g, "°").trim();
-
-      const existing = await db.egeTask.findFirst({
-        where: {
-          taskNumber: item.taskNumber,
-          title: cleanedTitle,
-        },
-      });
-
-      if (existing) {
-        await db.egeTask.update({
-          where: { id: existing.id },
-          data: {
-            pdfPage: item.pdfPage ?? existing.pdfPage,
-            taskCode: item.taskCode ?? existing.taskCode,
-            topic: item.topic || existing.topic,
-            content: cleanedContent,
-            answer: item.answer || existing.answer,
-          },
-        });
-      } else {
-        await db.egeTask.create({
-          data: {
-            taskNumber: item.taskNumber,
-            topic: item.topic || `Задание №${item.taskNumber}`,
-            title: cleanedTitle,
-            content: cleanedContent,
-            answer: item.answer || null,
-            solution: item.solution || null,
-            difficulty: item.difficulty || "BASE",
-            source: item.source || "FIPI",
-            pdfPage: item.pdfPage ?? null,
-            taskCode: item.taskCode ?? null,
-          },
-        });
-      }
-    }
-
-    console.log(`[EGE Init] База заданий успешно синхронизирована (всего ${await db.egeTask.count()})`);
-
-    // Сохраняем актуальный снимок в data/ege-tasks.json
-    try {
-      const outDir = path.join(process.cwd(), "data");
-      if (!fs.existsSync(outDir)) {
-        fs.mkdirSync(outDir, { recursive: true });
-      }
-      const allTasks = await db.egeTask.findMany({ orderBy: [{ taskNumber: "asc" }, { createdAt: "asc" }] });
-      fs.writeFileSync(path.join(outDir, "ege-tasks.json"), JSON.stringify(allTasks, null, 2), "utf-8");
-    } catch (e) {
-      console.warn("[EGE Init] Ошибка сохранения data/ege-tasks.json:", e);
-    }
-
-    return await db.egeTask.count();
-  } catch (err) {
-    console.error("[EGE Init] Фатальная ошибка авто-инициализации заданий:", err);
+    return count;
+  } catch (e) {
+    console.error("Failed to initialize EGE tasks:", e);
     return 0;
+  } finally {
+    isInitializing = false;
   }
 }
+
+export const ensureEgeBankInitialized = ensureEgeTasksInitialized;

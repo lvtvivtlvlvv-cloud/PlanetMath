@@ -197,22 +197,9 @@ export function PdfTaskCrop({
     };
   }, [pdfPage, taskCode]);
 
-  // Fallback to text if no PDF page is specified or if an error occurred
+  // Return null if no PDF page is specified or if an error occurred
   if (!pdfPage || error) {
-    return (
-      <div className={`rounded-xl border border-cyan-500/20 bg-slate-950/70 p-4 ${className}`}>
-        {fallbackText ? (
-          <div className="text-sm font-sans text-slate-200 leading-relaxed whitespace-pre-wrap">
-            {fallbackText}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 text-xs text-amber-400/90">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>Условие задания отсутствует или находится на обновлении</span>
-          </div>
-        )}
-      </div>
-    );
+    return null;
   }
 
   return (

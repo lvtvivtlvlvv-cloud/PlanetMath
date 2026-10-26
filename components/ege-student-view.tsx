@@ -18,7 +18,8 @@ import {
 } from "lucide-react";
 import { submitEgeItemAnswerAction } from "@/app/student/actions";
 import { MathText } from "./math-text";
-import { EgeGeometryDiagram } from "./ege-geometry-diagram";
+import { PdfTaskCrop } from "./pdf-task-crop";
+import { hasPdfDrawing } from "@/lib/ege-math-cleaner";
 
 export interface StudentEgeAssignmentItem {
   id: string;
@@ -482,12 +483,20 @@ function TaskCard({
         </div>
       </div>
 
-      {/* Условие задания с KaTeX рендером формул и векторным чертежом */}
+      {/* Условие задания с KaTeX рендером формул и оригинальным чертежом из PDF при наличии */}
       <div className="flex flex-col lg:flex-row gap-4 items-start justify-between py-1">
         <div className="flex-1 min-w-0">
           <MathText text={item.content} className="text-xs sm:text-sm text-zinc-200" />
         </div>
-        <EgeGeometryDiagram taskNumber={item.taskNumber} text={item.content} />
+        {hasPdfDrawing(item) && item.pdfPage && (
+          <div className="shrink-0 w-full sm:w-[280px] lg:w-[320px]">
+            <PdfTaskCrop
+              pdfPage={item.pdfPage}
+              taskCode={item.taskCode}
+              taskNumber={item.taskNumber}
+            />
+          </div>
+        )}
       </div>
 
       {/* Поле ввода ответа и отправка */}
