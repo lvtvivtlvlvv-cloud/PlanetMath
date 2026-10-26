@@ -587,14 +587,34 @@ export async function createEgeAssignmentAction(data: {
 
   const deadline = data.deadline ? parseYmd(data.deadline) : null;
 
-  const pools: Record<number, { id: string }[]> = {};
+  const pools: Record<number, { id: string; taskCode: string | null }[]> = {};
   for (const { taskNumber } of requested) {
     pools[taskNumber] = await db.egeTask.findMany({
       where: { taskNumber },
-      select: { id: true },
+      select: { id: true, taskCode: true },
       orderBy: { createdAt: "asc" },
     });
   }
+
+  // Задания, которые ученик уже получал: новую работу собираем из «свежих»,
+  // чтобы случайный подбор не выдавал те же прототипы второй раз.
+  const usedByStudent = new Map<string, Set<string>>();
+  if (recipients.length > 0) {
+    const usedRows = await db.egeAssignmentItem.findMany({
+      where: { studentId: { in: recipients.map((r) => r.id) } },
+      select: { studentId: true, taskId: true },
+    });
+    for (const row of usedRows) {
+      let set = usedByStudent.get(row.studentId);
+      if (!set) {
+        set = new Set<string>();
+        usedByStudent.set(row.studentId, set);
+      }
+      set.add(row.taskId);
+    }
+  }
+
+  const exampleCodes: string[] = [];
 
   // Всё или ничего: половина класса с работой, половина без — хуже, чем ошибка.
   const result = await db.$transaction(async (tx) => {
@@ -602,6 +622,9 @@ export async function createEgeAssignmentAction(data: {
     let skipped = 0;
 
     for (const student of recipients) {
+      const isFirstStudent = assigned === 0;
+      const used = usedByStudent.get(student.id) ?? new Set<string>();
+
       const assignment = await tx.egeAssignment.create({
         data: {
           title,
@@ -629,8 +652,19 @@ export async function createEgeAssignmentAction(data: {
           continue;
         }
 
-        const picked = pickDistinct(pool, count);
+        // Сначала пробуем только невыданные ранее задания; если их не хватает —
+        // добираем из общего пула (иначе работу просто нечем заполнить).
+        const fresh = pool.filter((task) => !used.has(task.id));
+        const source = fresh.length >= count ? fresh : pool;
+        const picked = pickDistinct(source, count);
         if (picked.length < count) skipped += count - picked.length;
+
+        if (isFirstStudent) {
+          for (const task of picked) {
+            const code = task.taskCode || `№${taskNumber}`;
+            if (!exampleCodes.includes(code)) exampleCodes.push(code);
+          }
+        }
 
         for (const task of picked) {
           const isPart2 = taskNumber >= 13;
@@ -661,6 +695,7 @@ export async function createEgeAssignmentAction(data: {
     success: true,
     countAssigned: result.assigned,
     skippedTasks: result.skipped,
+    exampleCodes: exampleCodes.slice(0, 8),
   };
 }
 

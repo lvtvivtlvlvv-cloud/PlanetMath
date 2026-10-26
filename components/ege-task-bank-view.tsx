@@ -201,11 +201,10 @@ export function EgeTaskBankView({
     setPage(0);
   }, [selectedTaskNumberFilter, searchQuery]);
 
-  const listTopRef = useRef<HTMLDivElement | null>(null);
   const goToPage = (next: number) => {
+    // Без scrollIntoView: страница должна просто переключиться, не прыгая вниз.
     const clamped = Math.max(0, Math.min(pageCount - 1, next));
     setPage(clamped);
-    listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const chipsScrollRef = useRef<HTMLDivElement | null>(null);
@@ -344,7 +343,10 @@ export function EgeTaskBankView({
         });
 
         if (res.success) {
-          showToast("success", `Работа успешно сформирована и выдана (${res.countAssigned} ученикам)!`);
+          const codes = res.exampleCodes?.length
+            ? ` Случайно подобраны: ${res.exampleCodes.join(", ")}.`
+            : "";
+          showToast("success", `Работа выдана (${res.countAssigned}).${codes}`);
           setActiveSubTab("history");
         }
       } catch (err: any) {
@@ -752,8 +754,9 @@ export function EgeTaskBankView({
                   <Layers className={`h-4 w-4 ${isLight ? "text-sky-600" : "text-sky-400"}`} />
                   2. Выберите количество заданий по номерам ЕГЭ (1–19)
                 </h3>
-                <p className={`text-xs mt-0.5 ${isLight ? "text-slate-500" : "text-slate-400"}`}>
-                  Укажите, сколько задач каждого типа нужно автоматически подобрать и прикрепить
+                <p className="text-xs mt-0.5">
+                  Укажите, сколько задач каждого типа нужно подобрать. Задания выбираются случайно
+                  из банка — и по возможности те, которые ученик ещё не получал.
                 </p>
               </div>
 
@@ -1267,8 +1270,6 @@ export function EgeTaskBankView({
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
-
-            <div ref={listTopRef} className="scroll-mt-24" />
 
             <div className="space-y-3 pt-2">
               {filteredTasks.length === 0 ? (
